@@ -1,7 +1,7 @@
 {
-  "name": "Ocorrências — Malba Thereza",
-  "short_name": "Ocorrências",
-  "description": "Sistema de Registro de Ocorrências Escolares — Protocolo 179 · CONVIVA SP",
+  "name": "SisRoe — Malba Thereza",
+  "short_name": "SisRoe",
+  "description": "SisRoe — Sistema de Registro de Ocorrências Escolares · Protocolo 179 · CONVIVA SP",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
