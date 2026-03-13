@@ -20,18 +20,35 @@ let todosChats = {};  // occId → [msgs]
 export function iniciarChat(occ, usuario, chatsExistentes) {
   occAtual = occ;
   usuarioAtual = usuario;
-  if (chatsExistentes) todosChats = chatsExistentes;
+  // Sempre usa a versão mais completa de cada chat
+  if (chatsExistentes) {
+    Object.keys(chatsExistentes).forEach(k => {
+      const existente = todosChats[k] || [];
+      const novo = chatsExistentes[k] || [];
+      // Mescla sem duplicar — usa id da mensagem como chave
+      const mapa = {};
+      [...existente, ...novo].forEach(m => { mapa[m.id] = m; });
+      todosChats[k] = Object.values(mapa).sort((a,b) => a.id - b.id);
+    });
+  }
 
   if (!modalEl) _criarModal();
 
   const perfisGestao = ['poc','coordenador','vice','diretor'];
-  const podeEnviar = perfisGestao.includes(usuario.perfil);
+  const ehGestao = perfisGestao.includes(usuario.perfil);
 
   // Título
   modalEl.querySelector('#chat-titulo').textContent =
     `Chat — Ocorrência #${occ.id} · Art. ${occ.numero}`;
   modalEl.querySelector('#chat-subtitulo').textContent =
     `${occ.turma} · ${occ.data} às ${occ.hora} · ${occ.tipo}`;
+
+  // Verifica se gestão já iniciou a conversa
+  const msgsDoChat = (chatsExistentes && chatsExistentes[String(occ.id)]) || [];
+  const gestaoJaFalou = msgsDoChat.some(m => perfisGestao.includes(m.remetentePerfil));
+
+  // Professor só pode responder se gestão já enviou mensagem
+  const podeEnviar = ehGestao || gestaoJaFalou;
 
   // Área de input
   const inputArea = modalEl.querySelector('#chat-input-area');
@@ -42,7 +59,7 @@ export function iniciarChat(occ, usuario, chatsExistentes) {
   } else {
     inputArea.style.display = 'none';
     bloqueado.style.display = 'block';
-    bloqueado.textContent = 'Somente a equipe gestora pode enviar mensagens neste chat.';
+    bloqueado.textContent = '⏳ Aguardando a equipe gestora iniciar a conversa.';
   }
 
   modalEl.classList.add('show');
@@ -59,11 +76,26 @@ export function fecharChat() {
 export function receberMsgChat(msg) {
   const id = String(msg.occId);
   if (!todosChats[id]) todosChats[id] = [];
-  todosChats[id].push(msg);
+
+  // Evita duplicatas: não adiciona se mensagem com mesmo id já existe
+  const jaExiste = todosChats[id].some(m => m.id === msg.id);
+  if (!jaExiste) todosChats[id].push(msg);
 
   if (occAtual && String(occAtual.id) === id && modalEl.classList.contains('show')) {
-    _adicionarMsg(msg);
-    _scrollBottom();
+    // Só renderiza na tela se for mensagem nova
+    if (!jaExiste) {
+      _adicionarMsg(msg);
+      _scrollBottom();
+    }
+
+    // Se professor estava bloqueado e gestão acabou de falar, libera o input
+    const perfisGestao = ['poc','coordenador','vice','diretor'];
+    if (!perfisGestao.includes(usuarioAtual.perfil) && perfisGestao.includes(msg.remetentePerfil)) {
+      const inputArea = modalEl.querySelector('#chat-input-area');
+      const bloqueado = modalEl.querySelector('#chat-bloqueado');
+      if (inputArea) inputArea.style.display = 'flex';
+      if (bloqueado) bloqueado.style.display = 'none';
+    }
   }
 }
 

@@ -21,12 +21,10 @@
     <div class="fg"><label>Selecione seu nome</label>
       <select id="loginUsuario"><option value="">Selecione...</option></select></div>
     <div class="fg"><label>Senha</label>
-      <input type="password" id="loginPass" placeholder="••••••••"/></div>
+      <input type="password" id="loginPass" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter')window._doLogin()"/></div>
+    <div id="loginErro" style="color:var(--re);font-size:13px;display:none;margin-bottom:8px"></div>
     <button class="bp" onclick="window._doLogin()">Entrar</button>
-    <div style="font-size:12px;color:var(--mu);border:0.5px solid var(--bd);border-radius:8px;padding:10px;margin-top:1rem">
-      <strong style="display:block;margin-bottom:6px">Acesso rápido para demonstração:</strong>
-      <div id="demoButtons"></div>
-    </div>
   </div>
 </div>
 
@@ -37,6 +35,7 @@
     <div style="display:flex;align-items:center;gap:8px">
       <span id="wsStatus" class="ws-status err">● offline</span>
       <div class="ub"><span class="un" id="topName">-</span><span class="ur" id="topRole">-</span></div>
+      <button class="lo" onclick="abrirModalSenha()" style="margin-right:4px">🔑 Senha</button>
       <button class="lo" onclick="window._doLogout()">Sair</button>
     </div>
   </div>
@@ -45,6 +44,7 @@
     <button onclick="showTab('registrar',this)">Registrar</button>
     <button onclick="showTab('ocorrencias',this)">Ocorrências</button>
     <button id="tabRel" onclick="showTab('relatorio',this)" style="display:none">Relatórios</button>
+    <button id="tabAlunos" onclick="showTab('alunos',this)" style="display:none">👤 Alunos</button>
     <button id="tabGes" onclick="showTab('gestao',this)" style="display:none">Gestão</button>
   </div>
   <div class="ct">
@@ -62,6 +62,11 @@
       <div class="st" style="margin-bottom:1rem">Registrar Ocorrência — Protocolo 179</div>
       <div id="perfilHeader"></div>
       <div class="fc">
+        <div id="blocoADM">
+          <div class="fl" style="background:none;color:var(--bl);border-bottom:1.5px solid var(--bl);font-size:12px">Bloco 0 — Ocorrências Administrativas / Pedagógicas</div>
+          <div class="ab bl" style="margin-bottom:8px"><span><strong>Registre e comunique</strong> à coordenação. Não requer Protocolo 179.</span></div>
+          <div class="tg" id="gridAdm"></div>
+        </div>
         <div id="blocoI" style="display:none">
           <div class="fl">Bloco I — Urgência / Emergência
             <span class="lt poc">P.O.C.</span><span class="lt gt">Gestão</span></div>
@@ -89,6 +94,7 @@
             </select></div>
           <div class="fg"><label>Gravidade</label>
             <select id="occGrav"><option value="">Selecione...</option>
+              <option value="administrativa">Administrativa / Pedagógica</option>
               <option value="urgencia" id="optUrg">Urgência / Emergência</option>
               <option value="grave">Grave</option><option value="media">Média</option><option value="leve">Leve</option>
             </select></div>
@@ -150,6 +156,17 @@
 
     <!-- RELATÓRIOS -->
     <div id="tab-relatorio" style="display:none">
+
+      <!-- BACKUP -->
+      <div class="fc" style="margin-bottom:1rem">
+        <div class="st" style="font-size:13px;margin-bottom:8px">💾 Backup das Ocorrências</div>
+        <p style="font-size:13px;color:var(--mu);margin-bottom:12px">Exporta todas as ocorrências. Guarde o arquivo em local seguro.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="bn mg" onclick="window._baixarBackup()">⬇ Baixar backup (JSON)</button>
+          <button class="bn bl" onclick="window._baixarBackupCSV()">⬇ Baixar backup (CSV)</button>
+        </div>
+        <div id="backupMsg" style="display:none;margin-top:10px;font-size:13px;color:var(--gr)"></div>
+      </div>
       <div class="st">Relatórios</div>
       <div class="fc" style="margin-bottom:1rem">
         <div class="fl">Filtros</div>
@@ -161,6 +178,46 @@
         <button class="bn mg" onclick="window._gerarRel()">Gerar Relatório</button>
       </div>
       <div id="relOutput"></div>
+    </div>
+
+    <!-- ALUNOS -->
+    <div id="tab-alunos" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+        <div class="st" style="margin:0;border:none;padding:0">👤 Dashboard por Aluno</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <select id="aMes" onchange="window.renderAlunos()" style="font-size:12px;padding:4px 8px;border:0.5px solid #ccc;border-radius:8px;background:#fff"></select>
+          <select id="aTurma" onchange="window.renderAlunos()" style="font-size:12px;padding:4px 8px;border:0.5px solid #ccc;border-radius:8px;background:#fff"><option value="">Todas as turmas</option></select>
+        </div>
+      </div>
+
+      <!-- ALERTAS -->
+      <div id="aAlerta" style="margin-bottom:1rem"></div>
+
+      <!-- STATS -->
+      <div class="sg" id="aStats" style="margin-bottom:1rem"></div>
+
+      <!-- GRÁFICO POR TURMA -->
+      <div class="fc" style="margin-bottom:1rem">
+        <div class="st" style="font-size:13px;margin-bottom:12px">Ocorrências por Turma</div>
+        <div id="aGrafico" style="overflow-x:auto"></div>
+      </div>
+
+      <!-- RANKING -->
+      <div class="fc" style="margin-bottom:1rem">
+        <div class="st" style="font-size:13px;margin-bottom:10px">🏆 Ranking — Alunos com mais ocorrências no período</div>
+        <div id="aRanking"></div>
+      </div>
+
+      <!-- MODAL HISTÓRICO DO ALUNO -->
+      <div class="mo" id="modalAluno" onclick="if(event.target===this)fecharModalAluno()">
+        <div class="md" onclick="event.stopPropagation()" style="max-width:640px">
+          <div class="mh">
+            <span class="mt2" id="modalAlunoTit">Histórico do Aluno</span>
+            <button class="mc" onclick="fecharModalAluno()">✕</button>
+          </div>
+          <div id="modalAlunoBody"></div>
+        </div>
+      </div>
     </div>
 
     <!-- GESTÃO -->
@@ -194,6 +251,19 @@
 
 <!-- CONTAINER DE NOTIFICAÇÕES -->
 <div class="notif-popup" id="notifContainer"></div>
+
+<!-- MODAL TROCAR SENHA -->
+<div class="mo" id="modalSenha" onclick="if(event.target===this)fecharModalSenha()">
+  <div class="md" onclick="event.stopPropagation()" style="max-width:420px">
+    <div class="mh"><span class="mt2">🔑 Trocar Senha</span><button class="mc" onclick="fecharModalSenha()">✕</button></div>
+    <div class="ab bl" style="margin-bottom:1rem">Por segurança, troque a senha padrão <strong>Malba@2025</strong> por uma senha pessoal.</div>
+    <div class="fg"><label>Senha atual</label><input type="password" id="senhaAtual" placeholder="••••••••"/></div>
+    <div class="fg"><label>Nova senha (mínimo 6 caracteres)</label><input type="password" id="senhaNova" placeholder="••••••••"/></div>
+    <div class="fg"><label>Confirmar nova senha</label><input type="password" id="senhaConf" placeholder="••••••••"/></div>
+    <div id="senhaErro" style="color:var(--re);font-size:13px;display:none;margin-bottom:8px"></div>
+    <button class="bp" onclick="window._trocarSenha()">Salvar nova senha</button>
+  </div>
+</div>
 
 </div><!-- #app -->
 

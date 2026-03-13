@@ -2,6 +2,7 @@
 import { conectar, onEvento, enviar } from './ws.js';
 import { mostrarNotifOcorrencia, pedirPermissaoNotif } from './notif.js';
 import { iniciarChat, fecharChat, receberMsgChat } from './chat.js';
+import { salvarSessao, limparSessao, getToken, getUsuario, temSessao, apiFetch } from './auth.js';
 
 // ─── DADOS ────────────────────────────────────────────────────────────────────
 const USUARIOS = [
@@ -65,11 +66,29 @@ const PL = {
   vice:'Vice-Diretor',
   diretor:'Diretor de Escola',
 };
-const GL = { urgencia:'Urgência/Emergência', grave:'Grave', media:'Média', leve:'Leve' };
+const GL = { urgencia:'Urgência/Emergência', grave:'Grave', media:'Média', leve:'Leve', administrativa:'Administrativa' };
 const SL = { pendente:'Aguard. complemento', encerrado:'Encerrado' };
 const GORDEM = ['leve','media','grave','urgencia'];
 const PODE_EDIT = ['poc','coordenador','vice','diretor'];
 const PODE_REL  = ['coordenador','vice','diretor'];
+const TB0 = [
+  {n:'A1', l:'Aluno dormiu durante a aula'},
+  {n:'A2', l:'Aluno sem material escolar'},
+  {n:'A3', l:'Aluno com celular em uso indevido'},
+  {n:'A4', l:'Aluno recusou-se a realizar atividade'},
+  {n:'A5', l:'Aluno perturbou / atrapalhou a aula'},
+  {n:'A6', l:'Aluno saiu da sala sem autorização'},
+  {n:'A7', l:'Aluno chegou atrasado repetidamente'},
+  {n:'A8', l:'Aluno com linguagem inadequada (palavrão)'},
+  {n:'A9', l:'Aluno sem uniforme escolar'},
+  {n:'A10',l:'Aluno com boné/chapéu em sala'},
+  {n:'A11',l:'Aluno faltou sem justificativa'},
+  {n:'A12',l:'Aluno saiu mais cedo sem autorização'},
+  {n:'A13',l:'Aluno danificou material da escola'},
+  {n:'A14',l:'Aluno com comportamento desrespeitoso com professor'},
+  {n:'A15',l:'Aluno utilizou equipamento eletrônico proibido'},
+];
+
 const TU = [
   {n:'I',  l:'Ameaça/risco iminente à vida (atirador, massacres)'},
   {n:'II', l:'Fenômenos naturais com risco à UE (inundação, desabamento)'},
@@ -139,53 +158,100 @@ function _montarLoginSelect() {
   USUARIOS.forEach(u => {
     const o = document.createElement('option');
     o.value = u.id;
-    o.textContent = u.nome + ' — ' + PL[u.perfil];
+    o.dataset.nome = u.nome;
+    o.textContent = u.nome.split(' ').slice(0,3).join(' ') + ' — ' + PL[u.perfil];
     sel.appendChild(o);
   });
-
-  // Demo buttons
-  const perfis = ['professor','poc','coordenador','vice','diretor'];
-  const pn = {professor:'Professor',poc:'P.O.C.',coordenador:'Coordenador',vice:'Vice-Diretor',diretor:'Diretor'};
-  document.getElementById('demoButtons').innerHTML = perfis.map(p =>
-    `<button class="db" onclick="window._qLogin('${p}')">${pn[p]}</button>`
-  ).join('');
 }
 
-window._qLogin = (p) => {
-  const u = USUARIOS.find(x => x.perfil === p);
-  if (u) _autenticar(u);
+window._doLogin = async () => {
+  const sel = document.getElementById('loginUsuario');
+  const nome = sel.options[sel.selectedIndex]?.dataset?.nome || '';
+  const senha = document.getElementById('loginPass').value;
+  const erroEl = document.getElementById('loginErro');
+  erroEl.style.display = 'none';
+
+  if (!nome) { erroEl.textContent = 'Selecione seu nome.'; erroEl.style.display = 'block'; return; }
+  if (!senha) { erroEl.textContent = 'Digite sua senha.'; erroEl.style.display = 'block'; return; }
+
+  const btn = document.querySelector('#loginScreen .bp');
+  btn.textContent = 'Entrando...'; btn.disabled = true;
+
+  try {
+    const resp = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, senha }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      erroEl.textContent = data.erro || 'Erro ao entrar.';
+      erroEl.style.display = 'block';
+      btn.textContent = 'Entrar'; btn.disabled = false;
+      return;
+    }
+    salvarSessao(data.token, data.usuario);
+    await _autenticar(data.usuario);
+  } catch {
+    erroEl.textContent = 'Erro de conexão com o servidor.';
+    erroEl.style.display = 'block';
+    btn.textContent = 'Entrar'; btn.disabled = false;
+  }
 };
-window._doLogin = () => {
-  const uid = parseInt(document.getElementById('loginUsuario').value);
-  if (!uid) { alert('Selecione seu nome.'); return; }
-  const u = USUARIOS.find(x => x.id === uid);
-  if (u) _autenticar(u);
-};
+
 window._doLogout = () => {
+  limparSessao();
   cu = null; sTipo = null; selAlunos = []; atuais = [];
+  // Resetar botão de login
+  const btn = document.querySelector('#loginScreen .bp');
+  if (btn) { btn.textContent = 'Entrar'; btn.disabled = false; }
+  // Limpar campos
+  const pass = document.getElementById('loginPass');
+  if (pass) pass.value = '';
+  const erroEl = document.getElementById('loginErro');
+  if (erroEl) erroEl.style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('mainScreen').style.display = 'none';
 };
 
+// Trocar senha
+window.abrirModalSenha = () => {
+  document.getElementById('senhaAtual').value = '';
+  document.getElementById('senhaNova').value = '';
+  document.getElementById('senhaConf').value = '';
+  document.getElementById('senhaErro').style.display = 'none';
+  document.getElementById('modalSenha').classList.add('show');
+};
+window.fecharModalSenha = () => document.getElementById('modalSenha').classList.remove('show');
+window._trocarSenha = async () => {
+  const atual = document.getElementById('senhaAtual').value;
+  const nova = document.getElementById('senhaNova').value;
+  const conf = document.getElementById('senhaConf').value;
+  const erroEl = document.getElementById('senhaErro');
+  erroEl.style.display = 'none';
+  if (!atual || !nova || !conf) { erroEl.textContent = 'Preencha todos os campos.'; erroEl.style.display = 'block'; return; }
+  if (nova !== conf) { erroEl.textContent = 'As senhas não coincidem.'; erroEl.style.display = 'block'; return; }
+  if (nova.length < 6) { erroEl.textContent = 'A nova senha deve ter pelo menos 6 caracteres.'; erroEl.style.display = 'block'; return; }
+  const resp = await apiFetch('/api/auth/trocar-senha', {
+    method: 'POST', body: JSON.stringify({ senhaAtual: atual, novaSenha: nova }),
+  });
+  const data = await resp.json();
+  if (!resp.ok) { erroEl.textContent = data.erro; erroEl.style.display = 'block'; return; }
+  fecharModalSenha();
+  alert('✅ Senha alterada com sucesso!');
+};
+
 async function _autenticar(usuario) {
   cu = usuario;
-
-  // Solicita permissão de notificação do SO
   pedirPermissaoNotif();
-
-  // Conecta WebSocket
   _iniciarWS();
-
-  // Carrega dados do servidor
-  const r = await fetch('/api/ocorrencias');
-  occ = await r.json();
-
+  // Dados chegam via WebSocket (evento 'init')
   _renderMain();
 }
 
 // ─── WEBSOCKET ────────────────────────────────────────────────────────────────
 function _iniciarWS() {
-  conectar(cu.id);
+  conectar(getToken());
 
   onEvento('status', (s) => {
     const el = document.getElementById('wsStatus');
@@ -195,6 +261,7 @@ function _iniciarWS() {
   });
 
   onEvento('init', (msg) => {
+    // Substitui lista completa — evita duplicatas ao reconectar
     occ = msg.ocorrencias || [];
     chats = msg.chats || {};
     renderDash();
@@ -202,11 +269,12 @@ function _iniciarWS() {
   });
 
   onEvento('nova_ocorrencia', (msg) => {
-    // Adiciona se ainda não existe
-    if (!occ.find(o => o.id === msg.occ.id)) occ.push(msg.occ);
+    if (!cu || !msg.occ) return; // ignora se não estiver logado
+    const idx = occ.findIndex(o => o && o.id === msg.occ.id);
+    if (idx >= 0) occ[idx] = msg.occ;
+    else occ.unshift(msg.occ);
     renderDash();
     renderOcc();
-    // Notifica gestores
     mostrarNotifOcorrencia(msg.occ, cu, (occId) => {
       const o = occ.find(x => x.id === occId);
       if (o) abrirChat(o);
@@ -254,6 +322,7 @@ function _renderMain() {
   document.getElementById('campoGestao').style.display = isGest() ? 'block' : 'none';
   document.getElementById('optUrg').style.display = isB1 ? '' : 'none';
   document.getElementById('tabRel').style.display = PODE_REL.includes(cu.perfil) ? '' : 'none';
+  document.getElementById('tabAlunos').style.display = PODE_REL.includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabGes').style.display = cu.perfil === 'diretor' ? '' : 'none';
 
   const icons = {professor:'👨‍🏫',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};
@@ -352,6 +421,9 @@ function _montarGridTipos() {
   // Aguarda DOM
 }
 function _montarGridTiposReal() {
+  document.getElementById('gridAdm').innerHTML = TB0.map(t =>
+    `<button class="tb2 ab2" onclick="window._selTipo('${t.n}',this,'administrativa')"><span class="tn" style="background:var(--bl)">${t.n}</span><span>${t.l}</span></button>`
+  ).join('');
   document.getElementById('gridUrg').innerHTML = TU.map(t =>
     `<button class="tb2 ub2" onclick="window._selTipo('${t.n}',this,'urgencia')"><span class="tn">${t.n}</span><span>${t.l}</span></button>`
   ).join('');
@@ -360,7 +432,7 @@ function _montarGridTiposReal() {
   ).join('');
 }
 window._selTipo = (num, btn, nivel) => {
-  const todos = [...TU,...TG];
+  const todos = [...TB0,...TU,...TG];
   const tipo = todos.find(t=>t.n===num);
   const label = tipo ? tipo.l : '';
   document.querySelectorAll('.tb2').forEach(b=>b.classList.remove('sel'));
@@ -369,6 +441,17 @@ window._selTipo = (num, btn, nivel) => {
   document.getElementById('tipoLabel').textContent = 'Art. '+num+' — '+label;
   if(!PODE_EDIT.includes(cu.perfil) && nivel==='urgencia') nivel='grave';
   document.getElementById('occGrav').value = nivel==='urgencia'?'urgencia':'grave';
+  if (nivel === 'administrativa') {
+    document.getElementById('protBox').innerHTML = `<div class="pb" style="background:var(--bll);border-color:#90CAF9"><strong style="color:var(--bl)">Orientações — Ocorrência Administrativa/Pedagógica:</strong>
+      <div class="ps"><span class="pn" style="background:var(--bl)">1</span><span>Registre a ocorrência com dados completos do aluno</span></div>
+      <div class="ps"><span class="pn" style="background:var(--bl)">2</span><span>Comunique à coordenação pedagógica se houver reincidência</span></div>
+      <div class="ps"><span class="pn" style="background:var(--bl)">3</span><span>Comunique à família quando necessário</span></div>
+      <div class="ps"><span class="pn" style="background:var(--bl)">4</span><span>Aguarde orientação da equipe gestora pelo chat do sistema</span></div>
+    </div>`;
+    document.getElementById('protBox').style.display='block';
+    document.getElementById('occGrav').value = 'leve';
+    return;
+  }
   const p = PROT[nivel]||PROT.grave;
   const ehProf = cu.perfil==='professor';
   const rowsProf = p.professor.map((s,i)=>`<div class="ps"><span class="pn">${i+1}</span><span>${s}</span></div>`).join('');
@@ -392,9 +475,10 @@ function _setDatas() {
 
 // ─── CARDS ───────────────────────────────────────────────────────────────────
 function cardHTML(o) {
-  const reg = USUARIOS.find(u=>u.id===o.registradoPorId);
+  const regNome = o.registradoPorNome || '—';
+  const regPerfil = o.registradoPorPerfil || '';
   const nomes = o.alunos&&o.alunos.length ? o.alunos.map(a=>a.nome).join(', ') : '—';
-  const pchip = reg?(reg.perfil==='professor'?'background:#E8EAF6;color:#3949AB':reg.perfil==='poc'?'background:var(--orl);color:var(--or)':'background:var(--mgl);color:var(--mg)'):'';
+  const pchip = regPerfil==='professor'?'background:#E8EAF6;color:#3949AB':regPerfil==='poc'?'background:var(--orl);color:var(--or)':'background:var(--mgl);color:var(--mg)';
   const naoLidos = chatNaoLidos[String(o.id)] || 0;
   const badgeChat = naoLidos > 0 ? `<span style="background:var(--re);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-left:4px">${naoLidos}</span>` : '';
   return `<div class="oc ${o.gravidade}">
@@ -402,7 +486,7 @@ function cardHTML(o) {
       <div class="ot">Art. ${o.numero} — ${o.tipo}</div>
       <div class="om">${o.data} às ${o.hora} · ${o.local} · <strong>${o.turma}</strong></div>
       <div class="om">Aluno(s): ${nomes}</div>
-      ${reg?`<div class="om">Por: ${reg.nome} <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;${pchip}">${reg.perfil.toUpperCase()}</span></div>`:''}
+      ${regNome?`<div class="om">Por: ${regNome} <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;${pchip}">${regPerfil.toUpperCase()}</span></div>`:''}
     </div>
     <div class="bs">
       <span class="bg bg-${o.gravidade}">${GL[o.gravidade]}</span>
@@ -412,15 +496,18 @@ function cardHTML(o) {
       <button class="bn" onclick="window._verDet(${o.id})">Ver detalhes</button>
       ${isEdit()&&o.status==='pendente'?`<button class="bn mg" onclick="window._abrirComp(${o.id})">✏ Complementar</button>`:''}
       ${isEdit()?`<button class="bn or" onclick="window._abrirEdit(${o.id})">⬆ Editar</button>`:''}
-      ${isEdit()?`<button class="bn vd" onclick="window._abrirChat(${o.id})">💬 Chat${badgeChat}</button>`:''}
+      <button class="bn vd" onclick="window._abrirChat(${o.id})">💬 Chat${badgeChat}</button>
       ${isImprimir()?`<button class="bn bl" onclick="window._gerarDoc(${o.id})">📄 Gerar Documento</button>`:''}
     </div></div>`;
 }
 
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────
 function renderDash() {
-  const total=occ.length, urg=occ.filter(o=>o.gravidade==='urgencia').length;
-  const pend=occ.filter(o=>o.status==='pendente').length, enc=occ.filter(o=>o.status==='encerrado').length;
+  const ehProf = cu && cu.perfil === 'professor';
+  // Professor só vê suas próprias ocorrências no dashboard
+  const lista = occ.filter(o=>o&&o.gravidade&&(ehProf?(o.registradoPorId==cu.id||o.registradoPorNome===cu.nome):true));
+  const total=lista.length, urg=lista.filter(o=>o.gravidade==='urgencia').length;
+  const pend=lista.filter(o=>o.status==='pendente').length, enc=lista.filter(o=>o.status==='encerrado').length;
   document.getElementById('statsGrid').innerHTML=`
     <div class="sc re"><div class="sn">${urg}</div><div class="sl">Urgência</div></div>
     <div class="sc or"><div class="sn">${pend}</div><div class="sl">Aguard. complemento</div></div>
@@ -430,18 +517,21 @@ function renderDash() {
   if(urg>0) al.push(`<div class="ab re" style="margin-bottom:8px">⚠ ${urg} ocorrência(s) de urgência/emergência.</div>`);
   if(pend>0&&isEdit()) al.push(`<div class="ab or" style="margin-bottom:8px">📋 ${pend} ocorrência(s) aguardando complemento.</div>`);
   document.getElementById('dashAlerts').innerHTML=al.join('');
-  const rec = [...occ].sort((a,b)=>b.id-a.id).slice(0,5);
+  const rec = [...lista].sort((a,b)=>b.id-a.id).slice(0,5);
   document.getElementById('dashList').innerHTML = rec.length
     ? rec.map(cardHTML).join('')
     : '<div class="es">Nenhuma ocorrência registrada ainda.</div>';
 }
 
-function renderOcc() {
+window.renderOcc = function renderOcc() {
   const fN=document.getElementById('fNivel').value;
   const fT=document.getElementById('fTurma').value;
   const fG=document.getElementById('fGrav').value;
   const fS=document.getElementById('fStatus').value;
-  let lista=[...occ].sort((a,b)=>b.id-a.id);
+  // Professor só vê as próprias ocorrências; gestão vê todas
+  const ehProf = cu && cu.perfil === 'professor';
+  let lista=occ.filter(o=>o&&o.gravidade).sort((a,b)=>b.id-a.id);
+  if(ehProf) lista=lista.filter(o=>o.registradoPorId==cu.id||o.registradoPorNome===cu.nome);
   if(fN) lista=lista.filter(o=>TD[o.turma]&&TD[o.turma].nivel===fN);
   if(fT) lista=lista.filter(o=>o.turma===fT);
   if(fG) lista=lista.filter(o=>o.gravidade===fG);
@@ -477,13 +567,10 @@ window._registrarOcorrencia = async () => {
     registradoPorPerfil: cu.perfil,
   };
 
-  const resp = await fetch('/api/ocorrencias', {
-    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload),
-  });
-  const novaOcc = await resp.json();
-  if(!occ.find(o=>o.id===novaOcc.id)) occ.push(novaOcc);
-
-  _limparForm(); renderDash();
+  const resp = await apiFetch('/api/ocorrencias', { method:'POST', body:JSON.stringify(payload) });
+  if (!resp || !resp.ok) { alert('Erro ao registrar. Tente novamente.'); return; }
+  // Não adiciona aqui — o WebSocket (evento nova_ocorrencia) cuida disso para todos
+  _limparForm();
   showTab('ocorrencias', document.querySelectorAll('.nt button')[2]);
   alert('Ocorrência registrada!\n'+(isGest()?'Use "📄 Gerar Documento" para visualizar.':'Aguardando complemento da equipe gestora.'));
 };
@@ -504,8 +591,10 @@ function _limparForm() {
 // ─── VER DETALHES ─────────────────────────────────────────────────────────────
 window._verDet = (id) => {
   const o=occ.find(x=>x.id===id); if(!o) return;
-  const reg=USUARIOS.find(u=>u.id===o.registradoPorId);
-  const comp=o.complementadoPorId?USUARIOS.find(u=>u.id===o.complementadoPorId):null;
+  const regNome2 = o.registradoPorNome || '—';
+  const regPerfil2 = o.registradoPorPerfil || 'professor';
+  const compNome = o.complementadoPorNome || null;
+  const compPerfil = o.complementadoPorPerfil || null;
   const nomes=o.alunos&&o.alunos.length?o.alunos.map(a=>a.nome).join('<br>'):'—';
   document.getElementById('modalTit').textContent='Ocorrência #'+o.id+' — Art. '+o.numero;
   document.getElementById('modalBody').innerHTML=`
@@ -518,13 +607,13 @@ window._verDet = (id) => {
     <div class="ir"><span class="il">Local</span><span>${o.local}</span></div>
     <div class="ir"><span class="il">Turma</span><span>${o.turma}</span></div>
     <div class="ir"><span class="il">Aluno(s)</span><span style="text-align:right;max-width:60%;font-size:12px">${nomes}</span></div>
-    <div class="ir"><span class="il">Registrado por</span><span>${reg?reg.nome:'—'}</span></div>
+    <div class="ir"><span class="il">Registrado por</span><span>${regNome2}</span></div>
     ${o.relato?`<div style="margin-top:10px;background:#f9f9f9;border-radius:8px;padding:10px"><p style="font-size:12px;color:var(--mu);font-weight:500;margin-bottom:4px">Relato</p><p style="font-size:13px">${o.relato}</p></div>`:''}
-    ${o.descricao?`<div style="margin-top:8px;background:var(--mgl);border-radius:8px;padding:10px"><p style="font-size:12px;color:var(--mg);font-weight:500;margin-bottom:4px">Descrição — ${comp?comp.nome:'Coordenação'}</p><p style="font-size:13px">${o.descricao}</p>${o.providencias?`<p style="font-size:12px;color:var(--mu);font-weight:500;margin:6px 0 3px">Providências</p><p style="font-size:13px">${o.providencias}</p>`:''}</div>`:''}
+    ${o.descricao?`<div style="margin-top:8px;background:var(--mgl);border-radius:8px;padding:10px"><p style="font-size:12px;color:var(--mg);font-weight:500;margin-bottom:4px">Descrição — ${compNome||'Coordenação'}</p><p style="font-size:13px">${o.descricao}</p>${o.providencias?`<p style="font-size:12px;color:var(--mu);font-weight:500;margin:6px 0 3px">Providências</p><p style="font-size:13px">${o.providencias}</p>`:''}</div>`:''}
     <div style="display:flex;gap:6px;margin-top:1rem;flex-wrap:wrap">
       ${isEdit()&&o.status==='pendente'?`<button class="bn mg" onclick="closeModal();window._abrirComp(${id})">✏ Complementar</button>`:''}
       ${isEdit()?`<button class="bn or" onclick="closeModal();window._abrirEdit(${id})">⬆ Editar</button>`:''}
-      ${isEdit()?`<button class="bn vd" onclick="closeModal();window._abrirChat(${id})">💬 Chat</button>`:''}
+      <button class="bn vd" onclick="closeModal();window._abrirChat(${id})">💬 Chat</button>
       ${isImprimir()?`<button class="bn bl" onclick="closeModal();window._gerarDoc(${id})">📄 Gerar Documento</button>`:''}
     </div>`;
   document.getElementById('modalOv').classList.add('show');
@@ -559,7 +648,7 @@ window._salvarEdit = async (id) => {
   const tv=document.getElementById('eTipo').value.split('||');
   const todos=[...TU,...TG]; const tipo=todos.find(t=>t.n===tv[0]);
   const body={gravidade:ng,numero:tv[0],tipo:tipo?tipo.l:o.tipo,relato:document.getElementById('eRelato').value,editadoPorId:cu.id};
-  await fetch('/api/ocorrencias/'+id+'/editar',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  await apiFetch('/api/ocorrencias/'+id+'/editar',{method:'PATCH',body:JSON.stringify(body)});
   closeModal();
 };
 
@@ -587,9 +676,10 @@ window._abrirComp = (id) => {
       <div class="fl" style="font-size:11px;margin-bottom:8px">Apuração da Equipe Gestora</div>
       <div class="fg"><label>Descrição detalhada</label><textarea id="cDesc" rows="4">${o.descricao||''}</textarea></div>
       <div class="fg"><label>Providências tomadas</label><textarea id="cProv" rows="3">${o.providencias||''}</textarea></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="fg"><label>B.O. registrado?</label><select id="cBO"><option value="">Selecione...</option><option${o.bo==='Sim'?' selected':''}>Sim</option><option${o.bo==='Não se aplica'?' selected':''}>Não se aplica</option><option${o.bo==='Não'?' selected':''}>Não</option></select></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div class="fg"><label>B.O. registrado?</label><select id="cBO"><option value="">Selecione...</option><option${o.bo==='Sim'?' selected':''}>Sim</option><option${o.bo==='Não'?' selected':''}>Não</option><option${o.bo==='Não se aplica'?' selected':''}>Não se aplica</option></select></div>
         <div class="fg"><label>Família comunicada?</label><select id="cFam"><option value="">Selecione...</option><option${o.familia==='Sim'?' selected':''}>Sim</option><option${o.familia==='Não'?' selected':''}>Não</option><option${o.familia==='Não se aplica'?' selected':''}>Não se aplica</option></select></div>
+        <div class="fg"><label>Conselho Tutelar?</label><select id="cConselhoTutelar"><option value="">Selecione...</option><option${o.conselhoTutelar==='Sim'?' selected':''}>Sim</option><option${o.conselhoTutelar==='Não'?' selected':''}>Não</option><option${o.conselhoTutelar==='Não se aplica'?' selected':''}>Não se aplica</option></select></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
         <button class="bp" style="flex:1;min-width:140px" onclick="window._salvarComp(${id})">Salvar e Encerrar</button>
@@ -605,14 +695,18 @@ window._salvarComp = async (id) => {
   const relatosAlunos=o.alunos&&o.alunos.length
     ? o.alunos.map((_,i)=>{const el=document.getElementById('cRelAl_'+i);return el?el.value:'';})
     : [document.getElementById('cRelAl_0')?.value||''];
+  const _v = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
   const body={
-    relatosAlunos, relatoResponsavel:document.getElementById('cRelResp').value||'',
-    descricao:d, providencias:document.getElementById('cProv').value,
-    bo:document.getElementById('cBO').value||'Não informado',
-    familia:document.getElementById('cFam').value||'Não informado',
-    complementadoPorId:cu.id,
+    relatosAlunos,
+    relatoResponsavel: _v('cRelResp'),
+    descricao: d,
+    providencias: _v('cProv'),
+    bo: _v('cBO') || 'Não informado',
+    familia: _v('cFam') || 'Não informado',
+    conselhoTutelar: _v('cConselhoTutelar') || 'Não informado',
+    complementadoPorId: cu.id,
   };
-  await fetch('/api/ocorrencias/'+id+'/complementar',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  await apiFetch('/api/ocorrencias/'+id+'/complementar',{method:'PATCH',body:JSON.stringify(body)});
   closeModal();
   alert('Encerrada! Use "📄 Gerar Documento" para visualizar e imprimir.');
 };
@@ -655,7 +749,7 @@ window.closeModal = (e) => {
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
 window.showTab = (name, btn) => {
-  ['dashboard','registrar','ocorrencias','relatorio','gestao'].forEach(t => {
+  ['dashboard','registrar','ocorrencias','relatorio','alunos','gestao'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===name ? '' : 'none';
   });
   document.querySelectorAll('.nt button').forEach(b=>b.classList.remove('act'));
@@ -663,6 +757,7 @@ window.showTab = (name, btn) => {
   if(name==='ocorrencias') renderOcc();
   if(name==='gestao') renderGestao();
   if(name==='dashboard') renderDash();
+  if(name==='alunos') { _initAbaAlunos(); window.renderAlunos(); }
 };
 
 function renderGestao() {
@@ -698,8 +793,10 @@ window._gerarRel = () => {
 
 // ─── MONTAR DOCUMENTO ─────────────────────────────────────────────────────────
 function montarDoc(o) {
-  const reg=USUARIOS.find(u=>u.id===o.registradoPorId);
-  const comp=o.complementadoPorId?USUARIOS.find(u=>u.id===o.complementadoPorId):null;
+  const regNome2 = o.registradoPorNome || '—';
+  const regPerfil2 = o.registradoPorPerfil || 'professor';
+  const compNome = o.complementadoPorNome || null;
+  const compPerfil = o.complementadoPorPerfil || null;
   const hoje=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
   const numF='OC-'+new Date().getFullYear()+'-'+String(o.id).padStart(4,'0');
   const GL2={urgencia:'URGÊNCIA / EMERGÊNCIA',grave:'GRAVE',media:'MÉDIA',leve:'LEVE'};
@@ -794,7 +891,7 @@ function montarDoc(o) {
       <tbody>${nomeAlunos}</tbody></table>
     </div>
     <div class="secao"><div class="secao-titulo">3. Relato do Professor / Servidor</div>
-      <div class="campo"><label>Por: ${reg?reg.nome+' ('+PL[reg.perfil]+')':'—'} · ${o.data} às ${o.hora}</label></div>
+      <div class="campo"><label>Por: ${regNome2} (${PL[regPerfil2]||regPerfil2}) · ${o.data} às ${o.hora}</label></div>
       ${o.relato?`<div class="caixa-texto">${o.relato}</div>`:`<div class="caixa-vazia"></div>`}
     </div>
     <div class="secao"><div class="secao-titulo cinza">4. Relato(s) dos Envolvidos / Família</div>
@@ -808,15 +905,15 @@ function montarDoc(o) {
       ${o.relatoResponsavel?`<div class="caixa-texto" style="min-height:38px">${o.relatoResponsavel}</div>`:`<div class="caixa-vazia" style="min-height:38px"></div>`}
     </div>
     <div class="secao"><div class="secao-titulo azul">5. Descrição e Providências — Equipe Gestora</div>
-      <div class="campo"><label>Por: ${comp?comp.nome+' ('+PL[comp.perfil]+')':'—'} · Em: ${o.dataComp||'—'}</label></div>
+      <div class="campo"><label>Por: ${compNome||(o.dataComp?'Equipe Gestora':'—')} ${compNome?'('+( PL[compPerfil]||compPerfil)+')':''} · Em: ${o.dataComp||'—'}</label></div>
       <div class="campo"><label>Descrição detalhada</label></div>
       ${o.descricao?`<div class="caixa-texto" style="min-height:60px">${o.descricao}</div>`:`<div class="caixa-vazia" style="min-height:60px"></div>`}
       <div class="campo" style="margin-top:6px"><label>Providências tomadas</label></div>
       ${o.providencias?`<div class="caixa-texto" style="min-height:40px">${o.providencias}</div>`:`<div class="caixa-vazia" style="min-height:40px"></div>`}
       <div class="campo-grid-3" style="margin-top:6px">
-        <div class="campo"><label>B.O.</label><div class="valor">${o.bo||'☐ Sim  ☐ Não  ☐ N/A'}</div></div>
-        <div class="campo"><label>Família</label><div class="valor">${o.familia||'☐ Sim  ☐ Não'}</div></div>
-        <div class="campo"><label>Conselho Tutelar</label><div class="valor">☐ Sim  ☐ Não  ☐ N/A</div></div>
+        <div class="campo"><label>B.O.</label><div class="valor">${o.bo&&o.bo!=='Não informado'?o.bo:'☐ Sim  ☐ Não  ☐ N/A'}</div></div>
+        <div class="campo"><label>Família</label><div class="valor">${o.familia&&o.familia!=='Não informado'?o.familia:'☐ Sim  ☐ Não  ☐ N/A'}</div></div>
+        <div class="campo"><label>Conselho Tutelar</label><div class="valor">${o.conselhoTutelar||'☐ Sim  ☐ Não  ☐ N/A'}</div></div>
       </div>
     </div>
     <div class="secao"><div class="secao-titulo">6. Providências — Protocolo 179 · CONVIVA SP</div>
@@ -825,8 +922,8 @@ function montarDoc(o) {
     <div class="secao"><div class="secao-titulo">7. Assinaturas</div>
       <div class="assinaturas-grid">
         <div class="assinatura-box"><div class="assinatura-linha"></div>
-          <div class="assinatura-nome">${reg?reg.nome:'Professor(a)'}</div>
-          <div class="assinatura-cargo">${reg?PL[reg.perfil]:'Professor'}</div>
+          <div class="assinatura-nome">${regNome2||'Professor(a)'}</div>
+          <div class="assinatura-cargo">${PL[regPerfil2]||regPerfil2||'Professor'}</div>
           <div class="assinatura-cpf">CPF: ___.___.___-__ · Data: ____/____/________</div></div>
         ${o.alunos&&o.alunos.length?o.alunos.map(a=>`
         <div class="assinatura-box"><div class="assinatura-linha"></div>
@@ -842,8 +939,8 @@ function montarDoc(o) {
           <div class="assinatura-cargo">Nome: ____________________________________________</div>
           <div class="assinatura-cpf">CPF: ___.___.___-__ · Data: ____/____/________</div></div>
         <div class="assinatura-box"><div class="assinatura-linha"></div>
-          <div class="assinatura-nome">${comp?comp.nome:'Coordenador(a) Pedagógico(a)'}</div>
-          <div class="assinatura-cargo">${comp?PL[comp.perfil]:'Coordenação Pedagógica'}</div>
+          <div class="assinatura-nome">${compNome||'Coordenador(a) Pedagógico(a)'}</div>
+          <div class="assinatura-cargo">${compNome?PL[compPerfil]||compPerfil:'Coordenação Pedagógica'}</div>
           <div class="assinatura-cpf">CPF: ___.___.___-__ · Data: ____/____/________</div></div>
         <div class="assinatura-box"><div class="assinatura-linha"></div>
           <div class="assinatura-nome">Diretor(a) / Vice-Diretor(a)</div>
@@ -863,9 +960,244 @@ function montarDoc(o) {
   </div></body></html>`;
 }
 
+// ─── ABA ALUNOS ──────────────────────────────────────────────────────────────
+
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+               'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const LIMITE_ALERTA = 3; // ocorrências no mês para acionar alerta
+
+function _initAbaAlunos() {
+  // Popular select de mês se ainda não foi
+  const sel = document.getElementById('aMes');
+  if (sel.options.length > 1) return;
+  const hoje = new Date();
+  // Últimos 12 meses
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = `${MESES[d.getMonth()]} ${d.getFullYear()}`;
+    if (i === 0) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  // Popular select de turma
+  const st = document.getElementById('aTurma');
+  if (st.options.length > 1) return;
+  _ordTurmas(Object.keys(TD)).forEach(t => {
+    const o = document.createElement('option');
+    o.value = t; o.textContent = t;
+    st.appendChild(o);
+  });
+}
+
+window.renderAlunos = function() {
+  const mes = document.getElementById('aMes')?.value || '';
+  const turmaFiltro = document.getElementById('aTurma')?.value || '';
+  const [ano, mesNum] = mes.split('-').map(Number);
+
+  // Filtrar ocorrências pelo mês/ano selecionado
+  let lista = occ.filter(o => {
+    if (!o || !o.data) return false;
+    // data formato dd/mm/yyyy ou yyyy-mm-dd
+    let d;
+    if (o.data.includes('/')) {
+      const [dd,mm,yyyy] = o.data.split('/');
+      d = new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd));
+    } else {
+      d = new Date(o.data);
+    }
+    return d.getFullYear() === ano && (d.getMonth()+1) === mesNum;
+  });
+
+  if (turmaFiltro) lista = lista.filter(o => o.turma === turmaFiltro);
+
+  // Montar mapa aluno → ocorrências
+  const mapaAluno = {}; // ra → {nome, ra, turma, ocorrencias:[]}
+  lista.forEach(o => {
+    if (!o.alunos || !o.alunos.length) return;
+    o.alunos.forEach(a => {
+      const chave = a.ra || a.nome;
+      if (!mapaAluno[chave]) mapaAluno[chave] = { nome:a.nome, ra:a.ra||'—', turma:o.turma, ocorrencias:[] };
+      mapaAluno[chave].ocorrencias.push(o);
+    });
+  });
+
+  const alunos = Object.values(mapaAluno).sort((a,b) => b.ocorrencias.length - a.ocorrencias.length);
+  const emAlerta = alunos.filter(a => a.ocorrencias.length >= LIMITE_ALERTA);
+
+  // ── STATS ──
+  const totalOcc = lista.length;
+  const totalAlunos = alunos.length;
+  const totalAlerta = emAlerta.length;
+  const encerradas = lista.filter(o => o.status === 'encerrado').length;
+  document.getElementById('aStats').innerHTML = `
+    <div class="sc mg"><div class="sn">${totalOcc}</div><div class="sl">Ocorrências no mês</div></div>
+    <div class="sc or"><div class="sn">${totalAlunos}</div><div class="sl">Alunos envolvidos</div></div>
+    <div class="sc re"><div class="sn">${totalAlerta}</div><div class="sl">Em alerta (${LIMITE_ALERTA}+)</div></div>
+    <div class="sc gr"><div class="sn">${encerradas}</div><div class="sl">Encerradas</div></div>`;
+
+  // ── ALERTAS ──
+  const alertaEl = document.getElementById('aAlerta');
+  if (emAlerta.length) {
+    alertaEl.innerHTML = `
+      <div class="ab re" style="flex-direction:column;align-items:stretch;gap:8px">
+        <strong style="font-size:13px">🚨 ${emAlerta.length} aluno(s) com ${LIMITE_ALERTA}+ ocorrências em ${MESES[mesNum-1]} — Requer intervenção!</strong>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+          ${emAlerta.map(a => `
+            <div onclick="window._verHistoricoAluno('${_esc(a.ra)}','${_esc(a.nome)}')"
+              style="background:#fff;border:1.5px solid var(--re);border-radius:8px;padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:8px">
+              <span style="background:var(--re);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${a.ocorrencias.length}</span>
+              <div><div style="font-size:12px;font-weight:600;color:var(--re)">${a.nome}</div>
+              <div style="font-size:10px;color:var(--mu)">${a.turma} · RA: ${a.ra}</div></div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  } else {
+    alertaEl.innerHTML = `<div class="ab gr" style="margin-bottom:0">✅ Nenhum aluno com ${LIMITE_ALERTA}+ ocorrências em ${MESES[mesNum-1]}.</div>`;
+  }
+
+  // ── GRÁFICO POR TURMA ──
+  const mapaTurma = {};
+  lista.forEach(o => {
+    if (!o.turma) return;
+    if (!mapaTurma[o.turma]) mapaTurma[o.turma] = { total:0, urgencia:0, grave:0, media:0, leve:0, administrativa:0 };
+    mapaTurma[o.turma].total++;
+    mapaTurma[o.turma][o.gravidade] = (mapaTurma[o.turma][o.gravidade]||0)+1;
+  });
+  const turmasOrd = _ordTurmas(Object.keys(mapaTurma));
+  const maxVal = Math.max(...turmasOrd.map(t => mapaTurma[t].total), 1);
+  const cores = {urgencia:'var(--re)',grave:'var(--or)',media:'var(--go)',leve:'var(--gr)',administrativa:'var(--bl)'};
+  document.getElementById('aGrafico').innerHTML = turmasOrd.length
+    ? `<div style="display:flex;flex-direction:column;gap:6px;min-width:300px">
+        ${turmasOrd.map(t => {
+          const d = mapaTurma[t];
+          const pct = Math.round((d.total/maxVal)*100);
+          const segmentos = ['urgencia','grave','media','leve','administrativa']
+            .filter(g => d[g])
+            .map(g => `<div title="${GL[g]}: ${d[g]}" style="width:${Math.round((d[g]/d.total)*pct)}%;background:${cores[g]};height:100%;min-width:2px"></div>`)
+            .join('');
+          return `<div style="display:flex;align-items:center;gap:8px">
+            <div style="width:70px;font-size:11px;text-align:right;color:var(--mu);flex-shrink:0">${t}</div>
+            <div style="flex:1;background:#f0f0f0;border-radius:4px;height:18px;overflow:hidden;display:flex">${segmentos}</div>
+            <div style="width:24px;font-size:12px;font-weight:500;color:var(--mg);text-align:right">${d.total}</div>
+          </div>`;
+        }).join('')}
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:10px">
+          ${Object.entries(cores).map(([g,c])=>`<span style="display:flex;align-items:center;gap:3px"><span style="width:10px;height:10px;background:${c};border-radius:2px;display:inline-block"></span>${GL[g]||g}</span>`).join('')}
+        </div>
+      </div>`
+    : '<div class="es">Nenhuma ocorrência no período.</div>';
+
+  // ── RANKING ──
+  document.getElementById('aRanking').innerHTML = alunos.length
+    ? `<div style="display:flex;flex-direction:column;gap:6px">
+        ${alunos.slice(0,20).map((a,i) => {
+          const alerta = a.ocorrencias.length >= LIMITE_ALERTA;
+          const cor = alerta ? 'var(--re)' : a.ocorrencias.length >= 2 ? 'var(--or)' : 'var(--mu)';
+          const bg = alerta ? 'var(--rel)' : '#fff';
+          return `<div onclick="window._verHistoricoAluno('${_esc(a.ra)}','${_esc(a.nome)}')"
+            style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:${bg};border:0.5px solid ${alerta?'#FFCDD2':'var(--bd)'};border-radius:8px;cursor:pointer;transition:.15s"
+            onmouseover="this.style.borderColor='var(--mg)'" onmouseout="this.style.borderColor='${alerta?'#FFCDD2':'var(--bd)'}'">
+            <span style="font-size:11px;font-weight:700;color:${cor};min-width:20px;text-align:center">${i+1}º</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:500;color:${alerta?'var(--re)':'#222'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.nome}${alerta?' 🚨':''}</div>
+              <div style="font-size:11px;color:var(--mu)">${a.turma} · RA: ${a.ra}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:18px;font-weight:700;color:${cor}">${a.ocorrencias.length}</div>
+              <div style="font-size:10px;color:var(--mu)">ocorr.</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`
+    : '<div class="es">Nenhum aluno envolvido no período.</div>';
+};
+
+window._verHistoricoAluno = function(ra, nome) {
+  // Busca todas as ocorrências do aluno (sem filtro de mês)
+  const hist = occ.filter(o => o && o.alunos && o.alunos.some(a => (a.ra||a.nome) === ra || a.nome === nome))
+    .sort((a,b) => b.id - a.id);
+
+  const total = hist.length;
+  const porGrav = {};
+  hist.forEach(o => { porGrav[o.gravidade] = (porGrav[o.gravidade]||0)+1; });
+
+  document.getElementById('modalAlunoTit').textContent = `👤 ${nome}`;
+  document.getElementById('modalAlunoBody').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem">
+      <span class="bg" style="background:var(--mgl);color:var(--mg);font-size:12px;padding:4px 10px">RA: ${ra}</span>
+      <span class="bg" style="background:var(--mgl);color:var(--mg);font-size:12px;padding:4px 10px">${total} ocorrência(s) no total</span>
+      ${Object.entries(porGrav).map(([g,n])=>`<span class="bg bg-${g}" style="font-size:11px;padding:3px 8px">${GL[g]||g}: ${n}</span>`).join('')}
+    </div>
+    ${hist.length ? hist.map(o => `
+      <div class="oc ${o.gravidade}" style="margin-bottom:6px">
+        <div class="oh">
+          <div>
+            <div class="ot">Art. ${o.numero} — ${o.tipo}</div>
+            <div class="om">${o.data} às ${o.hora} · ${o.turma}</div>
+            <div class="om">Por: ${o.registradoPorNome||'—'}</div>
+          </div>
+          <div class="bs">
+            <span class="bg bg-${o.gravidade}">${GL[o.gravidade]||o.gravidade}</span>
+            <span class="bg bg-${o.status}">${o.status==='encerrado'?'Encerrado':'Pendente'}</span>
+          </div>
+        </div>
+        ${o.relato?`<div style="margin-top:6px;font-size:12px;color:var(--mu);padding:6px 8px;background:#f9f9f9;border-radius:6px">${o.relato}</div>`:''}
+      </div>`).join('')
+    : '<div class="es">Nenhuma ocorrência encontrada.</div>'}`;
+
+  document.getElementById('modalAluno').classList.add('show');
+};
+
+window.fecharModalAluno = () => document.getElementById('modalAluno').classList.remove('show');
+
+function _esc(str) { return String(str||'').replace(/'/g,"\'"); }
+
+// ─── BACKUP ──────────────────────────────────────────────────────────────────
+
+window._baixarBackup = async () => {
+  const resp = await apiFetch('/api/backup/json');
+  if (!resp || !resp.ok) { alert('Erro ao gerar backup.'); return; }
+  const data = await resp.json();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  _dispararDownload(blob, `ocorrencias_backup_${_dataHoje()}.json`);
+  document.getElementById('backupMsg').textContent = `✅ Backup gerado com ${data.ocorrencias.length} ocorrência(s).`;
+  document.getElementById('backupMsg').style.display = 'block';
+};
+
+window._baixarBackupCSV = async () => {
+  const resp = await apiFetch('/api/backup/csv');
+  if (!resp || !resp.ok) { alert('Erro ao gerar backup CSV.'); return; }
+  const texto = await resp.text();
+  const blob = new Blob(['﻿' + texto], { type: 'text/csv;charset=utf-8' });
+  _dispararDownload(blob, `ocorrencias_backup_${_dataHoje()}.csv`);
+  document.getElementById('backupMsg').textContent = '✅ Backup CSV gerado com sucesso.';
+  document.getElementById('backupMsg').style.display = 'block';
+};
+
+function _dispararDownload(blob, nomeArquivo) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nomeArquivo;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function _dataHoje() {
+  return new Date().toISOString().slice(0,10).replace(/-/g,'');
+}
+
 // ─── BOOTSTRAP ────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   await init();
   _montarTurmasSelectReal();
   _montarGridTiposReal();
+
+  // Auto-login se tiver sessão salva
+  if (temSessao()) {
+    const usuario = getUsuario();
+    if (usuario) await _autenticar(usuario);
+  }
 });
