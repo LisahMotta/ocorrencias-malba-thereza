@@ -1,0 +1,4163 @@
+{
+  "1ª Série A": {
+    "nivel": "Ensino Médio",
+    "alunos": [
+      {
+        "nome": "ALLAN GIMENES IGNÁCIO",
+        "ra": "000113444149"
+      },
+      {
+        "nome": "ANA BEATRIZ PEREIRA DA SILVA",
+        "ra": "000113452378"
+      },
+      {
+        "nome": "ANA CAROLINE CARVALHO BARBARO",
+        "ra": "000113109353"
+      },
+      {
+        "nome": "ANA LUIZA DO VALLE LIMA",
+        "ra": "000113009326"
+      },
+      {
+        "nome": "ANA VITÓRIA BISPO DE JESUS DA SILVA",
+        "ra": "000122303971"
+      },
+      {
+        "nome": "ANNA GABRIELLY CRUZ DA SILVA",
+        "ra": "000113447966"
+      },
+      {
+        "nome": "BEATRIZ EVELIN DE SOUZA DOS SANTOS",
+        "ra": "000114748386"
+      },
+      {
+        "nome": "BEATRIZ FELIX DOS SANTOS",
+        "ra": "000113445961"
+      },
+      {
+        "nome": "BEATRIZ FERREIRA DUARTE",
+        "ra": "000112465085"
+      },
+      {
+        "nome": "CAUA WESLLEY PEREIRA COSTA DE SA",
+        "ra": "000113044603"
+      },
+      {
+        "nome": "CAUÊ DE LIMA FERNANDES DE SOUSA",
+        "ra": "000114390176"
+      },
+      {
+        "nome": "EDUARDA STELLA MUSCARIONE",
+        "ra": "000113393581"
+      },
+      {
+        "nome": "ENZO GABRIEL MAIA DE OLIVEIRA",
+        "ra": "000113892659"
+      },
+      {
+        "nome": "ESTER MARIA MARQUES RAMOS",
+        "ra": "000112777899"
+      },
+      {
+        "nome": "GABRIEL GOULART DA SILVA",
+        "ra": "000113442178"
+      },
+      {
+        "nome": "GABRIEL HENRIQUE DOMINGOS DOS SANTOS",
+        "ra": "000113428873"
+      },
+      {
+        "nome": "GRAZIELE DA SILVA ORTIZ",
+        "ra": "000113182570"
+      },
+      {
+        "nome": "GUILHERME CAIQUE CARDOSO NOGUEIRA",
+        "ra": "000111438737"
+      },
+      {
+        "nome": "GUSTAVO FELIPE MACIEL MOREIRA",
+        "ra": "000113461015"
+      },
+      {
+        "nome": "IARA GABRIELLE DE SOUZA AUGUSTO",
+        "ra": "000112459015"
+      },
+      {
+        "nome": "JOÃO PAULO DE OLIVEIRA SOUSA",
+        "ra": "000113450189"
+      },
+      {
+        "nome": "LAURA DE FRANÇA TOLEDO",
+        "ra": "000114594440"
+      },
+      {
+        "nome": "LEANDRO LUCIO DE LIMA FILHO",
+        "ra": "000113374450"
+      },
+      {
+        "nome": "LORENA PELLATIERO ROSENDO CORREA",
+        "ra": "000111731405"
+      },
+      {
+        "nome": "LUARA VITÓRIA DOS SANTOS VALENTIM PINHEIRO",
+        "ra": "000112188002"
+      },
+      {
+        "nome": "LUIS FELIPE DA COSTA SILVA",
+        "ra": "000113116506"
+      },
+      {
+        "nome": "LUIZ EDUARDO TRONI RODRIGUES",
+        "ra": "000112454362"
+      },
+      {
+        "nome": "MARIA LAURA CONSTANTINO MARIANO",
+        "ra": "000113435878"
+      },
+      {
+        "nome": "MATHEUS MORAES BATISTA SILVA",
+        "ra": "000113236391"
+      },
+      {
+        "nome": "MELISSA MENEZES DOS SANTOS",
+        "ra": "000112114835"
+      },
+      {
+        "nome": "MIGUEL HENRIQUE DE GÓES",
+        "ra": "000111441921"
+      },
+      {
+        "nome": "MIGUEL HENRIQUE PAIVA RODRIGUES",
+        "ra": "000113461511"
+      },
+      {
+        "nome": "MILENA VASCONCELLOS GARCEZ",
+        "ra": "000113448343"
+      },
+      {
+        "nome": "NADIR LEMOS RIBEIRO CHAMARELLI DE ALMEIDA",
+        "ra": "000112388002"
+      },
+      {
+        "nome": "PAULO GABRIEL MARTINS SILVÉRIO",
+        "ra": "000113160690"
+      },
+      {
+        "nome": "SAMUEL DE OLIVEIRA CAMPOS",
+        "ra": "000113441424"
+      },
+      {
+        "nome": "SELENA DE FRANCA OLIVEIRA DA SILVA",
+        "ra": "000115093443"
+      },
+      {
+        "nome": "SOPHIA FERREIRA DE OLIVEIRA",
+        "ra": "000121401528"
+      },
+      {
+        "nome": "THIAGO HENRIQUE PACCI GUSMAO",
+        "ra": "000112186578"
+      },
+      {
+        "nome": "VINICIUS GOMES DOS SANTOS",
+        "ra": "000115512185"
+      },
+      {
+        "nome": "VINICIUS RAFAEL DE SOUSA LEMOS",
+        "ra": "000113468215"
+      },
+      {
+        "nome": "YAN EMANUEL OLIVEIRA SANTOS",
+        "ra": "000114382671"
+      },
+      {
+        "nome": "YASMIN COSTA DE SOUSA PESSOA",
+        "ra": "000113448393"
+      }
+    ]
+  },
+  "1ª Série B": {
+    "nivel": "Ensino Médio",
+    "alunos": [
+      {
+        "nome": "ALEXANDRE DA SILVA BARRETO PIRES",
+        "ra": "000113468180"
+      },
+      {
+        "nome": "ALICY SANCHES MONTEIRO",
+        "ra": "000113184541"
+      },
+      {
+        "nome": "ALINE JUSTOLIN DA SILVA",
+        "ra": "000113110981"
+      },
+      {
+        "nome": "ANDRÉ FERNANDES RIBEIRO GONÇALVES",
+        "ra": "000113167158"
+      },
+      {
+        "nome": "ANDRÉ MIGUEL FARIA BEZERRA",
+        "ra": "000113470442"
+      },
+      {
+        "nome": "ANNA LAURA PEREIRA DE CARVALHO SILVA",
+        "ra": "000111330262"
+      },
+      {
+        "nome": "ARTHUR DE CASTRO LIMA",
+        "ra": "000113112849"
+      },
+      {
+        "nome": "BERNARDO FABRICIO HENRIQUE DE OLIVEIRA",
+        "ra": "000113439333"
+      },
+      {
+        "nome": "BIANCA QUEIROZ DE SOUZA",
+        "ra": "000113088986"
+      },
+      {
+        "nome": "BIANCA RIBEIRO CAMPOS",
+        "ra": "000113460801"
+      },
+      {
+        "nome": "BRENO MONTEIRO DA COSTA",
+        "ra": "000113464091"
+      },
+      {
+        "nome": "BRUNNO ANTHONIO DE SOUZA AQUINO",
+        "ra": "000111677481"
+      },
+      {
+        "nome": "CAIO ALMEIDA RODRIGUES DE SA",
+        "ra": "000116163006"
+      },
+      {
+        "nome": "CAIO DOS SANTOS BRAZ",
+        "ra": "000110936927"
+      },
+      {
+        "nome": "DAVI ALVES DA COSTA",
+        "ra": "000110821724"
+      },
+      {
+        "nome": "EDUARDO RIBEIRO BARBOSA",
+        "ra": "000113458996"
+      },
+      {
+        "nome": "EMILLY HANANDA APARECIDA DOS ANJOS",
+        "ra": "000113107804"
+      },
+      {
+        "nome": "ENZO GABRIEL DE MIRANDA REIS",
+        "ra": "000113701043"
+      },
+      {
+        "nome": "GABRIEL VITOR DE DEUS RIBEIRO SANTIAGO",
+        "ra": "000111441302"
+      },
+      {
+        "nome": "JOÃO VICTOR ALMEIDA DE SOUSA",
+        "ra": "000113444097"
+      },
+      {
+        "nome": "LARA BEATRIZ SILVA",
+        "ra": "000113745692"
+      },
+      {
+        "nome": "LAURA ALVES DE OLIVEIRA CESAR",
+        "ra": "000111055993"
+      },
+      {
+        "nome": "LUCA DELLAMONICA LEMES",
+        "ra": "000113203500"
+      },
+      {
+        "nome": "LUCAS GABRIEL SILVA CRISPIM DIAS",
+        "ra": "000112620425"
+      },
+      {
+        "nome": "LUCAS GONZALES LUPETTE",
+        "ra": "000113026078"
+      },
+      {
+        "nome": "LÍNDICE ESTEFANY RODRIGUES DE OLIVEIRA",
+        "ra": "000110731023"
+      },
+      {
+        "nome": "MANUELA VICTÓRIA RODRIGUES VIEIRA SILVA",
+        "ra": "000113422142"
+      },
+      {
+        "nome": "MARIA CLARA BARBOSA DOS SANTOS",
+        "ra": "000114180035"
+      },
+      {
+        "nome": "MARIA CLARA HAYASHI SIMÕES",
+        "ra": "000113461455"
+      },
+      {
+        "nome": "MARIA CLARA MAGALHAES MESSIAS",
+        "ra": "000112152734"
+      },
+      {
+        "nome": "MARIA EDUARDA SANTOS DE OLIVEIRA",
+        "ra": "000110806510"
+      },
+      {
+        "nome": "MARIA FERNANDA GALVÃO PONTES RODRIGUES",
+        "ra": "000111432865"
+      },
+      {
+        "nome": "MARIANA SALDO DOS SANTOS",
+        "ra": "000113072312"
+      },
+      {
+        "nome": "MATEUS GABRIEL RANGEL DE GODOI",
+        "ra": "000113751067"
+      },
+      {
+        "nome": "MIGUEL DA SILVA VELOSO",
+        "ra": "000113184691"
+      },
+      {
+        "nome": "PAULO GABRIEL RODRIGUES RANGEL DO NASCIMENTO",
+        "ra": "000113111985"
+      },
+      {
+        "nome": "PEDRO HENRIQUE DA SILVA OLIVEIRA DINIZ",
+        "ra": "000111198050"
+      },
+      {
+        "nome": "PEDRO RUDI GOMES",
+        "ra": "000113417071"
+      },
+      {
+        "nome": "RAFAEL ALLAN VIANA",
+        "ra": "000113148037"
+      },
+      {
+        "nome": "SOPHIA HELENA MONTEIRO LOPES",
+        "ra": "000113450647"
+      },
+      {
+        "nome": "VITORIA IZIDORO SIQUEIRA",
+        "ra": "000113129960"
+      },
+      {
+        "nome": "YASMIN RODRIGUES DE SOUSA LEITE",
+        "ra": "000113459999"
+      }
+    ]
+  },
+  "1ª Série C": {
+    "nivel": "Ensino Médio",
+    "alunos": [
+      {
+        "nome": "ANA BEATRIZ ROBERTA DA SILVA",
+        "ra": "000112776786"
+      },
+      {
+        "nome": "ANA LUÍSA DOS SANTOS SIGISMUNDO",
+        "ra": "000113240460"
+      },
+      {
+        "nome": "ANA LÍVIA TOLEDO GONÇALVES",
+        "ra": "000111443367"
+      },
+      {
+        "nome": "BEATRIZ RENNO ARANTES RODRIGUES",
+        "ra": "000112875218"
+      },
+      {
+        "nome": "BRAYAN KAUÃ DOS SANTOS MORAIS TELES",
+        "ra": "000115842380"
+      },
+      {
+        "nome": "BRENNO MARIANO DE SOUSA FERREIRA",
+        "ra": "000114363526"
+      },
+      {
+        "nome": "DAVI BERTOLDO DE LIMA",
+        "ra": "000113119978"
+      },
+      {
+        "nome": "DAVI SOUZA THEODORO SILVA",
+        "ra": "000112260912"
+      },
+      {
+        "nome": "DIEGO MATHEUS DA SILVA FONSECA",
+        "ra": "000114473884"
+      },
+      {
+        "nome": "ESTHER VITORIA DA SILVA CARVALHO",
+        "ra": "000111506796"
+      },
+      {
+        "nome": "FABIANO PEREIRA DA SILVA",
+        "ra": "000114119185"
+      },
+      {
+        "nome": "FELIPE EMANUEL PEIXINHO CARDOSO",
+        "ra": "000120717704"
+      },
+      {
+        "nome": "GABRIEL AUGUSTO FERREIRA DE LIMA",
+        "ra": "000112838848"
+      },
+      {
+        "nome": "GUILHERME GOMES SANTOS",
+        "ra": "000113700683"
+      },
+      {
+        "nome": "HELOIZA CLEMENTELI VIEIRA RIBEIRO",
+        "ra": "000113082779"
+      },
+      {
+        "nome": "ISABELLA BEATRIZ AUGUSTO DOS SANTOS",
+        "ra": "000114160363"
+      },
+      {
+        "nome": "ISABELLA CAVALCANTE NARDY LOPES",
+        "ra": "000113507958"
+      },
+      {
+        "nome": "JENNIFER HIRAI LIMA",
+        "ra": "000114390349"
+      },
+      {
+        "nome": "JOAO PEDRO GODOI E PAIVA",
+        "ra": "000113072361"
+      },
+      {
+        "nome": "JOÁS DOS SANTOS",
+        "ra": "000113688951"
+      },
+      {
+        "nome": "JOÃO VINICIUS NEVES MOTTA",
+        "ra": "000113458951"
+      },
+      {
+        "nome": "KATHERINA WASILEWSKI KOTESKI",
+        "ra": "000125651065"
+      },
+      {
+        "nome": "KAUAN LEANDRO DO NASCIMENTO SOUSA",
+        "ra": "000113089352"
+      },
+      {
+        "nome": "LEONARDO TERENTIN VIEIRA DE SOUZA",
+        "ra": "000112459215"
+      },
+      {
+        "nome": "MARCO ANTÔNIO SOUZA DO NASCIMENTO",
+        "ra": "000112455246"
+      },
+      {
+        "nome": "MIGUEL MIACI SUDRÉ",
+        "ra": "000112459517"
+      },
+      {
+        "nome": "MYGUEL FERRAZ MARTINS",
+        "ra": "000111130977"
+      },
+      {
+        "nome": "NICOLY BEATRIZ GOUVEIA DOS SANTOS",
+        "ra": "000125675915"
+      },
+      {
+        "nome": "PAULO VINÍCIUS DA SILVA CARVALHO",
+        "ra": "000112968533"
+      },
+      {
+        "nome": "PEDRO LUAN DE FREITAS AMBROSIO MARTINS",
+        "ra": "000114370068"
+      },
+      {
+        "nome": "RAINANY LUARA SILVA CAMACHO",
+        "ra": "000112999906"
+      },
+      {
+        "nome": "RAMON NASCIMENTO DIAS DE OLIVEIRA",
+        "ra": "000113091891"
+      },
+      {
+        "nome": "SABRINNA FERMINO DOS SANTOS",
+        "ra": "000113424152"
+      },
+      {
+        "nome": "SAMILY ANDRADE DO AMARAL",
+        "ra": "000113110432"
+      },
+      {
+        "nome": "SOPHIA PIMENTEL DA COSTA SILVA",
+        "ra": "000121232803"
+      },
+      {
+        "nome": "THALITA GUTERRES PEREIRA",
+        "ra": "000112833335"
+      },
+      {
+        "nome": "THIAGO DE OLIVEIRA GALÉRA",
+        "ra": "000113459986"
+      },
+      {
+        "nome": "THIAGO DE SOUSA BARBOSA",
+        "ra": "000113413131"
+      },
+      {
+        "nome": "TIAGO HENRIQUE MONTEIRO DE OLIVEIRA",
+        "ra": "000113110579"
+      },
+      {
+        "nome": "VICTOR LUCIANO FERREIRA GONÇALVES",
+        "ra": "000115208227"
+      },
+      {
+        "nome": "WESLEY MARTINS JUNIOR",
+        "ra": "000115246442"
+      }
+    ]
+  },
+  "2ª Série A": {
+    "nivel": "Ensino Médio",
+    "alunos": [
+      {
+        "nome": "ALEKSANDRO ALMEIDA DE OLIVEIRA",
+        "ra": "000124983558"
+      },
+      {
+        "nome": "ANA BEATRIZ HASHIZUME",
+        "ra": "000112460134"
+      },
+      {
+        "nome": "ANA CLARA MELO DOS SANTOS",
+        "ra": "000113028466"
+      },
+      {
+        "nome": "ANA LAURA RODRIGUES DA SILVA",
+        "ra": "000115248984"
+      },
+      {
+        "nome": "BEATRIZ ALVES MARQUÊS",
+        "ra": "000111124041"
+      },
+      {
+        "nome": "BRENDA KETWELLEN HONORATO DE OLIVEIRA",
+        "ra": "000110894325"
+      },
+      {
+        "nome": "BRUNO AUGUSTO LEMES",
+        "ra": "000112909210"
+      },
+      {
+        "nome": "CAIO MACHADO VARLEZ CECCHINI",
+        "ra": "000109813119"
+      },
+      {
+        "nome": "CALEB SERRÃO MATEUS",
+        "ra": "000115432420"
+      },
+      {
+        "nome": "CAUÃ FIGUEREDO MORAES",
+        "ra": "000113248286"
+      },
+      {
+        "nome": "ENZO GABRIEL MENDES NOGUEIRA",
+        "ra": "000113369766"
+      },
+      {
+        "nome": "GABRIEL DE JESUS FERREIRA KURAMOTO",
+        "ra": "000112322183"
+      },
+      {
+        "nome": "GABRIEL FERNANDO DOS SANTOS",
+        "ra": "000112458967"
+      },
+      {
+        "nome": "GABRIEL RICARDO DA SILVA",
+        "ra": "000111457869"
+      },
+      {
+        "nome": "GUILHERME MARTINS DA SILVA RAMOS",
+        "ra": "000112447432"
+      },
+      {
+        "nome": "GUSTAVO MEIRENSE AMARAL",
+        "ra": "000112443252"
+      },
+      {
+        "nome": "GUSTAVO VITOR FERREIRA LOPES",
+        "ra": "000110556979"
+      },
+      {
+        "nome": "HADASSA HELOISA AZEVEDO ALVES",
+        "ra": "000112458990"
+      },
+      {
+        "nome": "JONATHAN WESLEY RODRIGUES DOMINGOS",
+        "ra": "000112447747"
+      },
+      {
+        "nome": "JOÃO ARAUJO ROSA",
+        "ra": "000112463610"
+      },
+      {
+        "nome": "JOÃO GABRIEL TAVARES ALEXANDRE",
+        "ra": "000112500391"
+      },
+      {
+        "nome": "JOÃO SAMOEL MONTOIA JUSTOLIN",
+        "ra": "000113065376"
+      },
+      {
+        "nome": "KAUANY RODRIGUES CASTRO DOS SANTOS",
+        "ra": "000113683187"
+      },
+      {
+        "nome": "LARA OLIVEIRA DA SILVA",
+        "ra": "000112592435"
+      },
+      {
+        "nome": "LARISSA MADALENA SILVA",
+        "ra": "000112460449"
+      },
+      {
+        "nome": "LEONAN SANTOS PAULINO",
+        "ra": "000112459829"
+      },
+      {
+        "nome": "LORRAYNE GABRIELLY CARDOSO DE LIMA",
+        "ra": "000113800337"
+      },
+      {
+        "nome": "LUAN BULHOSA DA ROCHA SANTOS",
+        "ra": "000116724811"
+      },
+      {
+        "nome": "LUIZ FERNANDO DE SANTANA RODRIGUES",
+        "ra": "000111173362"
+      },
+      {
+        "nome": "LUIZ GUSTAVO GONSALES DE CARVALHO",
+        "ra": "000110061451"
+      },
+      {
+        "nome": "MARIA CLARA FERREIRA MARTINS",
+        "ra": "000110826754"
+      },
+      {
+        "nome": "MARIA EDUARDA DE LIMA",
+        "ra": "000112464132"
+      },
+      {
+        "nome": "MARIA ELISA CÉSAR LEITE STEGEMANN",
+        "ra": "000113262668"
+      },
+      {
+        "nome": "MARIA LUÍZA FERREIRA DE MORAES",
+        "ra": "000112462706"
+      },
+      {
+        "nome": "MICAELLA TAVARES SANTOS",
+        "ra": "000113038877"
+      },
+      {
+        "nome": "MIGUEL FERNANDES COSTA",
+        "ra": "000112458432"
+      },
+      {
+        "nome": "MIGUEL GUSMÃO NASCIMENTO",
+        "ra": "000112452071"
+      },
+      {
+        "nome": "NATÃ XAVIER DE SOUZA",
+        "ra": "000112445593"
+      },
+      {
+        "nome": "PAULO HENRIQUE LOPES PROTZ",
+        "ra": "000111436440"
+      },
+      {
+        "nome": "PAULO RICARDO GONSALES DE CARVALHO",
+        "ra": "000110061432"
+      },
+      {
+        "nome": "RAFAELLA RAMOS MOTA",
+        "ra": "000112115577"
+      },
+      {
+        "nome": "SAMUEL ALVARENGA DOS SANTOS CARVALHO",
+        "ra": "000112067234"
+      },
+      {
+        "nome": "VICTHOR BRUNO PEREIRA",
+        "ra": "000114190247"
+      },
+      {
+        "nome": "YAHSMIN DA SILVA SILVERIO",
+        "ra": "000112052305"
+      },
+      {
+        "nome": "YGOR RAFAEL FERNANDES DE LIMA",
+        "ra": "000112113587"
+      }
+    ]
+  },
+  "2ª Série B": {
+    "nivel": "Ensino Médio",
+    "alunos": [
+      {
+        "nome": "ANA BEATRIZ DA SILVA SOUZA",
+        "ra": "000113117801"
+      },
+      {
+        "nome": "ANA CLARA BARBOSA DE LIMA",
+        "ra": "000111432164"
+      },
+      {
+        "nome": "ANA FLAVIA OLIVEIRA DE SOUZA LEAL",
+        "ra": "000112462011"
+      },
+      {
+        "nome": "ANNY VITÓRIA CREVELIN DE SOUZA",
+        "ra": "000111435625"
+      },
+      {
+        "nome": "BRENDA GABRIELLE PEREIRA BARBOSA",
+        "ra": "000112450066"
+      },
+      {
+        "nome": "BRENO LUCAS DE OLIVEIRA SANTANA",
+        "ra": "000112454788"
+      },
+      {
+        "nome": "CAIO EDUARDO ALMEIDA DA SILVA",
+        "ra": "000110873711"
+      },
+      {
+        "nome": "CAIO LUCAS NOLASCO DA SILVA",
+        "ra": "000112738117"
+      },
+      {
+        "nome": "CARLOS HENRIQUE CRESCÊNCIO LEONEL",
+        "ra": "000112428902"
+      },
+      {
+        "nome": "CAUÃ GABRIEL MARQUES DA SILVA E SILVA",
+        "ra": "000111433468"
+      },
+      {
+        "nome": "DANIEL LUIS RODRIGUES DE CASTRO",
+        "ra": "000110819683"
+      },
+      {
+        "nome": "DAVI RIBEIRO GUSMÃO",
+        "ra": "000113694720"
+      },
+      {
+        "nome": "ENRIQUE REIS MONTEIRO GOULART",
+        "ra": "000112954172"
+      },
+      {
+        "nome": "FLADIMIR RICARDO AMARAL JUNIOR",
+        "ra": "000112884280"
+      },
+      {
+        "nome": "HENZO ALVES DE ABREU",
+        "ra": "000112606172"
+      },
+      {
+        "nome": "ISAAC RODRIGUES ALVES",
+        "ra": "000112497074"
+      },
+      {
+        "nome": "ISMAEL VITOR SOUSA PASCHOAL",
+        "ra": "000114889886"
+      },
+      {
+        "nome": "JOÃO LUCAS SANTANA BUEMERAD",
+        "ra": "000120196904"
+      },
+      {
+        "nome": "JOÃO VICTOR VAZ BERTOLI",
+        "ra": "000111252266"
+      },
+      {
+        "nome": "KAUÃ WALLACE VILLA",
+        "ra": "000113421371"
+      },
+      {
+        "nome": "LORRANY CRISTINA RAMOS MARCIANO",
+        "ra": "000112443600"
+      },
+      {
+        "nome": "LUCAS SEIXAS DOS SANTOS",
+        "ra": "000113766368"
+      },
+      {
+        "nome": "LUIZ FELIPE DA SILVA MENDES",
+        "ra": "000111928576"
+      },
+      {
+        "nome": "LÍVIA ANDRADE DE PAIVA",
+        "ra": "000112463769"
+      },
+      {
+        "nome": "LÍVIA DOS SANTOS DELLÚ",
+        "ra": "000112200316"
+      },
+      {
+        "nome": "MARCIO IVAN WAGNER FILHO",
+        "ra": "000112465310"
+      },
+      {
+        "nome": "MARCOS VINÍCIUS GOMES ARAGÃO",
+        "ra": "000111168794"
+      },
+      {
+        "nome": "MARIA FERNANDA SANTOS GRAMACHO",
+        "ra": "000115684133"
+      },
+      {
+        "nome": "MARLON VINICIUS WATANABE",
+        "ra": "000109596166"
+      },
+      {
+        "nome": "MATHEUS HENRIQ BARBOSA DOS SANTOS",
+        "ra": "000112025669"
+      },
+      {
+        "nome": "NATALY VITÓRIA DE SOUZA RIBEIRO",
+        "ra": "000123391003"
+      },
+      {
+        "nome": "NICOLLY FONSECA DO NASCIMENTO MAGALHÃES",
+        "ra": "000112460489"
+      },
+      {
+        "nome": "PEDRO HENRIQUE CARTAXO SEIXAS",
+        "ra": "000112451129"
+      },
+      {
+        "nome": "PIETRO VITALINO DA SILVA",
+        "ra": "000113691325"
+      },
+      {
+        "nome": "PYETTRO MENDES SANTOS",
+        "ra": "000111900123"
+      },
+      {
+        "nome": "VINICIUS DE PAULA",
+        "ra": "000112463219"
+      },
+      {
+        "nome": "VITOR GABRIEL RAMOS ASSIS DOS SANTOS",
+        "ra": "000112456334"
+      },
+      {
+        "nome": "YASMIM GABRIELLY DA SILVA SANTOS",
+        "ra": "000113424193"
+      },
+      {
+        "nome": "ÉRICA RUBIO DA SILVA",
+        "ra": "000113271840"
+      }
+    ]
+  },
+  "2ª Série C": {
+    "nivel": "Ensino Médio",
+    "alunos": [
+      {
+        "nome": "ALESSANDRA OLIVEIRA DE DEUS",
+        "ra": "000112458654"
+      },
+      {
+        "nome": "ALICIA GABRIELA DOS SANTOS FERNANDES",
+        "ra": "000110005334"
+      },
+      {
+        "nome": "ANA LUIZA DA SILVA RIBEIRO",
+        "ra": "000112447907"
+      },
+      {
+        "nome": "ANA LUÍZA RIBEIRO PAULINO CALADO",
+        "ra": "000111988555"
+      },
+      {
+        "nome": "ARTHUR RIBEIRO ALMEIDA",
+        "ra": "000110112896"
+      },
+      {
+        "nome": "AUGUSTO RAVELL MONTEIRO",
+        "ra": "000110181360"
+      },
+      {
+        "nome": "BEATRIZ MACIEL GUIMARAES",
+        "ra": "000110174610"
+      },
+      {
+        "nome": "CAIO NYCOLAS DE JESUS FEITOSA",
+        "ra": "000113461217"
+      },
+      {
+        "nome": "CAROLINA SOUZA KIZERLLA",
+        "ra": "000112462089"
+      },
+      {
+        "nome": "DANIEL LUCAS TROMBINI DE LIMA",
+        "ra": "000111194208"
+      },
+      {
+        "nome": "EMILY DAS CHAGAS PRADO",
+        "ra": "000112443500"
+      },
+      {
+        "nome": "FRANCISCO ARCHANGELO GOUVEA MAIA",
+        "ra": "000113044577"
+      },
+      {
+        "nome": "GABRIEL SILVA SIQUEIRA",
+        "ra": "000113445628"
+      },
+      {
+        "nome": "GIOVANNA SILVA CALSOLARI FRANCO",
+        "ra": "000110841342"
+      },
+      {
+        "nome": "HÉRICK RIAN SOARES FERREIRA",
+        "ra": "000122078723"
+      },
+      {
+        "nome": "IGOR DANTAS DOS SANTOS",
+        "ra": "000112443959"
+      },
+      {
+        "nome": "INGRID RIBEIRO MARCELINO",
+        "ra": "000109630048"
+      },
+      {
+        "nome": "JOSÉ EUSTAQUIO PAULINO FILHO",
+        "ra": "000111919906"
+      },
+      {
+        "nome": "KAYQUE SILVA DE ARAUJO",
+        "ra": "000112461097"
+      },
+      {
+        "nome": "LARISSA DA SILVA CARQUEIJO",
+        "ra": "000111170916"
+      },
+      {
+        "nome": "LUCAS COSTA CAMILO SEZARETTO",
+        "ra": "000113087973"
+      },
+      {
+        "nome": "LUCAS EDUARDO DE SOUZA LEÃO",
+        "ra": "000112443731"
+      },
+      {
+        "nome": "LUCAS GABRIEL SIMÃO AZEVEDO",
+        "ra": "000112462848"
+      },
+      {
+        "nome": "LÍVIA OLIVEIRA CAVALCANTE",
+        "ra": "000112442405"
+      },
+      {
+        "nome": "MARIA EDUARDA DOS SANTOS GONÇALVES",
+        "ra": "000124783941"
+      },
+      {
+        "nome": "MARIA VITÓRIA CORREIA DE ARAUJO",
+        "ra": "000112203433"
+      },
+      {
+        "nome": "NICOLAS BUENO DE SOUZA ADELINO",
+        "ra": "000112426258"
+      },
+      {
+        "nome": "PEDRO CAIO MORAES SUCENA",
+        "ra": "000112417878"
+      },
+      {
+        "nome": "PEDRO HENRIQUE VOGEL GOMES",
+        "ra": "000109820100"
+      },
+      {
+        "nome": "PIETRO SOUZA SILVA",
+        "ra": "000113923087"
+      },
+      {
+        "nome": "RAVY GARCIA AZEVEDO SILVA",
+        "ra": "000113110070"
+      },
+      {
+        "nome": "VINICIUS RUAN FERREIRA DE OLIVEIRA",
+        "ra": "000111187225"
+      },
+      {
+        "nome": "VITOR MATEUS BEZERRA DE ANDRADE",
+        "ra": "000112458382"
+      },
+      {
+        "nome": "VITÓRIA BEATRIZ DE SOUZA SILVESTRE",
+        "ra": "000125815306"
+      },
+      {
+        "nome": "YAN DE CARVALHO DA SILVA",
+        "ra": "000112459586"
+      },
+      {
+        "nome": "YASMIN FERREIRA FARIA ALMEIDA",
+        "ra": "000112445642"
+      }
+    ]
+  },
+  "2ª Série D": {
+    "nivel": "Ensino Médio",
+    "alunos": [
+      {
+        "nome": "ANA CLARA NERI DA SILVA",
+        "ra": "000112810317"
+      },
+      {
+        "nome": "ANA GABRIELLE RODRIGUES PAIVA",
+        "ra": "000113076065"
+      },
+      {
+        "nome": "ANA JULIA DE SOUZA SANTOS",
+        "ra": "000111969942"
+      },
+      {
+        "nome": "ANA LÍVIA VIGILATO RIBEIRO",
+        "ra": "000121667281"
+      },
+      {
+        "nome": "ARTHUR LUCCHESI FREITAS",
+        "ra": "000112342184"
+      },
+      {
+        "nome": "BEATRIZ OLIVEIRA MACIEL",
+        "ra": "000109802851"
+      },
+      {
+        "nome": "CAIO LUNA DE SOUZA",
+        "ra": "000115881734"
+      },
+      {
+        "nome": "CAUÊ VITA",
+        "ra": "000111152064"
+      },
+      {
+        "nome": "DAVID MAZZITELLI CONSTANCIO",
+        "ra": "000111457128"
+      },
+      {
+        "nome": "EMILLY LAURA ARAUJO",
+        "ra": "000113030221"
+      },
+      {
+        "nome": "ENZO GABRIEL DE ANDRADE LIMA",
+        "ra": "000112461856"
+      },
+      {
+        "nome": "GABRIEL ARCHANGELO GOUVEA MAIA",
+        "ra": "000113044491"
+      },
+      {
+        "nome": "GABRIEL FABRICIO LUPOLI ZACARIAS",
+        "ra": "000113507760"
+      },
+      {
+        "nome": "GABRIELLE VITÓRIA GOMES ALVES",
+        "ra": "000110565356"
+      },
+      {
+        "nome": "GIULIA RAFAELA SILVA NASCIMENTO",
+        "ra": "000114646917"
+      },
+      {
+        "nome": "JONATHAN KENJI SILVA",
+        "ra": "000112462661"
+      },
+      {
+        "nome": "JOÃO GUILHERME DIAS PRADO DOS SANTOS",
+        "ra": "000112459543"
+      },
+      {
+        "nome": "JOÃO PEDRO DOS SANTOS SILVA",
+        "ra": "000110945884"
+      },
+      {
+        "nome": "JOÃO VITOR DE GÓES",
+        "ra": "000110477632"
+      },
+      {
+        "nome": "JULIA GABRIELE DA SILVA BARBOSA",
+        "ra": "000112455282"
+      },
+      {
+        "nome": "KAUE DE FREITAS ALAMINO",
+        "ra": "000112455363"
+      },
+      {
+        "nome": "KETHELLYN CLARICE DAS DORES DOS SANTOS",
+        "ra": "000112458710"
+      },
+      {
+        "nome": "LUCAS LUPIÃO PINHEIRO DO PRADO",
+        "ra": "000113445396"
+      },
+      {
+        "nome": "LUIZ GUSTAVO FREIRE LIMA",
+        "ra": "000112447902"
+      },
+      {
+        "nome": "LUIZA CAROLINA LUZ",
+        "ra": "000112458051"
+      },
+      {
+        "nome": "MARIELLY DE CÁSSIA FARIA",
+        "ra": "000111508848"
+      },
+      {
+        "nome": "MATHEUS GABRIEL BRITO SILVA",
+        "ra": "000112444032"
+      },
+      {
+        "nome": "MICAELLY CRISTINNE CARVALHO DE MIRANDA",
+        "ra": "000112505598"
+      },
+      {
+        "nome": "NICOLAS PACHÊCO BORGES",
+        "ra": "000112038161"
+      },
+      {
+        "nome": "PEDRO ALVARENGA DA CRUZ",
+        "ra": "000111201703"
+      },
+      {
+        "nome": "RAFAEL CLAUDINO LEITE",
+        "ra": "000112458331"
+      },
+      {
+        "nome": "RIHANNA EVELYN SANTOS",
+        "ra": "000109630492"
+      },
+      {
+        "nome": "RODRIGO JUNIOR DE FARIA",
+        "ra": "000112451232"
+      },
+      {
+        "nome": "VICTOR LEONARDO CAVALCANTI COSTA",
+        "ra": "000113038924"
+      },
+      {
+        "nome": "VITÓRIA CORRÊA DE LIMA MOLINARI",
+        "ra": "000112462516"
+      },
+      {
+        "nome": "WILLIAM GABRIEL LOPES DA SILVA",
+        "ra": "000111910310"
+      },
+      {
+        "nome": "YASMIM FERNANDA LEMES RODRIGUES",
+        "ra": "000114189966"
+      },
+      {
+        "nome": "YASMIN CRISTINA DA SILVA PINTO",
+        "ra": "000111802665"
+      }
+    ]
+  },
+  "3ª Série A": {
+    "nivel": "Ensino Médio",
+    "alunos": [
+      {
+        "nome": "ANA CAROLINA SANTOS DO VALE",
+        "ra": "000108995954"
+      },
+      {
+        "nome": "ANA LUIZA RODRIGUES DE ALMEIDA",
+        "ra": "000113030726"
+      },
+      {
+        "nome": "ANA VITÓRIA DE OLIVEIRA DOS SANTOS",
+        "ra": "000111844265"
+      },
+      {
+        "nome": "ARTHUR SANTOS MARTTINEN",
+        "ra": "000111194818"
+      },
+      {
+        "nome": "BRENDA COSTA SALDO",
+        "ra": "000111457079"
+      },
+      {
+        "nome": "BRENO KAETANO SERPA",
+        "ra": "000110801778"
+      },
+      {
+        "nome": "CAROLINE BRIANEZI",
+        "ra": "000111429740"
+      },
+      {
+        "nome": "EMILI VITORIA GOMES DOS SANTOS",
+        "ra": "000112448839"
+      },
+      {
+        "nome": "EMILLY JAMILE GUIMARÃES LEITE",
+        "ra": "000112448759"
+      },
+      {
+        "nome": "GABRIEL GELLI BATISTA",
+        "ra": "000111198032"
+      },
+      {
+        "nome": "GABRIEL LAURENTINO BRAGA TRENTIN",
+        "ra": "000111424791"
+      },
+      {
+        "nome": "GABRIEL LISBOA CORTEZ",
+        "ra": "000111106445"
+      },
+      {
+        "nome": "GABRIEL MAGALHÃES RIBEIRO",
+        "ra": "000111168188"
+      },
+      {
+        "nome": "GEOVANNA BATISTA SIQUEIRA",
+        "ra": "000112061563"
+      },
+      {
+        "nome": "GUILHERME DAS NEVES DE SOUZA",
+        "ra": "000112688236"
+      },
+      {
+        "nome": "HENRIQUE CARDOSO DE MENEZES",
+        "ra": "000112264186"
+      },
+      {
+        "nome": "HIAGO MORTARI BREVES",
+        "ra": "000108891012"
+      },
+      {
+        "nome": "IGOR HENRIQUE ALVES DOS REIS",
+        "ra": "000110580280"
+      },
+      {
+        "nome": "ISAAC ALVES DOMINGOS DE SOUZA",
+        "ra": "000111433357"
+      },
+      {
+        "nome": "ISABELLE ISRAEL GASANA",
+        "ra": "000111306074"
+      },
+      {
+        "nome": "ISABELLI VITORIA DA SILVA MARINHO",
+        "ra": "000110081541"
+      },
+      {
+        "nome": "JONATHAN SIMÕES DE SOUZA",
+        "ra": "000111162311"
+      },
+      {
+        "nome": "JOÃO HENRIQUE DEODATO RAMOS JUNIOR",
+        "ra": "000112778903"
+      },
+      {
+        "nome": "KAIO MIGUEL MARQUES SILVA",
+        "ra": "000110626538"
+      },
+      {
+        "nome": "KELVIN OLAVO DE MELO TORRES",
+        "ra": "000110650583"
+      },
+      {
+        "nome": "LEANDRO HENRIQUE MORELATO VILAR",
+        "ra": "000111432997"
+      },
+      {
+        "nome": "LIVIA DA SILVA DE CAMPOS MARIA",
+        "ra": "000110568455"
+      },
+      {
+        "nome": "LUCAS RODRIGUES ROSADO PENA",
+        "ra": "000110022411"
+      },
+      {
+        "nome": "LUCAS SANTOS DE OLIVEIRA ANDRADE",
+        "ra": "000110842699"
+      },
+      {
+        "nome": "MARIA CLARA PAULINO",
+        "ra": "000111915037"
+      },
+      {
+        "nome": "MIRELLA VITÓRIA RIBEIRO ALMEIDA",
+        "ra": "000111994606"
+      },
+      {
+        "nome": "NELSON LUIZ ALVES MOREIRA",
+        "ra": "000111519021"
+      },
+      {
+        "nome": "PEDRO HENRIQUE LEMOS CHAMARELLI DE ALMEIDA",
+        "ra": "000110951576"
+      },
+      {
+        "nome": "PIETRO BUENO LEMES DOS SANTOS",
+        "ra": "000114839882"
+      },
+      {
+        "nome": "RAFAEL DE SOUZA SIQUEIRA",
+        "ra": "000111441154"
+      },
+      {
+        "nome": "RENAN DOS SANTOS BARRETO",
+        "ra": "000110006996"
+      },
+      {
+        "nome": "TALLES RODRIGO FERNANDES",
+        "ra": "000110233313"
+      },
+      {
+        "nome": "VITOR BREVES SALDANHA",
+        "ra": "000112038270"
+      },
+      {
+        "nome": "VITÓRIA RAYNARA GALVÃO DE OLIVEIRA",
+        "ra": "000111962834"
+      },
+      {
+        "nome": "YASMIN RODRIGUES DE SOUZA",
+        "ra": "000109545676"
+      }
+    ]
+  },
+  "3ª Série B": {
+    "nivel": "Ensino Médio",
+    "alunos": [
+      {
+        "nome": "ANA CLARA SERAFIM DA SILVA",
+        "ra": "000111436817"
+      },
+      {
+        "nome": "ANNA CLARA PIMENTEL MOTA",
+        "ra": "000110067605"
+      },
+      {
+        "nome": "ANTONIA KEVYLLE DOS SANTOS BESSA",
+        "ra": "000122361191"
+      },
+      {
+        "nome": "ANTONIO PEREIRA CARVALHO NETO",
+        "ra": "000111457892"
+      },
+      {
+        "nome": "AUGUSTO HENRIQUE MACIEL FERREIRA",
+        "ra": "000110885786"
+      },
+      {
+        "nome": "CAIO AGUIAR MOREIRA",
+        "ra": "000109813100"
+      },
+      {
+        "nome": "CAMILLY VITÓRIA DA SILVA XAVIER",
+        "ra": "000111843401"
+      },
+      {
+        "nome": "CIBELE YASMIN DE ANDRADE",
+        "ra": "000112467062"
+      },
+      {
+        "nome": "DANIEL DOMINGUES DE OLIVEIRA CANDIDO",
+        "ra": "000116356290"
+      },
+      {
+        "nome": "DAVI GABRIEL LIMA DO NASCIMENTO",
+        "ra": "000108853142"
+      },
+      {
+        "nome": "DAVI GOMES RIBEIRO",
+        "ra": "000112525656"
+      },
+      {
+        "nome": "DIEGO JOSE PRADO PEINADO",
+        "ra": "000122067784"
+      },
+      {
+        "nome": "EMELY MONTOVANI MARQUES",
+        "ra": "000111507343"
+      },
+      {
+        "nome": "EVELLYN DOS SANTOS ALVES",
+        "ra": "000112995891"
+      },
+      {
+        "nome": "FELIPE GALVÃO BRAGA MENDES",
+        "ra": "000112463406"
+      },
+      {
+        "nome": "FELIPE GIOVANI LEITE",
+        "ra": "000111439812"
+      },
+      {
+        "nome": "FILIPE SANTOS DA SILVA",
+        "ra": "000111428758"
+      },
+      {
+        "nome": "GUSTAVO PIETRO DE OLIVEIRA",
+        "ra": "000111168432"
+      },
+      {
+        "nome": "JOICE KELLI ALVES UCHOA",
+        "ra": "000113416514"
+      },
+      {
+        "nome": "JOÃO LUCAS SILVA BARBARO",
+        "ra": "000114127459"
+      },
+      {
+        "nome": "JOÃO PEDRO ANGELO DE FREITAS",
+        "ra": "000113065298"
+      },
+      {
+        "nome": "JOÃO VICTOR DA SILVA BORGES",
+        "ra": "000111439522"
+      },
+      {
+        "nome": "JOÃO VITOR AGUIAR",
+        "ra": "000114122047"
+      },
+      {
+        "nome": "KAUA HENRIQUE DE SOUZA ALCANTARA",
+        "ra": "000113741862"
+      },
+      {
+        "nome": "LUCAS GABRIEL MARQUES MENDES",
+        "ra": "000111527486"
+      },
+      {
+        "nome": "LUCAS VINÍCIUS DE ANDRADE",
+        "ra": "000111392516"
+      },
+      {
+        "nome": "LUIZ GUSTAVO DA SILVA GALINDO",
+        "ra": "000126448398"
+      },
+      {
+        "nome": "LUIZ PAULO HIPOLITO DE OLIVEIRA",
+        "ra": "000111168775"
+      },
+      {
+        "nome": "MATHEUS EDUARDO PRADO CASSIANO",
+        "ra": "000112104922"
+      },
+      {
+        "nome": "MATHEUS PEDRO DA SILVA DIAS",
+        "ra": "000124312386"
+      },
+      {
+        "nome": "NATHALIA SILVA TARGINO",
+        "ra": "000112456914"
+      },
+      {
+        "nome": "NICOLAS DE SOUZA CORREIA",
+        "ra": "000113207035"
+      },
+      {
+        "nome": "PEDRO ENRIQUE SALES DE AQUINO",
+        "ra": "000112188592"
+      },
+      {
+        "nome": "PIETRO DANTAS COSTA",
+        "ra": "000109909267"
+      },
+      {
+        "nome": "RAISSA GOMES SILVA",
+        "ra": "000112295481"
+      },
+      {
+        "nome": "RILLARY VIEIRA GODOI",
+        "ra": "000110022095"
+      },
+      {
+        "nome": "THATIANE DE MELLO PAIVA UCHOAS",
+        "ra": "000111152282"
+      },
+      {
+        "nome": "VINICIUS CRUZ DE LA HOZ",
+        "ra": "000111865355"
+      },
+      {
+        "nome": "VITOR CONRADO RIBEIRO",
+        "ra": "000111332407"
+      },
+      {
+        "nome": "YAGO RENATO MARQUES RAMOS",
+        "ra": "000112362728"
+      }
+    ]
+  },
+  "3ª Série C": {
+    "nivel": "Ensino Médio",
+    "alunos": [
+      {
+        "nome": "ANA LUIZA BATISTA",
+        "ra": "000109286385"
+      },
+      {
+        "nome": "BARBARA SILVA DE OLIVEIRA",
+        "ra": "000110564683"
+      },
+      {
+        "nome": "BRENDO FELIPE LEMES RAMOS",
+        "ra": "000110451237"
+      },
+      {
+        "nome": "BRYAN WALLACE RIBEIRO",
+        "ra": "000111508342"
+      },
+      {
+        "nome": "DAVI NUNES BAPTISTA",
+        "ra": "000113845849"
+      },
+      {
+        "nome": "EDUARDA RIBEIRO MACIEL DE OLIVEIRA",
+        "ra": "000108112885"
+      },
+      {
+        "nome": "EDUARDO CESAR DE SOUZA CARIMBÁ",
+        "ra": "000110871534"
+      },
+      {
+        "nome": "EMILLY VIEIRA SILVA",
+        "ra": "000110597580"
+      },
+      {
+        "nome": "GABRIEL HENRIQUE DOS SANTOS VIEIRA",
+        "ra": "000113243209"
+      },
+      {
+        "nome": "GABRIEL RODRIGUES PEREIRA DE ARAÚJO",
+        "ra": "000112037855"
+      },
+      {
+        "nome": "GIOVANA MARTINS DE ARAÚJO",
+        "ra": "000111173610"
+      },
+      {
+        "nome": "GUILHERME BEZERRA TEIXEIRA",
+        "ra": "000111223233"
+      },
+      {
+        "nome": "HELEN KAROLINE XIMENES FERREIRA",
+        "ra": "000126144573"
+      },
+      {
+        "nome": "IGOR FERNANDES RAMOS",
+        "ra": "000111469463"
+      },
+      {
+        "nome": "JOÃO PEDRO DE SOUZA ROCHA LIMA",
+        "ra": "000113771255"
+      },
+      {
+        "nome": "KAUANY GERALDA SÉRGIO CARNEIRO",
+        "ra": "000113735035"
+      },
+      {
+        "nome": "LARISSA FERNANDA FIGUEIRA FERREIRA",
+        "ra": "000114500080"
+      },
+      {
+        "nome": "LAURA LUANI BERNARDO",
+        "ra": "000111187467"
+      },
+      {
+        "nome": "LUANA PAULA CRUZ",
+        "ra": "000111910145"
+      },
+      {
+        "nome": "LUCAS GABRIEL SILVA COSTA",
+        "ra": "000111928799"
+      },
+      {
+        "nome": "MARIA CLARA DE MOURA ANTUNES PEREIRA",
+        "ra": "000111476906"
+      },
+      {
+        "nome": "MARIA EDUARDA DE MOURA ANTUNES PEREIRA",
+        "ra": "000111477207"
+      },
+      {
+        "nome": "MARIA FERNANDA SACILOTTI",
+        "ra": "000108860594"
+      },
+      {
+        "nome": "MARIA VITÓRIA GIOVANI DE ATAIDES",
+        "ra": "000111547819"
+      },
+      {
+        "nome": "MATEUS RAFAEL ALMEIDA MARQUES",
+        "ra": "000110110702"
+      },
+      {
+        "nome": "MATHEUS FELIPE VIEIRA EVANGELISTA",
+        "ra": "000110786374"
+      },
+      {
+        "nome": "MIKAELLY VITORIA VICTORIANO FORMIGONI",
+        "ra": "000111435240"
+      },
+      {
+        "nome": "NICOLAS ARRUDA TEIXEIRA",
+        "ra": "000111441086"
+      },
+      {
+        "nome": "NICOLLAS HENRIQUE DE SOUZA MATTOS",
+        "ra": "000111437326"
+      },
+      {
+        "nome": "PAULO HENRIQUE FAGUNDES DA SILVA",
+        "ra": "000110820258"
+      },
+      {
+        "nome": "PEDRO GUILHERME CASTILHO DOS SANTOS",
+        "ra": "000111432816"
+      },
+      {
+        "nome": "PEDRO VINÍCIUS DONHA DOS SANTOS",
+        "ra": "000111457502"
+      },
+      {
+        "nome": "RAFAEL LOPES PERROTA",
+        "ra": "000110801742"
+      },
+      {
+        "nome": "RAFAELA DE MEDEIROS SOARES",
+        "ra": "000112047627"
+      },
+      {
+        "nome": "RAISSA VITORIA PEREIRA SILVA DOS ANJOS",
+        "ra": "000112494892"
+      },
+      {
+        "nome": "REBECA ARAUJO OLIVEIRA RIBEIRO",
+        "ra": "000109056868"
+      },
+      {
+        "nome": "SOPHIA MIACI PALODETO",
+        "ra": "000111973246"
+      },
+      {
+        "nome": "VINÍCIUS ALENCAR CAETANO PRADO",
+        "ra": "000112448511"
+      },
+      {
+        "nome": "VITOR LUIZ BATISTA MORAIS",
+        "ra": "000111936642"
+      }
+    ]
+  },
+  "1º Ano A": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ALICE EDUARDA DO CARMO MACÊDO",
+        "ra": "123823911"
+      },
+      {
+        "nome": "ALICE EMANUELLE MATOS FERREIRA",
+        "ra": "122931957"
+      },
+      {
+        "nome": "ANA LÍVIA CHAVES MARTINS",
+        "ra": "122566263"
+      },
+      {
+        "nome": "ARTHUR HIROSHI MENDES TATEKAWA",
+        "ra": "122874643"
+      },
+      {
+        "nome": "BELLA LIAH DE FREITAS JUSTOLIN",
+        "ra": "123488530"
+      },
+      {
+        "nome": "BIANCA APARECIDA RODRIGUES AFFONSO",
+        "ra": "123758727"
+      },
+      {
+        "nome": "EMANNUEL FREITAS BAHIA",
+        "ra": "126093678"
+      },
+      {
+        "nome": "EMANUELY DOS SANTOS",
+        "ra": "124783247"
+      },
+      {
+        "nome": "ISADORA MIRANDA DE JESUS",
+        "ra": "122545016"
+      },
+      {
+        "nome": "JOAQUIM MATOS SILVA",
+        "ra": "122298011"
+      },
+      {
+        "nome": "LAURA MARIA SALAZAR DE LIMA VIEIRA",
+        "ra": "122455442"
+      },
+      {
+        "nome": "LUÍZA DE ANDRADE MENEGUCCI",
+        "ra": "122374265"
+      },
+      {
+        "nome": "LÍVIA VALIM COIMBRA",
+        "ra": "122726350"
+      },
+      {
+        "nome": "MIGUEL EDUARDO TOLEDO",
+        "ra": "124351118"
+      },
+      {
+        "nome": "OTÁVIO AUGUSTO TOLEDO GONÇALVES",
+        "ra": "123487036"
+      },
+      {
+        "nome": "SAMUEL SANTOS MARTINS",
+        "ra": "123216427"
+      },
+      {
+        "nome": "THÉO INÁCIO DOS SANTOS",
+        "ra": "122446297"
+      },
+      {
+        "nome": "VINICIUS LEVI GUIMARÃES FARIA",
+        "ra": "122460699"
+      },
+      {
+        "nome": "YURI MESQUITA DE SOUZA CARDOSO",
+        "ra": "123504158"
+      }
+    ]
+  },
+  "1º Ano B": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ALICE DE SOUZA ARAUJO RIBEIRO",
+        "ra": "000121705126"
+      },
+      {
+        "nome": "ALLYCE HELOISA SANTOS",
+        "ra": "000121718612"
+      },
+      {
+        "nome": "ALÍCIA GABRIELE MORAES SILVA",
+        "ra": "000123573638"
+      },
+      {
+        "nome": "AYLA BEATRIZ LEITE PASCOAL",
+        "ra": "000123943762"
+      },
+      {
+        "nome": "BERNARDO VARGAS PINTO DOS SANTOS",
+        "ra": "000123131327"
+      },
+      {
+        "nome": "CLARA HELENA MEIRELES DOS SANTOS",
+        "ra": "000121724786"
+      },
+      {
+        "nome": "DEXTER MORGAN SANTOS ROSA",
+        "ra": "000121724837"
+      },
+      {
+        "nome": "EMANUELLE PEREIRA LUSTOSA SANTOS FÁVARO",
+        "ra": "000122756761"
+      },
+      {
+        "nome": "FELIPE PORTO DE ALVARENGA ROMERO",
+        "ra": "000123133002"
+      },
+      {
+        "nome": "GIOVANA ANTONELLA GOMES GONÇALVES DOS SANTOS",
+        "ra": "000122820892"
+      },
+      {
+        "nome": "ISAAC DE BRITO REIS SILVA",
+        "ra": "000123573297"
+      },
+      {
+        "nome": "JOSHUA FREITAS DIAS",
+        "ra": "000122328420"
+      },
+      {
+        "nome": "JULIA DE SOUZA MARTINS",
+        "ra": "000122372089"
+      },
+      {
+        "nome": "LARA CHLOE FERREIRA GOULART",
+        "ra": "000122371982"
+      },
+      {
+        "nome": "LAURA APARECIDA DE MORAES SANTOS",
+        "ra": "000123714071"
+      },
+      {
+        "nome": "LUAN OLIVEIRA DE ARAÚJO",
+        "ra": "000124345151"
+      },
+      {
+        "nome": "LUIS MIGUEL ZAMPOLA SANTOS",
+        "ra": "000123539680"
+      },
+      {
+        "nome": "LÍVIA ARAUJO CERIONE",
+        "ra": "000123122064"
+      },
+      {
+        "nome": "MANUELLE RODRIGUES FERREIRA",
+        "ra": "000123223307"
+      },
+      {
+        "nome": "PATRÍCIA TRONE PONTES",
+        "ra": "000124543738"
+      },
+      {
+        "nome": "RAMON DONAVAN FERREIRA",
+        "ra": "000122456034"
+      },
+      {
+        "nome": "SOPHIA SANCHES",
+        "ra": "000121951189"
+      }
+    ]
+  },
+  "2º Ano A": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ALICE ALVES DOS SANTOS",
+        "ra": "123130299"
+      },
+      {
+        "nome": "ALICE DANTAS SANTOS SIMÃO",
+        "ra": "123130645"
+      },
+      {
+        "nome": "BENÍCIO DE OLIVEIRA MATOS SIQUEIRA",
+        "ra": "121755190"
+      },
+      {
+        "nome": "CALEBE HENRIQUE DE ARAÚJO SANTOS",
+        "ra": "121731011"
+      },
+      {
+        "nome": "ERICK VINÍCIUS DE SOUZA FERNANDES",
+        "ra": "121611098"
+      },
+      {
+        "nome": "HEYTOR PEDRO CUNHA DA SILVA",
+        "ra": "122331551"
+      },
+      {
+        "nome": "ISABEL TRONE PONTES",
+        "ra": "124471176"
+      },
+      {
+        "nome": "ISABELLY DE ALMEIDA ALVES",
+        "ra": "120863742"
+      },
+      {
+        "nome": "JOÃO MIGUEL LEMOS CHAMARELLI DE ALMEIDA",
+        "ra": "121733637"
+      },
+      {
+        "nome": "LORENZO GALLO DE OLIVEIRA DOS SANTOS",
+        "ra": "122299091"
+      },
+      {
+        "nome": "LUIZ FABIANO PENELUPPI",
+        "ra": "121582614"
+      },
+      {
+        "nome": "MAITÊ CATARINA DA SILVA",
+        "ra": "122436289"
+      },
+      {
+        "nome": "MANUELLA OLIVEIRA DE ARAUJO",
+        "ra": "122299044"
+      },
+      {
+        "nome": "MANUELLA SOPHIA CRUZ GARCIA",
+        "ra": "121747108"
+      },
+      {
+        "nome": "MIGUEL DO NASCIMENTO MELO",
+        "ra": "122436589"
+      },
+      {
+        "nome": "MIGUEL LIMA NOGUEIRA",
+        "ra": "121791446"
+      },
+      {
+        "nome": "MIGUEL MOREIRA RIBEIRO",
+        "ra": "121992203"
+      },
+      {
+        "nome": "MURILO CARVALHO MOREIRA",
+        "ra": "123554349"
+      },
+      {
+        "nome": "NICOLLAS INTRIERI DA SILVA",
+        "ra": "122306358"
+      },
+      {
+        "nome": "NOAH COIMBRA SOTTANI",
+        "ra": "121784690"
+      },
+      {
+        "nome": "NOÁH LEONARDO ALVES PARADELAS",
+        "ra": "123680115"
+      },
+      {
+        "nome": "PEDRO HENRIQUE SANTOS ROSA",
+        "ra": "123237861"
+      },
+      {
+        "nome": "RAQUEL DE PAULA REIS",
+        "ra": "121737557"
+      },
+      {
+        "nome": "RUAN PIETRO BEZERRA SOARES",
+        "ra": "122875352"
+      },
+      {
+        "nome": "RYANA VITÓRIA DE SOUZA DO NASCIMENTO",
+        "ra": "123692591"
+      },
+      {
+        "nome": "SOPHIA DE SOUSA SANTOS ALVES",
+        "ra": "121055529"
+      },
+      {
+        "nome": "SOPHIA GABRIELE DE FARIA",
+        "ra": "121688690"
+      },
+      {
+        "nome": "VALENTINA ALVES MARINELI",
+        "ra": "122329342"
+      }
+    ]
+  },
+  "2º Ano B": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ALICE GAVA DA CUNHA",
+        "ra": "000122306068"
+      },
+      {
+        "nome": "ANTHONY GABRIEL TONETTO PAIVA",
+        "ra": "000122455078"
+      },
+      {
+        "nome": "AYLA DE ALCANTARA CORREIA",
+        "ra": "000124274605"
+      },
+      {
+        "nome": "CARLOS HENRIQUE GUIMARÃES SILVEIRA",
+        "ra": "000121732094"
+      },
+      {
+        "nome": "CAROLINE PEREZ MARQUES",
+        "ra": "000121740201"
+      },
+      {
+        "nome": "DANIEL FERREIRA ARAÚJO",
+        "ra": "000121498031"
+      },
+      {
+        "nome": "ELIAS GUILHERME MOREIRA FERREIRA",
+        "ra": "000123448700"
+      },
+      {
+        "nome": "GABRIEL SALES PERES DOS SANTOS",
+        "ra": "000123429378"
+      },
+      {
+        "nome": "GABRIELLY APOLINÁRIO DE CAMARGO",
+        "ra": "000122306286"
+      },
+      {
+        "nome": "GAEL GUSTAVO FERREIRA SILVA",
+        "ra": "000123567302"
+      },
+      {
+        "nome": "JOÃO VITOR MARCELINO MADUREIRA",
+        "ra": "000121740282"
+      },
+      {
+        "nome": "LAURA MADELEYNE SILVA",
+        "ra": "000123130239"
+      },
+      {
+        "nome": "LAURA PRATES DE LIMA",
+        "ra": "000123213602"
+      },
+      {
+        "nome": "LORENZO CALIXTO BATISTA RIBEIRO",
+        "ra": "000124094483"
+      },
+      {
+        "nome": "LORENZO GABRIEL MONTEIRO CARDOSO",
+        "ra": "000122949677"
+      },
+      {
+        "nome": "MAITÊ MARQUES PERRONE MARTINS",
+        "ra": "000122790197"
+      },
+      {
+        "nome": "MANUEL INÁCIO FERNANDES DE CASTILHO",
+        "ra": "000123830628"
+      },
+      {
+        "nome": "MANUELLY GRIMALDI DE LIMA",
+        "ra": "000122299805"
+      },
+      {
+        "nome": "MELISSA GUIMARÃES VENANCIO",
+        "ra": "000120867829"
+      },
+      {
+        "nome": "MIGUEL DE OLIVEIRA SOUSA",
+        "ra": "000122581459"
+      },
+      {
+        "nome": "MIRELLA CREPALDI PIRES",
+        "ra": "000121633942"
+      },
+      {
+        "nome": "PEDRO AUGUSTO PEIXINHO CARDOSO",
+        "ra": "000125232627"
+      },
+      {
+        "nome": "THAIS CRISTINA GONÇALVES DA COSTA",
+        "ra": "000123550666"
+      },
+      {
+        "nome": "VALENTINA PINHO DA SILVA",
+        "ra": "000122331555"
+      },
+      {
+        "nome": "VALENTINA VITÓRIA GUIMARÃES FARIA RODRIGUES",
+        "ra": "000121553780"
+      },
+      {
+        "nome": "VICTOR ALVES MARQUES",
+        "ra": "000123130532"
+      },
+      {
+        "nome": "VITOR MOREIRA RIBEIRO",
+        "ra": "000122758453"
+      },
+      {
+        "nome": "YARA COIMBRA SOTTANI",
+        "ra": "000121795584"
+      },
+      {
+        "nome": "YASMIN DE MORAIS DA MOTA",
+        "ra": "000122727107"
+      }
+    ]
+  },
+  "3º Ano A": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ALICE RODRIGUÊS GONÇALVES DE LIMA",
+        "ra": "120867594"
+      },
+      {
+        "nome": "BENJAMIN KALIL PENNA LUIZ",
+        "ra": "120628467"
+      },
+      {
+        "nome": "CAMILA LANA BIONDI",
+        "ra": "123128786"
+      },
+      {
+        "nome": "DAVI LUCAS DOS SANTOS MIRANDA",
+        "ra": "125392086"
+      },
+      {
+        "nome": "GABRIELA FERNANDES BIBANCO MENDES",
+        "ra": "121517033"
+      },
+      {
+        "nome": "GABRIELA MARIA MOREIRA DE ARAUJO MARINHO SANTOS",
+        "ra": "121744940"
+      },
+      {
+        "nome": "GABRIELE MENDES FERREIRA",
+        "ra": "121524891"
+      },
+      {
+        "nome": "GIL SAMPROGNA VELOSO",
+        "ra": "120886745"
+      },
+      {
+        "nome": "HEITOR SANTOS DE ALMEIDA",
+        "ra": "122876450"
+      },
+      {
+        "nome": "HENRY LUCCA DE MELO SANTIAGO",
+        "ra": "120844337"
+      },
+      {
+        "nome": "ISAAC MENEZES COELHO",
+        "ra": "121730663"
+      },
+      {
+        "nome": "ISABELA RODRIGUES DA SILVA",
+        "ra": "121583833"
+      },
+      {
+        "nome": "ISABELLA LIMA DE JESUS",
+        "ra": "121739158"
+      },
+      {
+        "nome": "JOÃO MIGUEL PEREIRA RIBEIRO",
+        "ra": "121519406"
+      },
+      {
+        "nome": "LARA DUTRA RIBEIRO",
+        "ra": "123209979"
+      },
+      {
+        "nome": "LEVI MIGUEL FERNANDES GALVÃO",
+        "ra": "121741476"
+      },
+      {
+        "nome": "LORENA APARECIDA MAGALHÃES MESSIAS",
+        "ra": "121745347"
+      },
+      {
+        "nome": "LUANA BEATRIZ CESARIO ORNELLAS",
+        "ra": "116795988"
+      },
+      {
+        "nome": "LUCAS DE PAULA MOTTA",
+        "ra": "120837403"
+      },
+      {
+        "nome": "LUIZA ROSENDO CORREA",
+        "ra": "122304683"
+      },
+      {
+        "nome": "LYDIA VALENTINA ALMEIDA DOS SANTOS",
+        "ra": "121693691"
+      },
+      {
+        "nome": "MANUELLY DE ANDRADE PAGANO",
+        "ra": "120808442"
+      },
+      {
+        "nome": "MARIA EDUARDA ARAÚJO LUCAS DOS SANTOS",
+        "ra": "121354494"
+      },
+      {
+        "nome": "MIKHAEL JACUBOSKI FAYET CASTELLO BRANCO FUSCO",
+        "ra": "121284536"
+      },
+      {
+        "nome": "PEDRO HENRIQUE MAIA DE ALMEIDA",
+        "ra": "120740489"
+      },
+      {
+        "nome": "SOFIA LIMA DE OLIVEIRA",
+        "ra": "121771143"
+      },
+      {
+        "nome": "SOPHIA MIRELLA DE ALMEIDA TORRES",
+        "ra": "121851729"
+      },
+      {
+        "nome": "THIAGO FERREIRA DUARTE",
+        "ra": "120850649"
+      },
+      {
+        "nome": "VALENTINA OLIVEIRA DOS SANTOS",
+        "ra": "123994021"
+      },
+      {
+        "nome": "VINÍCIUS CORRÊA DE LIMA MOLINÁRI",
+        "ra": "123491692"
+      }
+    ]
+  },
+  "3º Ano B": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ALICE BARBOSA DOS SANTOS",
+        "ra": "000121745199"
+      },
+      {
+        "nome": "ALÍCIA TORRES CARVALHO ROSA",
+        "ra": "000121553555"
+      },
+      {
+        "nome": "ANA LAURA RAMOS MULINARI",
+        "ra": "000121745865"
+      },
+      {
+        "nome": "ARTHUR CORREIA DE ARAUJO REIS",
+        "ra": "000121745864"
+      },
+      {
+        "nome": "ARTUR KOTESKY MARCELINO",
+        "ra": "000121744593"
+      },
+      {
+        "nome": "BRENNER FELLYPE GOMES PARADELAS",
+        "ra": "000121796824"
+      },
+      {
+        "nome": "BRUNO GABRIEL DOS SANTOS LIMA",
+        "ra": "000120616408"
+      },
+      {
+        "nome": "CLARA SOFIA RODRIGUES ALVES",
+        "ra": "000124557376"
+      },
+      {
+        "nome": "DANILO DOS SANTOS DELMONTE",
+        "ra": "000121556193"
+      },
+      {
+        "nome": "DAVI MIGUEL LEÃO DE CARVALHO",
+        "ra": "000121553726"
+      },
+      {
+        "nome": "EMMA ANTONELLA CAVALCANTE CANASSA BARBOSA",
+        "ra": "000121574509"
+      },
+      {
+        "nome": "GUSTAVO LORENZO MAXIMINO MARTINS",
+        "ra": "000121517367"
+      },
+      {
+        "nome": "HELENA DO CARMO MENEZES",
+        "ra": "000122330290"
+      },
+      {
+        "nome": "ISABELA PINHEIRO FERREIRA",
+        "ra": "000123099491"
+      },
+      {
+        "nome": "JOÃO PEDRO DA SILVA SANTOS",
+        "ra": "000120861557"
+      },
+      {
+        "nome": "LAURA ALESSANDRA PEREIRA",
+        "ra": "000120903950"
+      },
+      {
+        "nome": "LAUÃN MIGUEL DOS SANTOS MORAIS TELES",
+        "ra": "000125260787"
+      },
+      {
+        "nome": "LEVI PEDROSO AMORIM",
+        "ra": "000121727437"
+      },
+      {
+        "nome": "LUCIANNE SANTOS MONTEIRO DE ASSIS",
+        "ra": "000122821864"
+      },
+      {
+        "nome": "LUIZ HENRIQUE SOARES SANTOS",
+        "ra": "000122130184"
+      },
+      {
+        "nome": "MARIA ALICE LUPOLI DA SILVA",
+        "ra": "000121732166"
+      },
+      {
+        "nome": "MARIANA RAFAELA VICENTE HONORATO",
+        "ra": "000121745171"
+      },
+      {
+        "nome": "MIRELLA YANI PAIVA RODRIGUES",
+        "ra": "000121522795"
+      },
+      {
+        "nome": "PEDRO ARTHUR RODRIGUES FARIA",
+        "ra": "000121531129"
+      },
+      {
+        "nome": "PEDRO EMANUEL BUENO SIQUEIRA",
+        "ra": "000123556484"
+      },
+      {
+        "nome": "RAFAEL BUENO DE SOUSA",
+        "ra": "000122124778"
+      },
+      {
+        "nome": "REBECA ALVES CELESTE",
+        "ra": "000121501771"
+      },
+      {
+        "nome": "SAMUEL DE SOUSA SANTOS",
+        "ra": "000120025966"
+      },
+      {
+        "nome": "THEODORO FELIX DOS SANTOS",
+        "ra": "000121744505"
+      }
+    ]
+  },
+  "4º Ano A": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ALLANNA MARCHESINI SANT'ANA",
+        "ra": "000120506793"
+      },
+      {
+        "nome": "ALLICE FERREIRA RODRIGUES",
+        "ra": "000121386577"
+      },
+      {
+        "nome": "ANA CAROLINE GONÇALVES PINTO DE SOUZA",
+        "ra": "000120891310"
+      },
+      {
+        "nome": "ANTONELLA CHAGAS SANCHES",
+        "ra": "000120248998"
+      },
+      {
+        "nome": "CAROLINE GASPAR ALEIXO",
+        "ra": "000121349627"
+      },
+      {
+        "nome": "DANIEL ANTONIO FARIA",
+        "ra": "000120853081"
+      },
+      {
+        "nome": "ELISA MARCONDES LEONI",
+        "ra": "000116184070"
+      },
+      {
+        "nome": "ELOARA VITÓRIA OLIVEIRA DELGADO",
+        "ra": "000121657946"
+      },
+      {
+        "nome": "ENZO HENRI DE FREITAS JUSTOLIN",
+        "ra": "000120888225"
+      },
+      {
+        "nome": "ESTHER DE LIMA ROSA",
+        "ra": "000121519492"
+      },
+      {
+        "nome": "GABRIEL ASAPH DA SILVA SILVÉRIO",
+        "ra": "000121726353"
+      },
+      {
+        "nome": "ISABELLA AYUMI SASAKI",
+        "ra": "000120966739"
+      },
+      {
+        "nome": "JOÃO HENRIQUE MIHALSKI WAGNER",
+        "ra": "000121499142"
+      },
+      {
+        "nome": "JOÃO PEDRO TEIXEIRA",
+        "ra": "000116080605"
+      },
+      {
+        "nome": "KAIQUE GABRIEL MIONI DE MORAIS",
+        "ra": "000120877835"
+      },
+      {
+        "nome": "LAVINIA MANUELLA DA SILVA CUNHA",
+        "ra": "000116794939"
+      },
+      {
+        "nome": "LUCAS MATTEO DE SOUZA FERNANDES",
+        "ra": "000120300879"
+      },
+      {
+        "nome": "LUIZA RODRIGUES PEREIRA",
+        "ra": "000121526156"
+      },
+      {
+        "nome": "MANUELA LIMA RODRIGUES",
+        "ra": "000116064427"
+      },
+      {
+        "nome": "MANUELA TANAN ALMEIDA",
+        "ra": "000121580371"
+      },
+      {
+        "nome": "MARCOS VINICIUS BERTOUT LANDIM",
+        "ra": "000120877442"
+      },
+      {
+        "nome": "MARIA CLARA DIONISIO DE SETA SANTOS",
+        "ra": "000122304450"
+      },
+      {
+        "nome": "MATHEUS SALES DOS SANTOS",
+        "ra": "000122435080"
+      },
+      {
+        "nome": "SAMUEL RIBEIRO ARAUJO",
+        "ra": "000116795018"
+      },
+      {
+        "nome": "SARA GONCALVES HIGINO",
+        "ra": "000121283336"
+      },
+      {
+        "nome": "SAYMON FELIPE VELOZO SOUZA",
+        "ra": "000120078609"
+      },
+      {
+        "nome": "VICENTE TRONE PONTES",
+        "ra": "000121067718"
+      },
+      {
+        "nome": "YASMIN FARIA DE LIMA",
+        "ra": "000120886984"
+      }
+    ]
+  },
+  "4º Ano B": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ANA CLARA DA COSTA SILVA",
+        "ra": "000121616159"
+      },
+      {
+        "nome": "ANTHONY GABRIEL SILVÉRIO NASCIMENTO",
+        "ra": "000116472068"
+      },
+      {
+        "nome": "ARTHUR ABDIEL GUIMARÃES RODRIGUES",
+        "ra": "000120882939"
+      },
+      {
+        "nome": "DAVI OLIVEIRA DE ARAÚJO",
+        "ra": "000122131396"
+      },
+      {
+        "nome": "ELOÁ VICTORIA DE OLIVEIRA CUNHA",
+        "ra": "000120971119"
+      },
+      {
+        "nome": "ESTHER CAMILO VIEIRA",
+        "ra": "000126446478"
+      },
+      {
+        "nome": "EVA LUIZA GOMES GONÇALVES DOS SANTOS",
+        "ra": "000121246691"
+      },
+      {
+        "nome": "GABRIEL LOPES GUIMARÃES",
+        "ra": "000120875581"
+      },
+      {
+        "nome": "HAYLIE SANTOS ROSA",
+        "ra": "000116017072"
+      },
+      {
+        "nome": "HEITOR DE PAULA PINTO FARIA",
+        "ra": "000120877334"
+      },
+      {
+        "nome": "HELENA MOURA DE OLIVEIRA",
+        "ra": "000121745691"
+      },
+      {
+        "nome": "ISAAC ALMEIDA RAMOS",
+        "ra": "000120062682"
+      },
+      {
+        "nome": "JOAQUIM FERCHER ZILVES",
+        "ra": "000120877726"
+      },
+      {
+        "nome": "LAURA EMANUELLY BUENO DA SILVA",
+        "ra": "000116779956"
+      },
+      {
+        "nome": "LEVI ABNER RIBEIRO DA SILVA",
+        "ra": "000126339138"
+      },
+      {
+        "nome": "LUANA LUIZA CARDOSO DE SOUZA",
+        "ra": "000120019477"
+      },
+      {
+        "nome": "LUCAS BARBOSA DOS SANTOS",
+        "ra": "000121514431"
+      },
+      {
+        "nome": "LUCAS DANIEL RIBEIRO DIAS",
+        "ra": "000121746132"
+      },
+      {
+        "nome": "MANUELLA DOS SANTOS RIBEIRO NASCIMENTO DIAS",
+        "ra": "000120887482"
+      },
+      {
+        "nome": "MELISSA GABRIELLY MONTEIRO DA SILVA",
+        "ra": "000120894537"
+      },
+      {
+        "nome": "MIGUEL DA SILVA SANTOS",
+        "ra": "000122130823"
+      },
+      {
+        "nome": "MIGUEL DUQUE GUIMARÃES VENANCIO",
+        "ra": "000121261025"
+      },
+      {
+        "nome": "MIGUEL MIHALSKI WAGNER",
+        "ra": "000121498878"
+      },
+      {
+        "nome": "MIGUEL RIBEIRO ARAUJO",
+        "ra": "000116794974"
+      },
+      {
+        "nome": "SOFIA EMANUELLY OLIVEIRA LIMA",
+        "ra": "000120888549"
+      },
+      {
+        "nome": "THIAGO DA SILVA LEME",
+        "ra": "000122135988"
+      },
+      {
+        "nome": "VALENTINA DE SOUSA SANTOS ALVES",
+        "ra": "000120318646"
+      }
+    ]
+  },
+  "5º Ano A": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ALICE BIANCA ALVES OLIMPIO",
+        "ra": "000120858869"
+      },
+      {
+        "nome": "ALICE MESQUITA DA SILVA",
+        "ra": "000126313575"
+      },
+      {
+        "nome": "ANA BEATRIZ DE FREITAS MARTINS",
+        "ra": "000115751739"
+      },
+      {
+        "nome": "BENJAMIM MELO CARNEIRO SALES",
+        "ra": "000120887239"
+      },
+      {
+        "nome": "DAVI LUCAS GOMES DE OLIVEIRA",
+        "ra": "000120519635"
+      },
+      {
+        "nome": "GRAZIELA CÂNDIDO SIMÃO",
+        "ra": "000120531711"
+      },
+      {
+        "nome": "ISAAC RIBEIRO ARAÚJO",
+        "ra": "000116796128"
+      },
+      {
+        "nome": "ISADORA CAMARGO RIBEIRO DA SILVA",
+        "ra": "000120402137"
+      },
+      {
+        "nome": "ISAÍAS VICTOR HERMESDORFF SOUSA",
+        "ra": "000116012407"
+      },
+      {
+        "nome": "IURI LINS BARROS DA SILVA",
+        "ra": "000115628860"
+      },
+      {
+        "nome": "LAURA DIAS SANTOS",
+        "ra": "000120410716"
+      },
+      {
+        "nome": "LAURA HELLENA GABRIEL ABUJABRA",
+        "ra": "000120059844"
+      },
+      {
+        "nome": "MANUELA SATURNO FERREIRA",
+        "ra": "000115851087"
+      },
+      {
+        "nome": "MARIA CECÍLIA DA SILVA ALVES",
+        "ra": "000125835694"
+      },
+      {
+        "nome": "MARIA LUIZA DA SILVA",
+        "ra": "000116591282"
+      },
+      {
+        "nome": "MIGUEL ALEXANDRE DA SILVA",
+        "ra": "000120009425"
+      },
+      {
+        "nome": "MIGUEL LEVINO DOS SANTOS",
+        "ra": "000120969741"
+      },
+      {
+        "nome": "MILENA DE OLIVEIRA REIS GOULART",
+        "ra": "000120049573"
+      },
+      {
+        "nome": "PEDRO GABRIEL LACERDA RAMOS",
+        "ra": "000116531711"
+      },
+      {
+        "nome": "SAMUEL COSTA MENDES",
+        "ra": "000120334577"
+      },
+      {
+        "nome": "SARAH MANUELLA FÉLIX GARCIA",
+        "ra": "000120030023"
+      },
+      {
+        "nome": "SOPHIA SILVESTRE DE ALVARENGA",
+        "ra": "000120877184"
+      },
+      {
+        "nome": "VITOR GABRIEL FLOREANO DA SILVA",
+        "ra": "000120040130"
+      },
+      {
+        "nome": "VITOR RODRIGUES DOS SANTOS",
+        "ra": "000120031780"
+      },
+      {
+        "nome": "YASMIN VITÓRIA SANTOS TEIXEIRA",
+        "ra": "000120969805"
+      },
+      {
+        "nome": "ÍCARO YURI OLIVEIRA DOS ANJOS",
+        "ra": "000120095989"
+      }
+    ]
+  },
+  "5º Ano B": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "AGATA FERNANDES DANTAS DA COSTA",
+        "ra": "000120534776"
+      },
+      {
+        "nome": "ALICE SOPHIE MAIA DE ALMEIDA",
+        "ra": "000116367735"
+      },
+      {
+        "nome": "BRYAN RAFAEL FELIPE RIBEIRO DA SILVA",
+        "ra": "000120049104"
+      },
+      {
+        "nome": "DAVI DE BRITO GONÇALO",
+        "ra": "000116510204"
+      },
+      {
+        "nome": "DAVI GUILHERME NOGUEIRA",
+        "ra": "000120454847"
+      },
+      {
+        "nome": "DAVI LUCCA DE MELO SANTIAGO",
+        "ra": "000120867069"
+      },
+      {
+        "nome": "GABRIEL LEANDRO DA FONSECA",
+        "ra": "000116016639"
+      },
+      {
+        "nome": "HENRY DA SILVA RODRIGUES",
+        "ra": "000116676483"
+      },
+      {
+        "nome": "ICARO VIDAL FRANCO BENTO",
+        "ra": "000116374901"
+      },
+      {
+        "nome": "IGOR COSTA PIRES",
+        "ra": "000116737617"
+      },
+      {
+        "nome": "ISABELE VITÓRIA CORDEIRO",
+        "ra": "000115169846"
+      },
+      {
+        "nome": "ISABELLA DE FÁTIMA NOGUEIRA",
+        "ra": "000120436399"
+      },
+      {
+        "nome": "JOAQUIM GABRIEL GONÇALVES DOS SANTOS",
+        "ra": "000120608925"
+      },
+      {
+        "nome": "KAIO GABRIEL SANTOS MARTINS",
+        "ra": "000120307032"
+      },
+      {
+        "nome": "LAÍS DE OLIVEIRA SOUSA",
+        "ra": "000120526752"
+      },
+      {
+        "nome": "LORENZO VIEIRA JACINTO",
+        "ra": "000116696593"
+      },
+      {
+        "nome": "LUAN MIGUEL REZENDE RIBEIRO",
+        "ra": "000116017238"
+      },
+      {
+        "nome": "MANUELA CRISTINA ALVES DA SILVA",
+        "ra": "000120095655"
+      },
+      {
+        "nome": "MARIA EDUARDA PEREDA FONTANA LIMA",
+        "ra": "000120339325"
+      },
+      {
+        "nome": "PAULA GABRIELLY DOS SANTOS ABRANTES",
+        "ra": "000121431741"
+      },
+      {
+        "nome": "PEDRO RODRIGUES VIEIRA",
+        "ra": "000121544605"
+      },
+      {
+        "nome": "THIAGO SANTANA SOUSA",
+        "ra": "000115180667"
+      },
+      {
+        "nome": "THIAGO WESLEY RODRIGUES",
+        "ra": "000120044877"
+      },
+      {
+        "nome": "VINÍCIUS VITORINO FILHO",
+        "ra": "000121476008"
+      },
+      {
+        "nome": "VITOR HENRIQUE SOARES",
+        "ra": "000120922339"
+      },
+      {
+        "nome": "YASMIM ALBUQUERQUE DE SOUZA",
+        "ra": "000120053271"
+      }
+    ]
+  },
+  "6º Ano A": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "AGATHA DA SILVA DAMASIO",
+        "ra": "000125643863"
+      },
+      {
+        "nome": "ALICIA VITORIA SILVA SALES DA HORA",
+        "ra": "000116086719"
+      },
+      {
+        "nome": "AMANDA COPPO DOTTO",
+        "ra": "000120022017"
+      },
+      {
+        "nome": "ANÍCIA CORREIA DE ARAUJO",
+        "ra": "000116618143"
+      },
+      {
+        "nome": "ARTHUR LOSAN SANTOS DIAS",
+        "ra": "000120011075"
+      },
+      {
+        "nome": "BRENO RODRIGUES",
+        "ra": "000114353559"
+      },
+      {
+        "nome": "CALLEB PEDROSO AMORIM",
+        "ra": "000120446006"
+      },
+      {
+        "nome": "DANIEL MARTINS RODRIGUES",
+        "ra": "000115831053"
+      },
+      {
+        "nome": "DANIEL SIQUEIRA MARINHO",
+        "ra": "000116041882"
+      },
+      {
+        "nome": "DAVI VELOSO CARDOSO",
+        "ra": "000116115200"
+      },
+      {
+        "nome": "ERICK GUILHERME SILVA NOBREGA",
+        "ra": "000116364600"
+      },
+      {
+        "nome": "GABRIEL SANTOS OREFICE",
+        "ra": "000116058587"
+      },
+      {
+        "nome": "GABRIEL SANTOS RIBEIRO",
+        "ra": "000114353259"
+      },
+      {
+        "nome": "GUILHERME FELIPE ALVES DE LIMA DOMINGOS",
+        "ra": "000116017918"
+      },
+      {
+        "nome": "HELLENA DA SILVA LACERDA DUARTE COELHO",
+        "ra": "000124591766"
+      },
+      {
+        "nome": "ISABELA ALICE BEZERRA DE ANDRADE",
+        "ra": "000120025291"
+      },
+      {
+        "nome": "ISABELLA FERREIRA DA SILVA OLIVEIRA",
+        "ra": "000120021384"
+      },
+      {
+        "nome": "JOÃO PEDRO MARÇAL DINIZ DE JESUS",
+        "ra": "000115744526"
+      },
+      {
+        "nome": "LAURA PEREIRA DA CUNHA ABEGG",
+        "ra": "000116287789"
+      },
+      {
+        "nome": "LÍVIA CAVALCANTE SILVA",
+        "ra": "000120030252"
+      },
+      {
+        "nome": "MANUELA DE ARAUJO SANTOS",
+        "ra": "000116429219"
+      },
+      {
+        "nome": "MATEUS CARVALHO BARBARO",
+        "ra": "000116579506"
+      },
+      {
+        "nome": "MIGUEL HENRIQUE GOMES DE OLIVEIRA",
+        "ra": "000115672688"
+      },
+      {
+        "nome": "MIGUEL RODRIGUES ANDRADE",
+        "ra": "000116641103"
+      },
+      {
+        "nome": "PAULO ASAFE DOS SANTOS SILVA",
+        "ra": "000114921460"
+      },
+      {
+        "nome": "PEDRO HENRIQUE LEVINO SILVA",
+        "ra": "000120064249"
+      },
+      {
+        "nome": "PEDRO HENRIQUE PEREIRA DE PAIVA",
+        "ra": "000114363669"
+      },
+      {
+        "nome": "RAFAEL MARCOS ALVES DE SOUSA PINHO",
+        "ra": "000116669091"
+      },
+      {
+        "nome": "RAFAELLA RIBEIRO CAMPOS",
+        "ra": "000116085820"
+      },
+      {
+        "nome": "RAISSA QUEIROZ DE SOUZA",
+        "ra": "000116139343"
+      },
+      {
+        "nome": "RAPHAEL RODRIGUES PONTES",
+        "ra": "000114361858"
+      },
+      {
+        "nome": "REBECA RODRIGUES MACHADO",
+        "ra": "000120021157"
+      },
+      {
+        "nome": "SAMUEL SOARES TRAUSULA",
+        "ra": "000116688488"
+      },
+      {
+        "nome": "SOPHYA DE SOUSA MACHADO",
+        "ra": "000114937307"
+      },
+      {
+        "nome": "THEO HANEDA NUNES MONTEIRO",
+        "ra": "000116127422"
+      },
+      {
+        "nome": "VALENTIM BATISTA RODRIGUES",
+        "ra": "000116307835"
+      },
+      {
+        "nome": "VICENTE GIOVANAZ AMORIM",
+        "ra": "000121571111"
+      },
+      {
+        "nome": "VINICIUS DOS SANTOS LIMA PIRES",
+        "ra": "000114934052"
+      }
+    ]
+  },
+  "6º Ano B": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ANA ALICE AMARAL",
+        "ra": "000115735634"
+      },
+      {
+        "nome": "ANA LUZIA ARAUJO BRAZ",
+        "ra": "000114295435"
+      },
+      {
+        "nome": "ANALICE DOS SANTOS NASCIMENTO",
+        "ra": "000120024101"
+      },
+      {
+        "nome": "ANNA BEATRIZ MARQUES DA SILVA",
+        "ra": "000120802968"
+      },
+      {
+        "nome": "ANTÔNIO PEIXINHO CARDOSO",
+        "ra": "000120713961"
+      },
+      {
+        "nome": "ARTHUR DA SILVA LOPES",
+        "ra": "000120888642"
+      },
+      {
+        "nome": "ARTHUR LINS BARROS DA SILVA",
+        "ra": "000115735073"
+      },
+      {
+        "nome": "DANIELLE DE BIVAR MAIA",
+        "ra": "000126026473"
+      },
+      {
+        "nome": "DAVI LUIZ DUTRA RODRIGUES",
+        "ra": "000120020592"
+      },
+      {
+        "nome": "EMANUELLY VITÓRIA DOS SANTOS ROCHA",
+        "ra": "000120045739"
+      },
+      {
+        "nome": "FELIPE NOGUEIRA PEREIRA",
+        "ra": "000120023433"
+      },
+      {
+        "nome": "GABRIEL DE SOUZA MENEZES",
+        "ra": "000116080267"
+      },
+      {
+        "nome": "GIOVANNA CAMILLY BARBOSA RIBEIRO",
+        "ra": "000120017934"
+      },
+      {
+        "nome": "GUSTAVO AMÉRICO VASCONCELLOS GARCEZ",
+        "ra": "000120375386"
+      },
+      {
+        "nome": "HELENA GABRIELA GERALDO",
+        "ra": "000120010319"
+      },
+      {
+        "nome": "JIMMY CORDEIRO DIAS FARIA FERREIRA GOMES",
+        "ra": "000115870233"
+      },
+      {
+        "nome": "JULIA BEATRIZ DE CARVALHO",
+        "ra": "000114353372"
+      },
+      {
+        "nome": "LARISSA RAFAELLE NOBREGA MENEZES",
+        "ra": "000120009197"
+      },
+      {
+        "nome": "LORENZO COELHO PINHEIRO",
+        "ra": "000116578795"
+      },
+      {
+        "nome": "LUCAS MEDEIROS BRANDÃO",
+        "ra": "000116050357"
+      },
+      {
+        "nome": "LUIZ HENRIQUE BAZILIO MARCELINO",
+        "ra": "000120027111"
+      },
+      {
+        "nome": "MIGUEL DAVI GRIMALDI DA SILVA",
+        "ra": "000120091187"
+      },
+      {
+        "nome": "MIGUEL LIMA DE JESUS",
+        "ra": "000120020764"
+      },
+      {
+        "nome": "MIGUEL PHILIPP FONSECA BERTAZZO PAES",
+        "ra": "000120328258"
+      },
+      {
+        "nome": "MURYLO LIMA NOGUEIRA",
+        "ra": "000120018769"
+      },
+      {
+        "nome": "NATASHA VITORIA DOS SANTOS MORAIS TELES",
+        "ra": "000121222820"
+      },
+      {
+        "nome": "NATHAN GONCALVES HIGINO",
+        "ra": "000116257304"
+      },
+      {
+        "nome": "PEDRO DA CONCEIÇÃO DE OLIVEIRA",
+        "ra": "000125093338"
+      },
+      {
+        "nome": "PEDRO MIGUEL SILVA CRISPIM DIAS",
+        "ra": "000116567999"
+      },
+      {
+        "nome": "ROBERTH DE SOUZA DO NASCIMENTO",
+        "ra": "000116414443"
+      },
+      {
+        "nome": "SAMUEL CIRILO VIEIRA DOS REIS",
+        "ra": "000116023255"
+      },
+      {
+        "nome": "SAMUEL RODOLFO CARVALHO SILVA",
+        "ra": "000120261640"
+      },
+      {
+        "nome": "SAMUEL SIQUEIRA MUNIZ",
+        "ra": "000114366298"
+      },
+      {
+        "nome": "SAMUEL VIEIRA DOS SANTOS ARAUJO",
+        "ra": "000115800439"
+      },
+      {
+        "nome": "YASMIM VITÓRIA CAVALCANTE VALENTIM",
+        "ra": "000120027592"
+      }
+    ]
+  },
+  "7º Ano A": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "AGATHA NICOLLY PAULISTA RIBEIRO",
+        "ra": "000113410610"
+      },
+      {
+        "nome": "ALICE DA SILVA BARRETO PIRES",
+        "ra": "000120266131"
+      },
+      {
+        "nome": "ANGEL CHRISTINE TOLEDO SOARES DA ROSA",
+        "ra": "000116078753"
+      },
+      {
+        "nome": "ANITA CANDINHO HERNANDES",
+        "ra": "000114325183"
+      },
+      {
+        "nome": "ARTHUR ARMANDO DE MEDEIROS",
+        "ra": "000115551309"
+      },
+      {
+        "nome": "BRAYAN OLIVEIRA REIS",
+        "ra": "000115047797"
+      },
+      {
+        "nome": "CAROLINA GOMES FERRAZ",
+        "ra": "000114718936"
+      },
+      {
+        "nome": "CHRISTOPHER BRYAN CEDANO DA NATIVIDADE",
+        "ra": "000115245763"
+      },
+      {
+        "nome": "DAVI GUSTAVO DA SILVA SOUZA",
+        "ra": "000114044219"
+      },
+      {
+        "nome": "ENZO GABRIEL LEAL DE ARAUJO",
+        "ra": "000116076200"
+      },
+      {
+        "nome": "FELIPE DA SILVA ARAGÃO",
+        "ra": "000116048298"
+      },
+      {
+        "nome": "GABRIEL MOACIR VALIM SCOLLA",
+        "ra": "000115961975"
+      },
+      {
+        "nome": "IAGO SILVA ALMEIDA",
+        "ra": "000114115828"
+      },
+      {
+        "nome": "IGOR DE MORAIS DA MOTA",
+        "ra": "000115551414"
+      },
+      {
+        "nome": "ISABELE LEÃO DIAS DOS SANTOS",
+        "ra": "000115242731"
+      },
+      {
+        "nome": "ISABELLY CARVALHO",
+        "ra": "000115243002"
+      },
+      {
+        "nome": "JULIANA AKEMI OTA LOPES",
+        "ra": "000116084838"
+      },
+      {
+        "nome": "KAMILY VITORIA MONTEIRO CARDOSO",
+        "ra": "000116679065"
+      },
+      {
+        "nome": "LARA SANTOS DINIZ",
+        "ra": "000114682605"
+      },
+      {
+        "nome": "LAURA BARROS BENHOSSI",
+        "ra": "000115232744"
+      },
+      {
+        "nome": "LEANDRO HENRIQUE ARAUJO PEREIRA",
+        "ra": "000116576459"
+      },
+      {
+        "nome": "LIVIA MENEZES COELHO",
+        "ra": "000113439321"
+      },
+      {
+        "nome": "LORENZO ROSENDO CORREA",
+        "ra": "000115871538"
+      },
+      {
+        "nome": "LUIZA ROCHA FERNANDES",
+        "ra": "000115851341"
+      },
+      {
+        "nome": "MARIA EDUARDA DO NASCIMENTO",
+        "ra": "000125438324"
+      },
+      {
+        "nome": "MATEUS PAULO FERREIRA",
+        "ra": "000120411230"
+      },
+      {
+        "nome": "MATHEUS RODRIGUES COUTO",
+        "ra": "000113806700"
+      },
+      {
+        "nome": "MAYA SCHMIDT DE OLIVEIRA",
+        "ra": "000114367906"
+      },
+      {
+        "nome": "MAYARA VITORIA MARTINS",
+        "ra": "000120045498"
+      },
+      {
+        "nome": "MELISSA LIMA DE OLIVEIRA",
+        "ra": "000113404772"
+      },
+      {
+        "nome": "NATHÁLIA CRISTINA MOREIRA FERREIRA",
+        "ra": "000116076741"
+      },
+      {
+        "nome": "PEDRO HENRIQUE MACEDO MORAES ALVES",
+        "ra": "000116077917"
+      },
+      {
+        "nome": "RAONI ADLA BARBOSA ROSA",
+        "ra": "000113277181"
+      },
+      {
+        "nome": "REBECA LEANDRA PORTES PEREIRA",
+        "ra": "000114363839"
+      },
+      {
+        "nome": "SAMUEL BEZERRA TEIXEIRA",
+        "ra": "000116083881"
+      },
+      {
+        "nome": "SANDRO CRISTIANO DOS SANTOS CRISTIANO",
+        "ra": "000113869066"
+      },
+      {
+        "nome": "VICTOR GABRIEL MATOS LIMA",
+        "ra": "000115232820"
+      },
+      {
+        "nome": "VITORIA DE SOUZA",
+        "ra": "000114989250"
+      },
+      {
+        "nome": "ÍSIS MACEDO MARQUES SILVA",
+        "ra": "000115219980"
+      }
+    ]
+  },
+  "7º Ano B": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ANA PAULA DO NASCIMENTO MELO",
+        "ra": "000114365217"
+      },
+      {
+        "nome": "BEATRICE VITORIA PENNA LUIZ",
+        "ra": "000114918435"
+      },
+      {
+        "nome": "BRENO ALEXANDRE DE ANDRADE RIBEIRO",
+        "ra": "000115241014"
+      },
+      {
+        "nome": "DENYS RODRIGUES DOS SANTOS",
+        "ra": "000114874638"
+      },
+      {
+        "nome": "ENZO MOTA",
+        "ra": "000113673112"
+      },
+      {
+        "nome": "ESTER SANTANA PAIVA AMORIM",
+        "ra": "000116083182"
+      },
+      {
+        "nome": "EVE DE OLIVEIRA",
+        "ra": "000116083326"
+      },
+      {
+        "nome": "FRANCISCO GONÇALVES LIRA",
+        "ra": "000115240520"
+      },
+      {
+        "nome": "GABRIEL DELFINO ALVES",
+        "ra": "000120970778"
+      },
+      {
+        "nome": "GABRIEL REIS SANTOS",
+        "ra": "000116593092"
+      },
+      {
+        "nome": "GABRIELA VENÂNCIO LIMA",
+        "ra": "000116081238"
+      },
+      {
+        "nome": "GABRIELE TRONE PONTES",
+        "ra": "000121067751"
+      },
+      {
+        "nome": "GIULIA DO CARMO MENEZES",
+        "ra": "000115818611"
+      },
+      {
+        "nome": "HANNAH ISAIAMA RONSISVALLE",
+        "ra": "000116078906"
+      },
+      {
+        "nome": "HELOÍSA DE FREITAS JUSTOLIN",
+        "ra": "000115777861"
+      },
+      {
+        "nome": "HENZO LIMA LOBATO",
+        "ra": "000114863017"
+      },
+      {
+        "nome": "IAN ALVES CELESTE",
+        "ra": "000115688043"
+      },
+      {
+        "nome": "JADE PEREIRA ABUD",
+        "ra": "000116422065"
+      },
+      {
+        "nome": "JENNIFER PORTES MILANI",
+        "ra": "000114812054"
+      },
+      {
+        "nome": "LARA GABRIELI DA SILVA SOUZA",
+        "ra": "000114044196"
+      },
+      {
+        "nome": "LAVINIA LIRIO GUERRA",
+        "ra": "000114599184"
+      },
+      {
+        "nome": "LAVÍNIA LOREN GONÇALVES FERREIRA",
+        "ra": "000114200927"
+      },
+      {
+        "nome": "LOHANY FERNANDA HENRIQUE SILVA",
+        "ra": "000115232757"
+      },
+      {
+        "nome": "LORENZO SANTOS OREFICE",
+        "ra": "000115270047"
+      },
+      {
+        "nome": "MARIA LUIZA SOUZA DE BARROS",
+        "ra": "000114274565"
+      },
+      {
+        "nome": "MELISSA JÚLIA DOS SANTOS LIMA",
+        "ra": "000116077782"
+      },
+      {
+        "nome": "MIGUEL RIBEIRO SOUSA",
+        "ra": "000116488077"
+      },
+      {
+        "nome": "MIKAELY AMANCIO SILVA",
+        "ra": "000115242822"
+      },
+      {
+        "nome": "NATHAN GABRIEL DE OLIVEIRA CUNHA",
+        "ra": "000115263051"
+      },
+      {
+        "nome": "OTAVIO HENRIQUE SOARES E SILVA",
+        "ra": "000115232813"
+      },
+      {
+        "nome": "PEDRO SOUZA FELIPPE",
+        "ra": "000115554554"
+      },
+      {
+        "nome": "PEDRO TAMER GOMES DE MELO",
+        "ra": "000116564317"
+      },
+      {
+        "nome": "RAFAEL GARCEZ SOARES",
+        "ra": "000116511393"
+      },
+      {
+        "nome": "SAMUEL ARCANJO DE FREITAS",
+        "ra": "000113885560"
+      },
+      {
+        "nome": "SOFIA MARTINS DE OLIVEIRA",
+        "ra": "000116083919"
+      },
+      {
+        "nome": "THAYS HELENA SOARES",
+        "ra": "000116050893"
+      },
+      {
+        "nome": "VINICIUS CHAGAS MOREIRA AREIAS",
+        "ra": "000114793001"
+      },
+      {
+        "nome": "VITOR CORRÊA DE LIMA",
+        "ra": "000115242229"
+      },
+      {
+        "nome": "VITORIA ALVES DA SILVA",
+        "ra": "000116076935"
+      }
+    ]
+  },
+  "8º Ano A": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ADASSA MANUELLE DE SOUZA SILVA",
+        "ra": "000115228594"
+      },
+      {
+        "nome": "ADRIANO BARBOZA",
+        "ra": "000113655917"
+      },
+      {
+        "nome": "AIYRA VICTORIA HERMESDORFF SOUSA",
+        "ra": "000114838409"
+      },
+      {
+        "nome": "ALANA RODRIGUES",
+        "ra": "000114354783"
+      },
+      {
+        "nome": "ANA BEATRIZ SANCHES LIMA",
+        "ra": "000114334703"
+      },
+      {
+        "nome": "BEATRIZ OLIVEIRA DA SILVA",
+        "ra": "000116084304"
+      },
+      {
+        "nome": "BRUNNO MATHEUS DOS SANTOS SILVA",
+        "ra": "000115245927"
+      },
+      {
+        "nome": "CLARA DIAS SOARES",
+        "ra": "000114367383"
+      },
+      {
+        "nome": "DANIEL ALENCAR BONFIM",
+        "ra": "000112444748"
+      },
+      {
+        "nome": "DAVI LEANDRO DA FONSECA",
+        "ra": "000115236110"
+      },
+      {
+        "nome": "DAVI LUCCA MAIA DE ALMEIDA",
+        "ra": "000115096355"
+      },
+      {
+        "nome": "ELIZA GABRYELLE RODRIGUES DE OLIVEIRA SILVA",
+        "ra": "000115440927"
+      },
+      {
+        "nome": "EMANUELLY VITORIA PASCHOALINO DE ANDRADE",
+        "ra": "000114831633"
+      },
+      {
+        "nome": "ENDREW NATHAN DE OLIVEIRA DIAS",
+        "ra": "000113417767"
+      },
+      {
+        "nome": "ENZO SBRUZZI",
+        "ra": "000115227333"
+      },
+      {
+        "nome": "GABRIEL FERNANDES SOUZA",
+        "ra": "000114360918"
+      },
+      {
+        "nome": "GABRIEL RODRIGUES LEAL",
+        "ra": "000116734375"
+      },
+      {
+        "nome": "GABRIELLA SOARES DE CAMARGO",
+        "ra": "000114406788"
+      },
+      {
+        "nome": "GUILHERME RODRIGUES PEREIRA",
+        "ra": "000114364960"
+      },
+      {
+        "nome": "GUSTAVO VERAS CAMPOS",
+        "ra": "000114926258"
+      },
+      {
+        "nome": "HANNA GABRIELA REIS SOARES",
+        "ra": "000122078594"
+      },
+      {
+        "nome": "HUGO HENRIQUE DAMIÃO CUNHA",
+        "ra": "000116084446"
+      },
+      {
+        "nome": "ISAC PIETRO PAIVA DOS SANTOS",
+        "ra": "000115229731"
+      },
+      {
+        "nome": "LAURA DIAS SOARES",
+        "ra": "000114367298"
+      },
+      {
+        "nome": "LOHAN BULHOSA DA ROCHA SANTOS",
+        "ra": "000116702113"
+      },
+      {
+        "nome": "LUIZ MIGUEL DOS SANTOS",
+        "ra": "000114361270"
+      },
+      {
+        "nome": "LUIZA HELENA BARROS GUIMARÃES",
+        "ra": "000113440105"
+      },
+      {
+        "nome": "MANUELLA DAISY ALMEIDA DE LIMA",
+        "ra": "000115230914"
+      },
+      {
+        "nome": "MANUELLA TEIXEIRA",
+        "ra": "000112444876"
+      },
+      {
+        "nome": "MARIA LUISA SANCHEZ BERNARDI",
+        "ra": "000115518897"
+      },
+      {
+        "nome": "MATHEUS BUENO DE SOUSA",
+        "ra": "000115093961"
+      },
+      {
+        "nome": "MELISSA RENATA VIANA",
+        "ra": "000115232083"
+      },
+      {
+        "nome": "PIETRA DE SIQUEIRA ROCHA RODRIGUES",
+        "ra": "000113124206"
+      },
+      {
+        "nome": "PYETRO ANTUNES OLIVEIRA",
+        "ra": "000113979490"
+      },
+      {
+        "nome": "SAMUEL FERREIRA PONTES",
+        "ra": "000115609981"
+      },
+      {
+        "nome": "SAMUEL SOUZA LANDIM",
+        "ra": "000124998132"
+      },
+      {
+        "nome": "VINICIUS SIQUEIRA DE ARAUJO",
+        "ra": "000113991072"
+      },
+      {
+        "nome": "ÍCARO ALVES DE OLIVEIRA ESTEVÃO",
+        "ra": "000126010233"
+      }
+    ]
+  },
+  "8º Ano B": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ARTHUR DE OLIVEIRA SOUSA",
+        "ra": "000113437561"
+      },
+      {
+        "nome": "ARTHUR ROGERIO DE CASTRO COELHO",
+        "ra": "000114640795"
+      },
+      {
+        "nome": "BRENO FERNANDES MIRANDA DA SILVA",
+        "ra": "000113414738"
+      },
+      {
+        "nome": "BRUNO VICTOR SANTOS PEREIRA",
+        "ra": "000113935296"
+      },
+      {
+        "nome": "DAVI CAIQUE KRUK MELLO DA SILVA",
+        "ra": "000114682334"
+      },
+      {
+        "nome": "DAVI KENZO SANTOS",
+        "ra": "000115235804"
+      },
+      {
+        "nome": "DAVI LUCAS DE SIQUEIRA SOUSA",
+        "ra": "000113429469"
+      },
+      {
+        "nome": "GABRIEL SIQUEIRA RODRIGUES ALVES",
+        "ra": "000115341379"
+      },
+      {
+        "nome": "GEOVANNA BEATRIZ CRUZ DA SILVA",
+        "ra": "000113945611"
+      },
+      {
+        "nome": "GIOVANA APARECIDA MONTEIRO GOULART",
+        "ra": "000115229725"
+      },
+      {
+        "nome": "GIOVANNA DA SILVA JUSTINO",
+        "ra": "000114929969"
+      },
+      {
+        "nome": "GUSTAVO GONÇALVES FRANÇA",
+        "ra": "000116445430"
+      },
+      {
+        "nome": "GUSTAVO HENRIQUE CAMPOS DE FREITAS",
+        "ra": "000114197818"
+      },
+      {
+        "nome": "GUSTAVO RODRIGUES PEREIRA",
+        "ra": "000114365002"
+      },
+      {
+        "nome": "ISABELLA MORAES SANTOS",
+        "ra": "000113409079"
+      },
+      {
+        "nome": "JOAQUIM DE LEMOS FERREIRA SILVA",
+        "ra": "000115435774"
+      },
+      {
+        "nome": "KAUA MIGUEL RIBEIRO DE MOURA SENA EUGENIO",
+        "ra": "000114481549"
+      },
+      {
+        "nome": "KAUA NICOLLAS ZAMPOLA SANTOS",
+        "ra": "000114364838"
+      },
+      {
+        "nome": "KAUE HENRIQUE ABDON GONCALVES",
+        "ra": "000116084626"
+      },
+      {
+        "nome": "LARISSA PIRES DUARTE HERNANDEZ",
+        "ra": "000113437690"
+      },
+      {
+        "nome": "LEONARDO VINICIUS ESMERIO SANTOS",
+        "ra": "000115245619"
+      },
+      {
+        "nome": "LORENZO CONSTANTINO OLIVEIRA KOMATSU",
+        "ra": "000112478857"
+      },
+      {
+        "nome": "LUIDY BERNARDO THOMÉ DE SOUZA MANSO",
+        "ra": "000114888336"
+      },
+      {
+        "nome": "LUIZA MORAIS DOS SANTOS",
+        "ra": "000114713541"
+      },
+      {
+        "nome": "LUNA FRIGGI DE CARVALHO MONTEIRO",
+        "ra": "000114375940"
+      },
+      {
+        "nome": "MARCO ANTONIO STELLA MUSCARIONE",
+        "ra": "000113931767"
+      },
+      {
+        "nome": "MARIANE CAMILE DE LIMA TEIXEIRA",
+        "ra": "000116084365"
+      },
+      {
+        "nome": "MATEUS GALDINO FALCONI",
+        "ra": "000121142274"
+      },
+      {
+        "nome": "MELINA PERETTA SANTOS",
+        "ra": "000112450298"
+      },
+      {
+        "nome": "MELISSA DA COSTA FERREIRA",
+        "ra": "000115244333"
+      },
+      {
+        "nome": "MIGUEL BISPO DE JESUS DA SILVA",
+        "ra": "000122358559"
+      },
+      {
+        "nome": "MIGUEL VIRGÍLIO FONTENELE",
+        "ra": "000113537319"
+      },
+      {
+        "nome": "RAPHAEL VIEIRA MACHADO",
+        "ra": "000115246570"
+      },
+      {
+        "nome": "SARA HELENA FERREIRA DONATELLI SEABRA",
+        "ra": "000115215167"
+      },
+      {
+        "nome": "SOPHIA MARIA TOURINHO DE CASTRO",
+        "ra": "000123161549"
+      },
+      {
+        "nome": "VICTOR MIGUEL DE MATOS CARVALHO",
+        "ra": "000115246108"
+      },
+      {
+        "nome": "VITOR GERZOSCHKOWITZ PINHEIRO RUSSO",
+        "ra": "000113023809"
+      },
+      {
+        "nome": "WALLISON FELIX RODRIGUES SAMPAIO",
+        "ra": "000113070809"
+      }
+    ]
+  },
+  "9º Ano A": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ALICE FERREIRA DA SILVA ARAUJO",
+        "ra": "000114876832"
+      },
+      {
+        "nome": "ALICIA SAMARA PENNA GUIRARDI",
+        "ra": "000114018541"
+      },
+      {
+        "nome": "ANA LAURA SILES SERPA",
+        "ra": "000124119443"
+      },
+      {
+        "nome": "ANA LUIZA GOMES TAVARES CLARO",
+        "ra": "000113839591"
+      },
+      {
+        "nome": "ANA LUIZA LIMA ROCHA",
+        "ra": "000113335413"
+      },
+      {
+        "nome": "ARTHUR HENRIQUE GONÇALVES DE OLIVEIRA",
+        "ra": "000115088688"
+      },
+      {
+        "nome": "BRAYAN FELIPE FIALHO DA SILVA",
+        "ra": "000113759671"
+      },
+      {
+        "nome": "BRIAN VARGAS SANTOS CASTRO",
+        "ra": "000113839760"
+      },
+      {
+        "nome": "CARLOS MIGUEL LEITE PASCOAL",
+        "ra": "000114367232"
+      },
+      {
+        "nome": "DANIELLE COSTA GOMES",
+        "ra": "000114360833"
+      },
+      {
+        "nome": "FELIPE OLIMPIO CURSINO DOS SANTOS",
+        "ra": "000113790242"
+      },
+      {
+        "nome": "HELOISA LUDGERO CARVALHO",
+        "ra": "000114356667"
+      },
+      {
+        "nome": "HENRICO SULPICIO MARIANO",
+        "ra": "000115023730"
+      },
+      {
+        "nome": "HENRIQUE MORAIS SILVA",
+        "ra": "000112446809"
+      },
+      {
+        "nome": "JOAO VENANCIO DE OLIVEIRA SANTOS",
+        "ra": "000112855492"
+      },
+      {
+        "nome": "JOEL VINICIO CONCEICAO DA SILVA",
+        "ra": "000112557930"
+      },
+      {
+        "nome": "JOSE BRUNO ALVES DA SILVA",
+        "ra": "000122101775"
+      },
+      {
+        "nome": "JUAN PABLO FÉLIX GARCIA",
+        "ra": "000113441267"
+      },
+      {
+        "nome": "LARA FONSÊCA DA SILVA",
+        "ra": "000114367528"
+      },
+      {
+        "nome": "LOUISE DA SILVA QUEIROZ",
+        "ra": "000113041929"
+      },
+      {
+        "nome": "LÍVIA MOURA DE FRANÇA SOARES",
+        "ra": "000113960157"
+      },
+      {
+        "nome": "MARIA ALICE BATISTA CORRÊA",
+        "ra": "000113441307"
+      },
+      {
+        "nome": "MARIA CLARA FERNANDES TORRES DE CASTILHO",
+        "ra": "000115794670"
+      },
+      {
+        "nome": "MARIA LUÍZA SAMPAIO SILVA RAMALHO PONTES",
+        "ra": "000113399858"
+      },
+      {
+        "nome": "MARIAH VICTORIA FERREIRA DE MORAIS",
+        "ra": "000111437639"
+      },
+      {
+        "nome": "MIGUEL CARNEIRO PRADO",
+        "ra": "000111634890"
+      },
+      {
+        "nome": "MIGUEL DE ALBUQUERQUE SILVA BARRETO",
+        "ra": "000113429828"
+      },
+      {
+        "nome": "MIGUEL DIAS MARQUES BONFIM DA COSTA",
+        "ra": "000114366738"
+      },
+      {
+        "nome": "MIGUEL HENRIQUE ANTUNES CANTONI",
+        "ra": "000113903225"
+      },
+      {
+        "nome": "RODRIGO FAGUNDES DOS SANTOS",
+        "ra": "000114240901"
+      },
+      {
+        "nome": "SAMUEL FERCHER ZILVES",
+        "ra": "000114368005"
+      },
+      {
+        "nome": "SAMUEL LIMA DE OLIVEIRA",
+        "ra": "000114368029"
+      },
+      {
+        "nome": "SAMUEL PINHEIRO FERREIRA",
+        "ra": "000114365937"
+      },
+      {
+        "nome": "SOPHIA CAMARGO DOS SANTOS",
+        "ra": "000114367227"
+      },
+      {
+        "nome": "TAYLANI APARECIDA FERREIRA DE ARAÚJO",
+        "ra": "000114372516"
+      },
+      {
+        "nome": "VINICIUS SOARES PEREIRA",
+        "ra": "000112841453"
+      },
+      {
+        "nome": "VITOR HUGO APOLINÁRIO DE CAMARGO",
+        "ra": "000113440286"
+      }
+    ]
+  },
+  "9º Ano B": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "ALICE RODRIGUES PONTES",
+        "ra": "000114093273"
+      },
+      {
+        "nome": "ANA CLARA RODRIGUES OLIVEIRA",
+        "ra": "000113441821"
+      },
+      {
+        "nome": "ANA FLORA MOURA SOUZA MOREIRA",
+        "ra": "000114366581"
+      },
+      {
+        "nome": "ARTHUR RODRIGUES RAIMUNDO",
+        "ra": "000113424276"
+      },
+      {
+        "nome": "BEATRIZ RIBEIRO DOS ANJOS",
+        "ra": "000114357683"
+      },
+      {
+        "nome": "CAIO JOHNATHAN DE OLIVEIRA E SILVA",
+        "ra": "000114801578"
+      },
+      {
+        "nome": "DANIEL GUSTAVO BEZERRA DE ANDRADE",
+        "ra": "000113440642"
+      },
+      {
+        "nome": "DANIELLE LISBOA CORTEZ",
+        "ra": "000112751642"
+      },
+      {
+        "nome": "DAVI DE OLIVEIRA ALENCAR",
+        "ra": "000113440696"
+      },
+      {
+        "nome": "DAVI VICENTE DA SILVA",
+        "ra": "000113428639"
+      },
+      {
+        "nome": "EMANUELLE DE SIQUEIRA SILVESTRE",
+        "ra": "000113644850"
+      },
+      {
+        "nome": "ISABELLA PIETRA PAIVA DOS SANTOS",
+        "ra": "000113440785"
+      },
+      {
+        "nome": "JAILTON GOMES DE SOUZA FILHO",
+        "ra": "000115664443"
+      },
+      {
+        "nome": "JHOSEPH LEE RYANN FERREIRA DA SILVA",
+        "ra": "000113410522"
+      },
+      {
+        "nome": "JOÃO VITOR COSTA DE SÁ",
+        "ra": "000112489256"
+      },
+      {
+        "nome": "JULIA VICTORIA MARIANO",
+        "ra": "000116080694"
+      },
+      {
+        "nome": "KAIQUE MIGUEL DA SILVA XAVIER",
+        "ra": "000115555103"
+      },
+      {
+        "nome": "KELLY BARBOSA DE SOUZA",
+        "ra": "000112495411"
+      },
+      {
+        "nome": "LAURA BEATRIZ PIMENTEL DA COSTA SILVA",
+        "ra": "000121232864"
+      },
+      {
+        "nome": "LAURA REIS CAMPOS",
+        "ra": "000113416633"
+      },
+      {
+        "nome": "LAVINIA DE MATOS CARVALHO",
+        "ra": "000115242619"
+      },
+      {
+        "nome": "LETICIA KROLL DA MOTTA",
+        "ra": "000114860419"
+      },
+      {
+        "nome": "LUCAS VELOSO CARDOSO",
+        "ra": "000114352373"
+      },
+      {
+        "nome": "LUIS FILIPE CARVALHO BARBARO",
+        "ra": "000114860231"
+      },
+      {
+        "nome": "MANUELA CANDINHO HERNANDES",
+        "ra": "000113282619"
+      },
+      {
+        "nome": "MANUELLA GOES LOPES DE ABREU",
+        "ra": "000113158373"
+      },
+      {
+        "nome": "MARIA FERNANDA SOUZA DO NASCIMENTO",
+        "ra": "000112455058"
+      },
+      {
+        "nome": "MARIA ISABELA SANTOS DE OLIVEIRA",
+        "ra": "000112450442"
+      },
+      {
+        "nome": "MARIANA DOS SANTOS SIGISMUNDO",
+        "ra": "000114219850"
+      },
+      {
+        "nome": "MATHEUS RODRIGO FERREIRA DE MORAES",
+        "ra": "000114358662"
+      },
+      {
+        "nome": "MIGUEL MEDEIROS BUSTAMANTE",
+        "ra": "000114317317"
+      },
+      {
+        "nome": "NICOLAS ALEXANDRE FERREIRA",
+        "ra": "000112864067"
+      },
+      {
+        "nome": "NICOLLY VIEIRA DOS SANTOS SANDOVAL",
+        "ra": "000112068940"
+      },
+      {
+        "nome": "PEDRO HENRIQUE SIQUEIRA LEME SILVESTRE",
+        "ra": "000113441409"
+      },
+      {
+        "nome": "RYAN DA SILVA RODRIGUES",
+        "ra": "000122947163"
+      },
+      {
+        "nome": "SOPHIA MACHADO DANTAS NASCIMENTO",
+        "ra": "000114377764"
+      },
+      {
+        "nome": "WEISLA OLIVIA DO ESPIRITO SANTO",
+        "ra": "000114367841"
+      },
+      {
+        "nome": "YOHAN KALEBY SILVA",
+        "ra": "000113428986"
+      }
+    ]
+  },
+  "9º Ano C": {
+    "nivel": "Ensino Fundamental",
+    "alunos": [
+      {
+        "nome": "DANIEL DE OLIVEIRA ELIAS DA SILVA",
+        "ra": "000114047626"
+      },
+      {
+        "nome": "DAVI GONCALVES HIGINO",
+        "ra": "000112164724"
+      },
+      {
+        "nome": "DAVI VITOR NASCIMENTO MALHONE",
+        "ra": "000113417592"
+      },
+      {
+        "nome": "EMANUELLA SANTOS RIBEIRO",
+        "ra": "000113440740"
+      },
+      {
+        "nome": "EMELLYN PEREIRA DE MELO",
+        "ra": "000114364123"
+      },
+      {
+        "nome": "GABRIEL ALBUQUERQUE GONSALVES",
+        "ra": "000114367183"
+      },
+      {
+        "nome": "GIOVANA ESTÉFANI DA COSTA",
+        "ra": "000113425902"
+      },
+      {
+        "nome": "IASMIN CAMARGO ANDRE DA SILVA",
+        "ra": "000111971827"
+      },
+      {
+        "nome": "JOÃO MIGUEL RABELO DA ROCHA",
+        "ra": "000112910174"
+      },
+      {
+        "nome": "JOÃO VINÍCIUS SOUSA DE LIMA",
+        "ra": "000123829052"
+      },
+      {
+        "nome": "JULIA BARBOSA RUIZ DE LIMA",
+        "ra": "000114358006"
+      },
+      {
+        "nome": "KAUAN BOLON SANTANA",
+        "ra": "000112456546"
+      },
+      {
+        "nome": "LARA SOFIA BATEMARQUE PEREIRA",
+        "ra": "000114358151"
+      },
+      {
+        "nome": "LAURYNN YHASMIN GONÇALVES FERREIRA",
+        "ra": "000114786618"
+      },
+      {
+        "nome": "LETÍCIA MODESTO DE MOURA",
+        "ra": "000121828138"
+      },
+      {
+        "nome": "LUCAS SIQUEIRA DOS REIS SOARES",
+        "ra": "000114209548"
+      },
+      {
+        "nome": "LUIS FELIPE MARTINS SEPULVEDA",
+        "ra": "000111439972"
+      },
+      {
+        "nome": "LUIZ OTAVIO GALLO DE OLIVEIRA DOS SANTOS",
+        "ra": "000112452184"
+      },
+      {
+        "nome": "MAIARA GUEDES VAZ",
+        "ra": "000111437972"
+      },
+      {
+        "nome": "MARCELLA VITÓRIA FERREIRA SILVA",
+        "ra": "000112449440"
+      },
+      {
+        "nome": "MARIA CLARA RAMOS HERVAZ",
+        "ra": "000115556701"
+      },
+      {
+        "nome": "MARIA CLARA VALIM SCOLLA",
+        "ra": "000115633869"
+      },
+      {
+        "nome": "MARIA EDUARDA GIFFONI RODRIGUES",
+        "ra": "000114358161"
+      },
+      {
+        "nome": "MATEUS RENO MARTINS",
+        "ra": "000114888280"
+      },
+      {
+        "nome": "MELISSA BARRETO GONÇALVES",
+        "ra": "000115182235"
+      },
+      {
+        "nome": "MICHELE TEIXEIRA DE OLIVEIRA",
+        "ra": "000114367956"
+      },
+      {
+        "nome": "MURILLO ARRUDA BARREIRA",
+        "ra": "000113906418"
+      },
+      {
+        "nome": "PAULO HENRIQUE GUIZI DE SOUZA",
+        "ra": "000116563760"
+      },
+      {
+        "nome": "PEDRO HENRIQUE INTRIERI DA SILVA",
+        "ra": "000113459948"
+      },
+      {
+        "nome": "PEDRO HENRIQUE PIRES HONORATO",
+        "ra": "000113115409"
+      },
+      {
+        "nome": "RAFAEL SANTOS VEGA",
+        "ra": "000126266514"
+      },
+      {
+        "nome": "RAUL FRIGGI DE CARVALHO MONTEIRO",
+        "ra": "000113427618"
+      },
+      {
+        "nome": "REBEKA STEFANNY AZEVEDO ALVES",
+        "ra": "000114361759"
+      },
+      {
+        "nome": "SAMARA ALEXANDRA DA SILVA",
+        "ra": "000113956739"
+      },
+      {
+        "nome": "SAMUEL RODRIGUES SANT' ANNA",
+        "ra": "000114360790"
+      }
+    ]
+  }
+}

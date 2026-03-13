@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ocorrências — Malba Thereza Ferraz Campaner</title>
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div id="app">
+
+<!-- LOGIN -->
+<div class="ls" id="loginScreen">
+  <div class="lh">
+    <div class="gb">GOVERNO DO ESTADO DE SÃO PAULO — SEDUC SP</div>
+    <h1>Ocorrências — Malba Thereza</h1>
+    <p>Sistema de Registro de Ocorrências Escolares<br>Protocolo 179 — CONVIVA SP</p>
+  </div>
+  <div class="lc">
+    <h2>Acesso ao Sistema</h2>
+    <div class="fg"><label>Selecione seu nome</label>
+      <select id="loginUsuario"><option value="">Selecione...</option></select></div>
+    <div class="fg"><label>Senha</label>
+      <input type="password" id="loginPass" placeholder="••••••••"/></div>
+    <button class="bp" onclick="window._doLogin()">Entrar</button>
+    <div style="font-size:12px;color:var(--mu);border:0.5px solid var(--bd);border-radius:8px;padding:10px;margin-top:1rem">
+      <strong style="display:block;margin-bottom:6px">Acesso rápido para demonstração:</strong>
+      <div id="demoButtons"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="ms" id="mainScreen">
+  <div class="tb">
+    <div><span class="at">Ocorrências — Malba Thereza</span><br><span class="as">Protocolo 179 · CONVIVA SP · SEDUC SP</span></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="wsStatus" class="ws-status err">● offline</span>
+      <div class="ub"><span class="un" id="topName">-</span><span class="ur" id="topRole">-</span></div>
+      <button class="lo" onclick="window._doLogout()">Sair</button>
+    </div>
+  </div>
+  <div class="nt">
+    <button class="act" onclick="showTab('dashboard',this)">Início</button>
+    <button onclick="showTab('registrar',this)">Registrar</button>
+    <button onclick="showTab('ocorrencias',this)">Ocorrências</button>
+    <button id="tabRel" onclick="showTab('relatorio',this)" style="display:none">Relatórios</button>
+    <button id="tabGes" onclick="showTab('gestao',this)" style="display:none">Gestão</button>
+  </div>
+  <div class="ct">
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard">
+      <div id="dashAlerts"></div>
+      <div class="sg" id="statsGrid"></div>
+      <div class="st">Ocorrências recentes</div>
+      <div class="ol" id="dashList"></div>
+    </div>
+
+    <!-- REGISTRAR -->
+    <div id="tab-registrar" style="display:none">
+      <div class="st" style="margin-bottom:1rem">Registrar Ocorrência — Protocolo 179</div>
+      <div id="perfilHeader"></div>
+      <div class="fc">
+        <div id="blocoI" style="display:none">
+          <div class="fl">Bloco I — Urgência / Emergência
+            <span class="lt poc">P.O.C.</span><span class="lt gt">Gestão</span></div>
+          <div class="ab re" style="margin-bottom:8px"><span><strong>Acionar PM (190) imediatamente</strong> e registrar na plataforma</span></div>
+          <div class="tg" id="gridUrg"></div>
+        </div>
+        <div id="blocoII">
+          <div class="fl" id="lblBlocoII">Bloco II — Convivência e Proteção</div>
+          <div class="ab or" style="margin-bottom:8px"><span><strong>Registrar e comunicar</strong> a equipe gestora</span></div>
+          <div class="tg" id="gridGrav"></div>
+        </div>
+        <p style="font-size:12px;color:var(--mu);margin:8px 0 4px">Tipo selecionado: <strong id="tipoLabel" style="color:var(--mg)">nenhum</strong></p>
+        <div id="protBox" style="display:none"></div>
+        <div class="fl" style="margin-top:1rem">Dados da ocorrência</div>
+        <div class="fr">
+          <div class="fg"><label>Data</label><input type="date" id="occData"/></div>
+          <div class="fg"><label>Horário</label><input type="time" id="occHora"/></div>
+        </div>
+        <div class="fr">
+          <div class="fg"><label>Local</label>
+            <select id="occLocal"><option value="">Selecione...</option>
+              <option>Sala de aula</option><option>Pátio / quadra</option><option>Corredor</option>
+              <option>Banheiro</option><option>Portão / entrada</option><option>Cantina / refeitório</option>
+              <option>Área externa / proximidades</option><option>Ambiente virtual / online</option><option>Outro</option>
+            </select></div>
+          <div class="fg"><label>Gravidade</label>
+            <select id="occGrav"><option value="">Selecione...</option>
+              <option value="urgencia" id="optUrg">Urgência / Emergência</option>
+              <option value="grave">Grave</option><option value="media">Média</option><option value="leve">Leve</option>
+            </select></div>
+        </div>
+        <div class="fl">Turma e alunos</div>
+        <div class="fg"><label>Turma</label>
+          <select id="occTurma" onchange="onTurmaChange()"><option value="">Selecione...</option></select></div>
+        <div class="fg" id="painelWrap" style="display:none">
+          <label>Aluno(s) — <strong id="lblTurma" style="color:var(--mg)"></strong></label>
+          <div class="ap">
+            <div class="aph"><span id="lblTotal"></span><small id="lblCount">0 selecionado(s)</small></div>
+            <div class="afw"><input type="text" id="filtroAluno" placeholder="Filtrar por nome..." oninput="filtrarAlunos()"/></div>
+            <div class="ali" id="listaAlunos"></div>
+          </div>
+          <div class="atw" id="tagsAlunos"></div>
+        </div>
+        <div class="fg"><label>Tipo de envolvido</label>
+          <select id="occEnv"><option value="">Selecione...</option>
+            <option>Estudante(s)</option><option>Estudante e servidor</option>
+            <option>Servidor(es)</option><option>Agente externo</option></select></div>
+        <div id="campoRelato">
+          <div class="fl">Relato da ocorrência</div>
+          <div class="fg"><textarea id="occRelato" rows="3" placeholder="Descreva o que foi presenciado ou comunicado..."></textarea></div>
+        </div>
+        <div id="campoGestao" style="display:none">
+          <div class="fl">Descrição e providências <span class="lt gt">Coordenação / Direção</span></div>
+          <div class="fg"><label>Descrição completa</label><textarea id="occDesc" rows="4"></textarea></div>
+          <div class="fg"><label>Providências tomadas</label><textarea id="occProv" rows="3"></textarea></div>
+          <div class="fr">
+            <div class="fg"><label>B.O. registrado?</label>
+              <select id="occBO"><option value="">Selecione...</option><option>Sim</option><option>Não se aplica</option><option>Não</option></select></div>
+            <div class="fg"><label>Família comunicada?</label>
+              <select id="occFam"><option value="">Selecione...</option><option>Sim</option><option>Não</option><option>Não se aplica</option></select></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:1.25rem;flex-wrap:wrap">
+          <button class="bp" style="flex:1;min-width:140px" onclick="window._registrarOcorrencia()">Registrar Ocorrência</button>
+          <button class="bn" style="flex:1;min-width:100px;padding:10px" onclick="window._limparForm()">Limpar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OCORRÊNCIAS -->
+    <div id="tab-ocorrencias" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+        <div class="st" style="margin:0;border:none;padding:0">Ocorrências Registradas</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <select id="fNivel" onchange="renderOcc()" style="font-size:12px;padding:4px 8px;border:0.5px solid #ccc;border-radius:8px;background:#fff">
+            <option value="">Todos os níveis</option><option value="Ensino Fundamental">Fundamental</option><option value="Ensino Médio">Médio</option></select>
+          <select id="fTurma" onchange="renderOcc()" style="font-size:12px;padding:4px 8px;border:0.5px solid #ccc;border-radius:8px;background:#fff"></select>
+          <select id="fGrav" onchange="renderOcc()" style="font-size:12px;padding:4px 8px;border:0.5px solid #ccc;border-radius:8px;background:#fff">
+            <option value="">Todas as gravidades</option><option value="urgencia">Urgência</option><option value="grave">Grave</option><option value="media">Média</option><option value="leve">Leve</option></select>
+          <select id="fStatus" onchange="renderOcc()" style="font-size:12px;padding:4px 8px;border:0.5px solid #ccc;border-radius:8px;background:#fff">
+            <option value="">Todos os status</option><option value="pendente">Aguard. complemento</option><option value="encerrado">Encerrado</option></select>
+        </div>
+      </div>
+      <div class="ol" id="occList"></div>
+    </div>
+
+    <!-- RELATÓRIOS -->
+    <div id="tab-relatorio" style="display:none">
+      <div class="st">Relatórios</div>
+      <div class="fc" style="margin-bottom:1rem">
+        <div class="fl">Filtros</div>
+        <div class="fr">
+          <div class="fg"><label>Turma</label><select id="relTurma"></select></div>
+          <div class="fg"><label>Gravidade</label>
+            <select id="relGrav"><option value="">Todas</option><option value="urgencia">Urgência</option><option value="grave">Grave</option><option value="media">Média</option><option value="leve">Leve</option></select></div>
+        </div>
+        <button class="bn mg" onclick="window._gerarRel()">Gerar Relatório</button>
+      </div>
+      <div id="relOutput"></div>
+    </div>
+
+    <!-- GESTÃO -->
+    <div id="tab-gestao" style="display:none">
+      <div class="st">Gestão de Usuários</div>
+      <div class="ol" id="gestaoList"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL GERAL -->
+<div class="mo" id="modalOv" onclick="closeModal(event)">
+  <div class="md" onclick="event.stopPropagation()">
+    <div class="mh"><span class="mt2" id="modalTit">Detalhes</span><button class="mc" onclick="closeModal()">✕</button></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- MODAL DOCUMENTO -->
+<div class="mo-doc" id="modalDoc">
+  <div class="mo-doc-bar">
+    <span>📄 Visualização — Registro de Ocorrência · Protocolo 179</span>
+    <div class="acoes">
+      <button class="btn-print" onclick="window._imprimirFrame()">🖨 Imprimir / Salvar PDF</button>
+      <button class="btn-close2" onclick="window._fecharModalDoc()">✕ Fechar</button>
+    </div>
+  </div>
+  <iframe class="mo-doc-frame" id="frameDoc"></iframe>
+</div>
+
+<!-- CONTAINER DE NOTIFICAÇÕES -->
+<div class="notif-popup" id="notifContainer"></div>
+
+</div><!-- #app -->
+
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>
