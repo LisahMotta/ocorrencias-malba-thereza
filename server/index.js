@@ -244,6 +244,17 @@ app.get('/api/backup/csv', autenticar, exigePerfil('diretor','coordenador','vice
   res.send(csv);
 });
 
+// ─── RESET (só diretor) ──────────────────────────────────────────────────────
+app.post('/api/admin/resetar-ocorrencias', autenticar, exigePerfil('diretor'), (req, res) => {
+  try {
+    db.resetarOcorrencias();
+    broadcastAll({ type: 'init', ocorrencias: [], chats: {} });
+    res.json({ ok: true, msg: 'Todas as ocorrências foram apagadas.' });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
 // ─── SPA ──────────────────────────────────────────────────────────────────────
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
 

@@ -1189,6 +1189,18 @@ function _dataHoje() {
   return new Date().toISOString().slice(0,10).replace(/-/g,'');
 }
 
+// ─── RESET ───────────────────────────────────────────────────────────────────
+
+window._confirmarReset = async () => {
+  const conf = prompt('Digite CONFIRMAR para apagar todas as ocorrências:');
+  if (conf !== 'CONFIRMAR') { alert('Operação cancelada.'); return; }
+  const resp = await apiFetch('/api/admin/resetar-ocorrencias', { method: 'POST' });
+  if (!resp || !resp.ok) { alert('Erro ao apagar. Tente novamente.'); return; }
+  occ = []; chats = {};
+  renderDash(); renderOcc();
+  alert('✅ Todas as ocorrências foram apagadas.');
+};
+
 // ─── BOOTSTRAP ────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   await init();

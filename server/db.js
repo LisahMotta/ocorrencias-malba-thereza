@@ -131,6 +131,13 @@ module.exports = {
       [d.gravidade,d.numero,d.tipo,d.relato||'',id]);
     return parseOcc(queryOne('SELECT * FROM ocorrencias WHERE id = ?', [id]));
   },
+  resetarOcorrencias: () => {
+    run('DELETE FROM ocorrencias');
+    run('DELETE FROM chats');
+    run("DELETE FROM sqlite_sequence WHERE name='ocorrencias'");
+    run("DELETE FROM sqlite_sequence WHERE name='chats'");
+  },
+
   listarChat: (occId) => queryAll('SELECT * FROM chats WHERE occ_id = ? ORDER BY id ASC', [occId]),
   inserirChat: (d) => {
     const id = run(

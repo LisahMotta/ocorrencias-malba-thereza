@@ -230,6 +230,15 @@
 
     <!-- GESTÃO -->
     <div id="tab-gestao" style="display:none">
+
+      <!-- ZONA DE PERIGO -->
+      <div class="fc" style="margin-bottom:1rem;border-color:#FFCDD2">
+        <div class="st" style="font-size:13px;margin-bottom:8px;color:var(--re)">⚠ Zona de Perigo</div>
+        <p style="font-size:13px;color:var(--mu);margin-bottom:12px">Apaga <strong>todas</strong> as ocorrências e chats do sistema. Esta ação não pode ser desfeita. Faça um backup antes.</p>
+        <button class="bn" style="border-color:var(--re);color:var(--re)" onclick="window._confirmarReset()">🗑 Apagar todas as ocorrências</button>
+      </div>
+
+      <!-- USUÁRIOS -->
       <div class="st">Gestão de Usuários</div>
       <div class="ol" id="gestaoList"></div>
     </div>
