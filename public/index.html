@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ocorrências — Malba Thereza Ferraz Campaner</title>
+<meta name="theme-color" content="#C2185B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ocorrências">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
 <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
@@ -36,6 +43,7 @@
       <span id="wsStatus" class="ws-status err">● offline</span>
       <div class="ub"><span class="un" id="topName">-</span><span class="ur" id="topRole">-</span></div>
       <button class="lo" onclick="abrirModalSenha()" style="margin-right:4px">🔑 Senha</button>
+      <button id="btnInstalar" onclick="window._instalarApp()" style="display:none;background:rgba(255,255,255,.15);border:0.5px solid rgba(255,255,255,.4);color:#fff;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;align-items:center;gap:4px">📲 Instalar</button>
       <button class="lo" onclick="window._doLogout()">Sair</button>
     </div>
   </div>
@@ -268,5 +276,41 @@
 </div><!-- #app -->
 
 <script type="module" src="/js/app.js"></script>
+<script>
+// Registrar Service Worker (PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        console.log('✅ PWA ativo');
+        // Verifica atualização a cada 60 segundos
+        setInterval(() => reg.update(), 60000);
+      })
+      .catch(err => console.log('SW erro:', err));
+  });
+}
+
+// Botão de instalar o app
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Mostra botão de instalar na topbar
+  const btn = document.getElementById('btnInstalar');
+  if (btn) btn.style.display = 'inline-flex';
+});
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('btnInstalar');
+  if (btn) btn.style.display = 'none';
+  deferredPrompt = null;
+});
+window._instalarApp = async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') console.log('App instalado!');
+  deferredPrompt = null;
+};
+</script>
 </body>
 </html>
