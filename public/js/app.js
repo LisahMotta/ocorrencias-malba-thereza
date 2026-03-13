@@ -1,7 +1,7 @@
 // app.js — lógica principal do sistema de ocorrências
 import { conectar, onEvento, enviar } from './ws.js';
 import { mostrarNotifOcorrencia, pedirPermissaoNotif } from './notif.js';
-import { iniciarChat, fecharChat, receberMsgChat } from './chat.js';
+import { iniciarChat, fecharChat, receberMsgChat, sincronizarChats } from './chat.js';
 import { salvarSessao, limparSessao, getToken, getUsuario, temSessao, apiFetch } from './auth.js';
 
 // ─── DADOS ────────────────────────────────────────────────────────────────────
@@ -261,9 +261,9 @@ function _iniciarWS() {
   });
 
   onEvento('init', (msg) => {
-    // Substitui lista completa — evita duplicatas ao reconectar
     occ = msg.ocorrencias || [];
     chats = msg.chats || {};
+    sincronizarChats(chats); // sincroniza chats com módulo chat.js
     renderDash();
     renderOcc();
   });

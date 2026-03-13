@@ -1,6 +1,6 @@
 // notif.js — gerencia notificações pop-up na tela
 
-const GL = { urgencia:'URGÊNCIA/EMERGÊNCIA', grave:'Grave', media:'Média', leve:'Leve' };
+const GL = { urgencia:'URGÊNCIA/EMERGÊNCIA', grave:'Grave', media:'Média', leve:'Leve', administrativa:'Administrativa' };
 
 let container = null;
 
@@ -19,8 +19,9 @@ export function mostrarNotifOcorrencia(occ, usuarioAtual, onChat) {
   const perfisGestao = ['poc','coordenador','vice','diretor'];
   if (!perfisGestao.includes(usuarioAtual.perfil)) return;
 
-  // Não notifica quem registrou
-  if (occ.registradoPorId === usuarioAtual.id) return;
+  // Não notifica quem registrou (comparação flexível de tipo)
+  if (occ.registradoPorId == usuarioAtual.id) return;
+  if (occ.registradoPorNome === usuarioAtual.nome) return;
 
   const c = getContainer();
   const card = document.createElement('div');
@@ -69,7 +70,7 @@ export function mostrarNotifOcorrencia(occ, usuarioAtual, onChat) {
   if (Notification && Notification.permission === 'granted') {
     new Notification('Nova Ocorrência — Malba Thereza', {
       body: `Art. ${occ.numero} · ${GL[occ.gravidade]} · ${occ.turma}\nPor: ${occ.registradoPorNome}`,
-      icon: '/assets/logo_sp.png',
+      icon: '/icons/icon-192.png',
     });
   }
 
