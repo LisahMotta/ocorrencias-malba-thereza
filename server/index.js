@@ -121,7 +121,17 @@ wss.on('connection', (ws) => {
     if (msg.type === 'chat_msg') {
       if (!userId) return;
       const usuario = db.getUsuario(parseInt(userId));
-      if (!usuario || !PODE_EDIT.includes(usuario.perfil)) return;
+      if (!usuario) return;
+
+      // Gestão sempre pode enviar
+      // Professor só pode se a gestão já iniciou a conversa nesta ocorrência
+      if (!PODE_EDIT.includes(usuario.perfil)) {
+        const msgsOcc = db.listarChat(msg.occId);
+        const gestaoJaFalou = msgsOcc.some(m =>
+          PODE_EDIT.includes(m.remetente_perfil || m.remetentePerfil)
+        );
+        if (!gestaoJaFalou) return; // bloqueia professor se gestão não iniciou
+      }
       const hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       const nova = db.inserirChat({
         occId: msg.occId, texto: msg.texto,
