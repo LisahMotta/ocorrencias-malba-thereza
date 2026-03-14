@@ -1087,37 +1087,30 @@ function montarDoc(o) {
     </div>
     <div class="secao"><div class="secao-titulo">7. Assinaturas</div>
       <div class="assinaturas-grid">
-        <div class="assinatura-box"><div class="assinatura-linha"></div>
-          <div class="assinatura-nome">${regNome2||'Professor(a)'}</div>
-          <div class="assinatura-cargo">${PL[regPerfil2]||regPerfil2||'Professor'}</div>
-          <div class="assinatura-cpf">CPF: ___.___.___-__ · Data: ____/____/________</div></div>
-        ${o.alunos&&o.alunos.length?o.alunos.map(a=>`
-        <div class="assinatura-box"><div class="assinatura-linha"></div>
-          <div class="assinatura-nome">${a.nome}</div>
-          <div class="assinatura-cargo">Estudante · RA: ${a.ra||'—'}</div>
-          <div class="assinatura-cpf">Data: ____/____/________</div></div>`).join(''):''}
-        <div class="assinatura-box"><div class="assinatura-linha"></div>
-          <div class="assinatura-nome">Responsável pelo(a) Estudante</div>
-          <div class="assinatura-cargo">Nome: ____________________________________________</div>
-          <div class="assinatura-cpf">CPF: ___.___.___-__ · Data: ____/____/________</div></div>
-        <div class="assinatura-box"><div class="assinatura-linha"></div>
-          <div class="assinatura-nome">P.O.C. — Prof. Orientador de Convivência</div>
-          <div class="assinatura-cargo">Nome: ____________________________________________</div>
-          <div class="assinatura-cpf">CPF: ___.___.___-__ · Data: ____/____/________</div></div>
-        <div class="assinatura-box"><div class="assinatura-linha"></div>
-          <div class="assinatura-nome">${compNome||'Coordenador(a) Pedagógico(a)'}</div>
-          <div class="assinatura-cargo">${compNome?PL[compPerfil]||compPerfil:'Coordenação Pedagógica'}</div>
-          <div class="assinatura-cpf">CPF: ___.___.___-__ · Data: ____/____/________</div></div>
-        <div class="assinatura-box"><div class="assinatura-linha"></div>
-          <div class="assinatura-nome">Diretor(a) / Vice-Diretor(a)</div>
-          <div class="assinatura-cargo">Equipe Gestora</div>
-          <div class="assinatura-cpf">CPF: ___.___.___-__ · Data: ____/____/________</div></div>
-        <div class="assinatura-box"><div class="assinatura-linha"></div>
-          <div class="assinatura-nome">Testemunha</div>
-          <div class="assinatura-cargo">Nome: ____________________________________________</div>
-          <div class="assinatura-cpf">CPF: ___.___.___-__ · Data: ____/____/________</div></div>
+        ${(()=>{
+          const jaAssinou = new Set();
+          const caixa = (nome, cargo, rodape) => {
+            const r = rodape || 'CPF: ___.___.___-__ · Data: ____/____/________';
+            if (nome) {
+              if (jaAssinou.has(nome)) return '';
+              jaAssinou.add(nome);
+              return '<div class="assinatura-box"><div class="assinatura-linha"></div><div class="assinatura-nome">'+nome+'</div><div class="assinatura-cargo">'+cargo+'</div><div class="assinatura-cpf">'+r+'</div></div>';
+            }
+            return '<div class="assinatura-box"><div class="assinatura-linha"></div><div class="assinatura-nome">'+cargo+'</div><div class="assinatura-cargo">Nome: ____________________________________________</div><div class="assinatura-cpf">'+r+'</div></div>';
+          };
+          let h = '';
+          h += caixa(regNome2, PL[regPerfil2]||regPerfil2||'Professor(a)');
+          if(o.alunos&&o.alunos.length){o.alunos.forEach(a=>{h+='<div class="assinatura-box"><div class="assinatura-linha"></div><div class="assinatura-nome">'+a.nome+'</div><div class="assinatura-cargo">Estudante · RA: '+(a.ra||'—')+'</div><div class="assinatura-cpf">Data: ____/____/________</div></div>';});}
+          h += caixa(null,'Responsável pelo(a) Estudante');
+          if(regPerfil2!=='poc') h += caixa(null,'P.O.C. — Prof. Orientador de Convivência');
+          if(compNome) h += caixa(compNome, PL[compPerfil]||compPerfil||'Equipe Gestora');
+          else h += caixa(null,'Coordenador(a) Pedagógico(a)');
+          if(!compPerfil||!['vice','diretor'].includes(compPerfil)) h += caixa(null,'Diretor(a) / Vice-Diretor(a)');
+          h += caixa(null,'Testemunha');
+          return h;
+        })()}
       </div>
-    </div>
+    </div>div>
     <div class="aviso-legal">Este documento possui valor legal e deve ser arquivado na UE, conforme Res. SE nº 19/2010 e Protocolo 179 CONVIVA SP. Falsificação: Art. 299 CP.</div>
     <div class="rodape">
       <div>EE Professora Malba Thereza Ferraz Campaner · Protocolo 179 · CONVIVA SP · SEDUC SP · ${numF}</div>
