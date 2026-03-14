@@ -733,7 +733,13 @@ window._salvarComp = async (id) => {
     placon: _v('cPlacon') || 'Não informado',
     complementadoPorId: cu.id,
   };
-  await apiFetch('/api/ocorrencias/'+id+'/complementar',{method:'PATCH',body:JSON.stringify(body)});
+  const resp = await apiFetch('/api/ocorrencias/'+id+'/complementar',{method:'PATCH',body:JSON.stringify(body)});
+  if (!resp) return; // token expirado — auth.js já fez reload
+  if (!resp.ok) {
+    const erro = await resp.json().catch(() => ({erro: 'Erro desconhecido'}));
+    alert('Erro ao salvar: ' + (erro.erro || resp.status));
+    return;
+  }
   closeModal();
   alert('Encerrada! Use "📄 Gerar Documento" para visualizar e imprimir.');
 };

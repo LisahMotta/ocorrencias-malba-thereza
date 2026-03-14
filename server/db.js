@@ -154,12 +154,12 @@ module.exports = {
     return parseOcc(queryOne('SELECT * FROM ocorrencias WHERE id = ?', [id]));
   },
   resetarOcorrencias: () => {
-    run('DELETE FROM ocorrencias');
-    run('DELETE FROM chats');
-    // sqlite_sequence só existe se tiver usado AUTOINCREMENT — ignora erro se não existir
+    try { db.run('DELETE FROM ocorrencias'); } catch(e) { console.error('[reset occ]', e.message); }
+    try { db.run('DELETE FROM chats'); } catch(e) { console.error('[reset chat]', e.message); }
     try { db.run("DELETE FROM sqlite_sequence WHERE name='ocorrencias'"); } catch(e) {}
     try { db.run("DELETE FROM sqlite_sequence WHERE name='chats'"); } catch(e) {}
     salvar();
+    console.log('[db] Ocorrências e chats apagados.');
   },
 
   listarChat: (occId) => queryAll('SELECT * FROM chats WHERE occ_id = ? ORDER BY id ASC', [occId]),

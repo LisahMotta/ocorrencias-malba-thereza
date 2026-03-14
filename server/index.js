@@ -346,12 +346,13 @@ app.get('/api/backup/csv', autenticar, exigePerfil('diretor','coordenador','vice
 });
 
 // ─── RESET (só diretor) ──────────────────────────────────────────────────────
-app.post('/api/admin/resetar-ocorrencias', autenticar, exigePerfil('diretor'), (req, res) => {
+app.post('/api/admin/resetar-ocorrencias', autenticar, exigePerfil('diretor','vice'), (req, res) => {
   try {
     db.resetarOcorrencias();
-    broadcastAll({ type: 'init', ocorrencias: [], chats: {} });
+    broadcast({ type: 'init', ocorrencias: [], chats: {} });
     res.json({ ok: true, msg: 'Todas as ocorrências foram apagadas.' });
   } catch (err) {
+    console.error('[reset] ERRO:', err.message);
     res.status(500).json({ erro: err.message });
   }
 });
