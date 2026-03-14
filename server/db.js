@@ -58,13 +58,26 @@ async function inicializar() {
     "ALTER TABLE ocorrencias ADD COLUMN complementado_por_nome TEXT",
     "ALTER TABLE ocorrencias ADD COLUMN complementado_por_perfil TEXT",
     "ALTER TABLE ocorrencias ADD COLUMN placon TEXT",
+    "ALTER TABLE usuarios ADD COLUMN perfil_anterior TEXT",
   ];
+  // Recriar tabela ocorrencias se faltar coluna crítica (banco muito antigo)
+  try {
+    db.run("SELECT placon FROM ocorrencias LIMIT 1");
+  } catch(e) {
+    console.log('[db] Banco antigo detectado — aplicando migrações forçadas');
+    migracoes.forEach(sql => { try { db.run(sql); } catch {} });
+  }
   migracoes.forEach(sql => {
     try { db.run(sql); } catch(e) { /* coluna já existe, ignora */ }
   });
 
   salvar();
   console.log('✅ Banco pronto:', DB_PATH);
+  // Verificar colunas existentes
+  try {
+    const cols = db.exec("PRAGMA table_info(ocorrencias)")[0];
+    if (cols) console.log('[db] Colunas:', cols.values.map(r=>r[1]).join(', '));
+  } catch {}
 }
 
 function queryAll(sql, params = []) {
