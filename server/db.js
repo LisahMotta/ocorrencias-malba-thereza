@@ -106,6 +106,7 @@ module.exports = {
   inserirUsuario: (nome, perfil, senha) => run('INSERT INTO usuarios (nome, perfil, senha) VALUES (?, ?, ?)', [nome, perfil, senha]),
   atualizarSenha: (id, hash) => run('UPDATE usuarios SET senha = ? WHERE id = ?', [hash, id]),
   toggleUsuario:  (id, ativo) => run('UPDATE usuarios SET ativo = ? WHERE id = ?', [ativo, id]),
+  atualizarPerfil:(id, perfil) => run('UPDATE usuarios SET perfil = ? WHERE id = ?', [perfil, id]),
   listarOcc: () => queryAll('SELECT * FROM ocorrencias ORDER BY id DESC').map(parseOcc),
   getOcc:    (id) => parseOcc(queryOne('SELECT * FROM ocorrencias WHERE id = ?', [id])),
   inserirOcc: (d) => {

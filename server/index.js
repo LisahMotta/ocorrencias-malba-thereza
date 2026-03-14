@@ -182,13 +182,37 @@ app.get('/api/usuarios', autenticar, exigePerfil('diretor', 'coordenador', 'vice
   res.json(db.listarUsuarios());
 });
 
-app.post('/api/usuarios/:id/resetar-senha', autenticar, exigePerfil('diretor'), async (req, res) => {
+// Adicionar novo usuário
+app.post('/api/usuarios', autenticar, exigePerfil('diretor', 'vice'), async (req, res) => {
+  const { nome, perfil } = req.body;
+  if (!nome || !perfil) return res.status(400).json({ erro: 'Nome e perfil obrigatórios' });
+  const existe = db.getUsuarioNome(nome.trim().toUpperCase());
+  if (existe) return res.status(400).json({ erro: 'Usuário já existe com este nome' });
+  const hash = await bcrypt.hash('Malba@2025', 10);
+  const id = db.inserirUsuario(nome.trim().toUpperCase(), perfil, hash);
+  res.json({ ok: true, id, nome: nome.trim().toUpperCase(), perfil, novaSenha: 'Malba@2025' });
+});
+
+// Alterar perfil do usuário
+app.patch('/api/usuarios/:id/perfil', autenticar, exigePerfil('diretor', 'vice'), (req, res) => {
+  const { perfil } = req.body;
+  if (!perfil) return res.status(400).json({ erro: 'Perfil obrigatório' });
+  // Impede alterar o próprio perfil
+  if (parseInt(req.params.id) === req.usuario.id) return res.status(400).json({ erro: 'Não é possível alterar seu próprio perfil' });
+  db.atualizarPerfil(parseInt(req.params.id), perfil);
+  res.json({ ok: true });
+});
+
+// Resetar senha
+app.post('/api/usuarios/:id/resetar-senha', autenticar, exigePerfil('diretor', 'vice'), async (req, res) => {
   const hash = await bcrypt.hash('Malba@2025', 10);
   db.atualizarSenha(parseInt(req.params.id), hash);
   res.json({ ok: true, novaSenha: 'Malba@2025' });
 });
 
-app.post('/api/usuarios/:id/toggle', autenticar, exigePerfil('diretor'), (req, res) => {
+// Ativar/desativar usuário
+app.post('/api/usuarios/:id/toggle', autenticar, exigePerfil('diretor', 'vice'), (req, res) => {
+  if (parseInt(req.params.id) === req.usuario.id) return res.status(400).json({ erro: 'Não é possível desativar sua própria conta' });
   db.toggleUsuario(parseInt(req.params.id), req.body.ativo ? 1 : 0);
   res.json({ ok: true });
 });

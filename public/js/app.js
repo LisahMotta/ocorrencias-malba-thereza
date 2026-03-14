@@ -323,7 +323,7 @@ function _renderMain() {
   document.getElementById('optUrg').style.display = isB1 ? '' : 'none';
   document.getElementById('tabRel').style.display = PODE_REL.includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabAlunos').style.display = PODE_REL.includes(cu.perfil) ? '' : 'none';
-  document.getElementById('tabGes').style.display = cu.perfil === 'diretor' ? '' : 'none';
+  document.getElementById('tabGes').style.display = ['diretor','vice'].includes(cu.perfil) ? '' : 'none';
 
   const icons = {professor:'👨‍🏫',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};
   const descs = {
@@ -760,13 +760,145 @@ window.showTab = (name, btn) => {
   if(name==='alunos') { _initAbaAlunos(); window.renderAlunos(); }
 };
 
-function renderGestao() {
-  document.getElementById('gestaoList').innerHTML=USUARIOS.map(u=>`
-    <div class="oc leve" style="border-left-color:var(--mg)">
-      <div class="oh"><div><div class="ot">${u.nome}</div></div>
-      <span class="bg" style="background:var(--mgl);color:var(--mg);font-size:11px;padding:3px 10px">${PL[u.perfil]}</span>
-    </div></div>`).join('');
+let usuariosDB = []; // usuários carregados do banco
+
+async function renderGestao() {
+  // Carregar usuários do banco
+  const resp = await apiFetch('/api/usuarios');
+  if (!resp || !resp.ok) return;
+  usuariosDB = await resp.json();
+
+  const podeMgmt = ['diretor','vice'].includes(cu.perfil);
+  const perfisOrdem = ['diretor','vice','coordenador','poc','professor'];
+
+  // Agrupar por perfil
+  const grupos = {};
+  perfisOrdem.forEach(p => { grupos[p] = []; });
+  usuariosDB.forEach(u => {
+    if (grupos[u.perfil]) grupos[u.perfil].push(u);
+    else grupos['professor'] = grupos['professor'] || [];
+  });
+
+  let html = '';
+
+  // Botão adicionar usuário (só diretor e vice)
+  if (podeMgmt) {
+    html += `<div class="fc" style="margin-bottom:1rem">
+      <div class="st" style="font-size:13px;margin-bottom:10px">➕ Adicionar Usuário</div>
+      <div class="fr">
+        <div class="fg"><label>Nome completo</label>
+          <input type="text" id="novoNome" placeholder="Nome em maiúsculas..." style="text-transform:uppercase"/></div>
+        <div class="fg"><label>Perfil / Cargo</label>
+          <select id="novoPerfil">
+            <option value="">Selecione...</option>
+            <option value="professor">Professor</option>
+            <option value="poc">P.O.C.</option>
+            <option value="coordenador">Coordenador</option>
+            <option value="vice">Vice-Diretor</option>
+            <option value="diretor">Diretor</option>
+          </select></div>
+      </div>
+      <button class="bn mg" onclick="window._adicionarUsuario()">➕ Adicionar</button>
+      <div id="msgNovoUsuario" style="display:none;margin-top:8px;font-size:13px"></div>
+    </div>`;
+  }
+
+  // Lista por perfil
+  perfisOrdem.forEach(p => {
+    const lista = usuariosDB.filter(u => u.perfil === p);
+    if (!lista.length) return;
+    html += `<div class="fl" style="margin-bottom:8px">${PL[p]}</div>`;
+    html += lista.map(u => {
+      const inativo = !u.ativo;
+      return `<div class="oc leve" style="border-left-color:${inativo?'#ccc':'var(--mg)'};opacity:${inativo?'.5':'1'}">
+        <div class="oh">
+          <div style="flex:1">
+            <div class="ot" style="${inativo?'color:#999':''}">
+              ${u.nome}
+              ${inativo?'<span style="font-size:10px;background:#eee;color:#999;border-radius:3px;padding:1px 6px;margin-left:4px">Inativo</span>':''}
+            </div>
+            <div class="om">${PL[u.perfil]}</div>
+          </div>
+          ${podeMgmt ? `<div class="bs" style="flex-wrap:wrap;gap:4px;justify-content:flex-end">
+            <button class="bn" style="font-size:11px;padding:3px 8px" onclick="window._editarPerfil(${u.id},'${u.nome}','${u.perfil}')">✏ Cargo</button>
+            <button class="bn" style="font-size:11px;padding:3px 8px" onclick="window._resetSenha(${u.id},'${u.nome}')">🔑 Senha</button>
+            <button class="bn" style="font-size:11px;padding:3px 8px;color:${inativo?'var(--gr)':'var(--re)'}"
+              onclick="window._toggleUsuario(${u.id},'${u.nome}',${u.ativo})">
+              ${inativo?'✅ Ativar':'🚫 Desativar'}
+            </button>
+          </div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  });
+
+  document.getElementById('gestaoList').innerHTML = html;
 }
+
+window._adicionarUsuario = async () => {
+  const nome = document.getElementById('novoNome').value.trim().toUpperCase();
+  const perfil = document.getElementById('novoPerfil').value;
+  const msg = document.getElementById('msgNovoUsuario');
+  if (!nome || !perfil) {
+    msg.textContent = '⚠ Preencha nome e perfil.';
+    msg.style.color = 'var(--re)'; msg.style.display = 'block'; return;
+  }
+  const resp = await apiFetch('/api/usuarios', { method:'POST', body:JSON.stringify({ nome, perfil }) });
+  const data = await resp.json();
+  if (!resp.ok) {
+    msg.textContent = '⚠ ' + data.erro;
+    msg.style.color = 'var(--re)'; msg.style.display = 'block'; return;
+  }
+  msg.textContent = `✅ Usuário criado! Senha padrão: Malba@2025`;
+  msg.style.color = 'var(--gr)'; msg.style.display = 'block';
+  document.getElementById('novoNome').value = '';
+  document.getElementById('novoPerfil').value = '';
+  renderGestao();
+};
+
+window._editarPerfil = (id, nome, perfilAtual) => {
+  document.getElementById('modalTit').textContent = '✏ Alterar Cargo — ' + nome.split(' ')[0];
+  document.getElementById('modalBody').innerHTML = `
+    <div class="ab bl" style="margin-bottom:1rem">Cargo atual: <strong>${PL[perfilAtual]}</strong></div>
+    <div class="fg"><label>Novo cargo</label>
+      <select id="novoCargoSel">
+        ${['professor','poc','coordenador','vice','diretor'].map(p =>
+          `<option value="${p}"${p===perfilAtual?' selected':''}>${PL[p]}</option>`
+        ).join('')}
+      </select></div>
+    <div style="display:flex;gap:8px;margin-top:1rem">
+      <button class="bp" style="flex:1" onclick="window._salvarPerfil(${id})">Salvar</button>
+      <button class="bn" style="flex:1;padding:10px" onclick="closeModal()">Cancelar</button>
+    </div>`;
+  document.getElementById('modalOv').classList.add('show');
+};
+
+window._salvarPerfil = async (id) => {
+  const perfil = document.getElementById('novoCargoSel').value;
+  const resp = await apiFetch('/api/usuarios/'+id+'/perfil', { method:'PATCH', body:JSON.stringify({ perfil }) });
+  const data = await resp.json();
+  if (!resp.ok) { alert('Erro: ' + data.erro); return; }
+  closeModal();
+  alert('✅ Cargo alterado com sucesso!');
+  renderGestao();
+};
+
+window._resetSenha = async (id, nome) => {
+  if (!confirm('Redefinir senha de ' + nome + ' para Malba@2025?')) return;
+  const resp = await apiFetch('/api/usuarios/'+id+'/resetar-senha', { method:'POST' });
+  const data = await resp.json();
+  if (!resp.ok) { alert('Erro ao redefinir senha.'); return; }
+  alert('✅ Senha redefinida para: Malba@2025');
+};
+
+window._toggleUsuario = async (id, nome, ativo) => {
+  const acao = ativo ? 'desativar' : 'ativar';
+  if (!confirm(`Deseja ${acao} o usuário ${nome}?`)) return;
+  const resp = await apiFetch('/api/usuarios/'+id+'/toggle', { method:'POST', body:JSON.stringify({ ativo: !ativo }) });
+  const data = await resp.json();
+  if (!resp.ok) { alert('Erro: ' + data.erro); return; }
+  renderGestao();
+};
 
 window._gerarRel = () => {
   const fT=document.getElementById('relTurma').value;
