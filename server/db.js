@@ -57,6 +57,7 @@ async function inicializar() {
     "ALTER TABLE ocorrencias ADD COLUMN conselho_tutelar TEXT",
     "ALTER TABLE ocorrencias ADD COLUMN complementado_por_nome TEXT",
     "ALTER TABLE ocorrencias ADD COLUMN complementado_por_perfil TEXT",
+    "ALTER TABLE ocorrencias ADD COLUMN placon TEXT",
   ];
   migracoes.forEach(sql => {
     try { db.run(sql); } catch(e) { /* coluna já existe, ignora */ }
@@ -95,6 +96,7 @@ function parseOcc(row) {
     complementadoPorPerfil:row.complementado_por_perfil|| null,
     dataComp:              row.data_comp,
     conselhoTutelar:       row.conselho_tutelar || '',
+    placon:                row.placon || '',
   };
 }
 
@@ -120,8 +122,8 @@ module.exports = {
     return parseOcc(queryOne('SELECT * FROM ocorrencias WHERE id = ?', [id]));
   },
   complementarOcc: (id, d) => {
-    run(`UPDATE ocorrencias SET descricao=?,providencias=?,bo=?,familia=?,conselho_tutelar=?,relatos_alunos=?,relato_responsavel=?,complementado_por_id=?,complementado_por_nome=?,complementado_por_perfil=?,data_comp=?,status='encerrado' WHERE id=?`,
-      [d.descricao||'',d.providencias||'',d.bo||'',d.familia||'',d.conselhoTutelar||'',
+    run(`UPDATE ocorrencias SET descricao=?,providencias=?,bo=?,familia=?,conselho_tutelar=?,placon=?,relatos_alunos=?,relato_responsavel=?,complementado_por_id=?,complementado_por_nome=?,complementado_por_perfil=?,data_comp=?,status='encerrado' WHERE id=?`,
+      [d.descricao||'',d.providencias||'',d.bo||'',d.familia||'',d.conselhoTutelar||'',d.placon||'',
        JSON.stringify(d.relatosAlunos||[]),d.relatoResponsavel||'',
        d.complementadoPorId,d.complementadoPorNome||'',d.complementadoPorPerfil||'',
        new Date().toLocaleDateString('pt-BR'),id]);

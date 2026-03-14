@@ -481,6 +481,13 @@ function cardHTML(o) {
   const pchip = regPerfil==='professor'?'background:#E8EAF6;color:#3949AB':regPerfil==='poc'?'background:var(--orl);color:var(--or)':'background:var(--mgl);color:var(--mg)';
   const naoLidos = chatNaoLidos[String(o.id)] || 0;
   const badgeChat = naoLidos > 0 ? `<span style="background:var(--re);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-left:4px">${naoLidos}</span>` : '';
+  const badgePlacon = o.placon === 'Sim'
+    ? `<span class="bg" style="background:#E8F5E9;color:#2E7D32;font-size:10px">✅ Placon</span>`
+    : o.placon === 'Pendente'
+    ? `<span class="bg" style="background:#FFF3E0;color:#E65100;font-size:10px">⏳ Placon</span>`
+    : o.status === 'encerrado'
+    ? `<span class="bg" style="background:#FFEBEE;color:#C62828;font-size:10px">⚠ Placon</span>`
+    : '';
   return `<div class="oc ${o.gravidade}">
     <div class="oh"><div style="flex:1;min-width:0">
       <div class="ot">Art. ${o.numero} — ${o.tipo}</div>
@@ -491,6 +498,7 @@ function cardHTML(o) {
     <div class="bs">
       <span class="bg bg-${o.gravidade}">${GL[o.gravidade]}</span>
       <span class="bg bg-${o.status}">${SL[o.status]||o.status}</span>
+      ${badgePlacon}
     </div></div>
     <div class="oa">
       <button class="bn" onclick="window._verDet(${o.id})">Ver detalhes</button>
@@ -676,11 +684,13 @@ window._abrirComp = (id) => {
       <div class="fl" style="font-size:11px;margin-bottom:8px">Apuração da Equipe Gestora</div>
       <div class="fg"><label>Descrição detalhada</label><textarea id="cDesc" rows="4">${o.descricao||''}</textarea></div>
       <div class="fg"><label>Providências tomadas</label><textarea id="cProv" rows="3">${o.providencias||''}</textarea></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="fg"><label>B.O. registrado?</label><select id="cBO"><option value="">Selecione...</option><option${o.bo==='Sim'?' selected':''}>Sim</option><option${o.bo==='Não'?' selected':''}>Não</option><option${o.bo==='Não se aplica'?' selected':''}>Não se aplica</option></select></div>
         <div class="fg"><label>Família comunicada?</label><select id="cFam"><option value="">Selecione...</option><option${o.familia==='Sim'?' selected':''}>Sim</option><option${o.familia==='Não'?' selected':''}>Não</option><option${o.familia==='Não se aplica'?' selected':''}>Não se aplica</option></select></div>
         <div class="fg"><label>Conselho Tutelar?</label><select id="cConselhoTutelar"><option value="">Selecione...</option><option${o.conselhoTutelar==='Sim'?' selected':''}>Sim</option><option${o.conselhoTutelar==='Não'?' selected':''}>Não</option><option${o.conselhoTutelar==='Não se aplica'?' selected':''}>Não se aplica</option></select></div>
+        <div class="fg"><label>Lançado no Placon?</label><select id="cPlacon"><option value="">Selecione...</option><option${o.placon==='Sim'?' selected':''}>Sim</option><option${o.placon==='Não'?' selected':''}>Não</option><option${o.placon==='Pendente'?' selected':''}>Pendente</option></select></div>
       </div>
+      ${_v('cPlacon')==='Sim'||o.placon==='Sim'?'':`<div class="ab or" style="margin-top:8px;font-size:12px">📋 Lembrete: registrar esta ocorrência na <strong>Plataforma CONVIVA (Placon)</strong> após encerrar.</div>`}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
         <button class="bp" style="flex:1;min-width:140px" onclick="window._salvarComp(${id})">Salvar e Encerrar</button>
         <button class="bn" style="flex:1;min-width:100px;padding:10px" onclick="closeModal()">Cancelar</button>
@@ -704,6 +714,7 @@ window._salvarComp = async (id) => {
     bo: _v('cBO') || 'Não informado',
     familia: _v('cFam') || 'Não informado',
     conselhoTutelar: _v('cConselhoTutelar') || 'Não informado',
+    placon: _v('cPlacon') || 'Não informado',
     complementadoPorId: cu.id,
   };
   await apiFetch('/api/ocorrencias/'+id+'/complementar',{method:'PATCH',body:JSON.stringify(body)});
@@ -1045,7 +1056,8 @@ function montarDoc(o) {
       <div class="campo-grid-3" style="margin-top:6px">
         <div class="campo"><label>B.O.</label><div class="valor">${o.bo&&o.bo!=='Não informado'?o.bo:'☐ Sim  ☐ Não  ☐ N/A'}</div></div>
         <div class="campo"><label>Família</label><div class="valor">${o.familia&&o.familia!=='Não informado'?o.familia:'☐ Sim  ☐ Não  ☐ N/A'}</div></div>
-        <div class="campo"><label>Conselho Tutelar</label><div class="valor">${o.conselhoTutelar||'☐ Sim  ☐ Não  ☐ N/A'}</div></div>
+        <div class="campo"><label>Conselho Tutelar</label><div class="valor">${o.conselhoTutelar&&o.conselhoTutelar!=='Não informado'?o.conselhoTutelar:'☐ Sim  ☐ Não  ☐ N/A'}</div></div>
+        <div class="campo"><label>Lançado no Placon</label><div class="valor" style="${o.placon==='Sim'?'color:#2E7D32;font-weight:bold':o.placon==='Pendente'?'color:#E65100':''}">${o.placon&&o.placon!=='Não informado'?o.placon:'☐ Sim  ☐ Não  ☐ Pendente'}</div></div>
       </div>
     </div>
     <div class="secao"><div class="secao-titulo">6. Providências — Protocolo 179 · CONVIVA SP</div>
