@@ -92,10 +92,25 @@ wss.on('connection', (ws) => {
         if (!clients.has(userId)) clients.set(userId, new Set());
         clients.get(userId).add(ws);
         console.log(`[WS] Usuário autenticado: ${payload.nome} (${payload.perfil}) — total conectados: ${wss.clients.size}`);
+        const todasOcc = db.listarOcc();
+        // Ocorrências pendentes das últimas 2h — para notificar gestor que acabou de conectar
+        const doisHAtras = Date.now() - (2 * 60 * 60 * 1000);
+        const pendentesRecentes = todasOcc.filter(o => {
+          if (o.status !== 'pendente') return false;
+          try {
+            // data formato dd/mm/yyyy
+            const [dd,mm,yyyy] = (o.data||'').split('/');
+            const hora = o.hora||'00:00';
+            const [hh,mi] = hora.split(':');
+            const ts = new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd), parseInt(hh), parseInt(mi)).getTime();
+            return ts >= doisHAtras;
+          } catch { return false; }
+        });
         ws.send(JSON.stringify({
           type: 'init',
-          ocorrencias: db.listarOcc(),
+          ocorrencias: todasOcc,
           chats: _todosChats(),
+          pendentesRecentes, // gestor vai exibir notificações perdidas
         }));
       } catch {
         ws.send(JSON.stringify({ type: 'erro', msg: 'Token inválido' }));

@@ -263,9 +263,25 @@ function _iniciarWS() {
   onEvento('init', (msg) => {
     occ = msg.ocorrencias || [];
     chats = msg.chats || {};
-    sincronizarChats(chats); // sincroniza chats com módulo chat.js
+    sincronizarChats(chats);
     renderDash();
     renderOcc();
+
+    // Mostrar notificações de ocorrências pendentes recentes (perdidas por reconexão)
+    const perfisGestao = ['poc','coordenador','vice','diretor'];
+    if (cu && perfisGestao.includes(cu.perfil) && msg.pendentesRecentes && msg.pendentesRecentes.length) {
+      // Pequeno delay para não aparecer junto com o carregamento da página
+      setTimeout(() => {
+        msg.pendentesRecentes.forEach(o => {
+          // Não notifica o próprio registrante
+          if (o.registradoPorNome === cu.nome) return;
+          mostrarNotifOcorrencia(o, cu, (occId) => {
+            const oc = occ.find(x => x.id === occId);
+            if (oc) abrirChat(oc);
+          });
+        });
+      }, 1500);
+    }
   });
 
   onEvento('nova_ocorrencia', (msg) => {
