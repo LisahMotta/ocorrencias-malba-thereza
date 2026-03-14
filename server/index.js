@@ -128,7 +128,17 @@ wss.on('connection', (ws) => {
         remetenteId: parseInt(userId), remetenteNome: usuario.nome,
         remetentePerfil: usuario.perfil, hora,
       });
-      broadcast({ type: 'chat_msg', msg: { ...nova, occId: msg.occId } });
+      // Normaliza para o frontend
+      const msgNorm = {
+        id:              Number(nova.id),
+        occId:           Number(msg.occId),
+        texto:           msg.texto,
+        remetenteId:     parseInt(userId),
+        remetenteNome:   usuario.nome,
+        remetentePerfil: usuario.perfil,
+        hora,
+      };
+      broadcast({ type: 'chat_msg', msg: msgNorm });
     }
   });
 
@@ -144,7 +154,18 @@ function _todosChats() {
   const resultado = {};
   db.listarOcc().forEach(o => {
     const msgs = db.listarChat(o.id);
-    if (msgs.length) resultado[String(o.id)] = msgs;
+    if (msgs.length) {
+      // Normaliza: remetenteId como número, occId como número
+      resultado[String(o.id)] = msgs.map(m => ({
+        ...m,
+        id:          Number(m.id),
+        occId:       Number(m.occ_id || o.id),
+        remetenteId: Number(m.remetente_id || m.remetenteId),
+        remetenteNome:   m.remetente_nome   || m.remetenteNome   || '',
+        remetentePerfil: m.remetente_perfil || m.remetentePerfil || '',
+        hora: m.hora || '',
+      }));
+    }
   });
   return resultado;
 }
