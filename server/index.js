@@ -8,7 +8,14 @@ const db = require('./db');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ noServer: true });
+
+// Tratamento explícito do upgrade — necessário para Railway/proxies reversos
+server.on('upgrade', (req, socket, head) => {
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    wss.emit('connection', ws, req);
+  });
+});
 
 const JWT_SECRET = process.env.JWT_SECRET || 'malba-thereza-2025-secret-key';
 const JWT_EXPIRA = '8h';
