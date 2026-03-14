@@ -91,8 +91,14 @@ function queryAll(sql, params = []) {
 function queryOne(sql, params = []) { return queryAll(sql, params)[0] || null; }
 function run(sql, params = []) {
   db.run(sql, params);
+  // Pega o last_insert_rowid ANTES de salvar (salvar pode resetar o estado)
+  let lastId = null;
+  try {
+    const res = db.exec('SELECT last_insert_rowid()');
+    lastId = res && res[0] && res[0].values && res[0].values[0] ? res[0].values[0][0] : null;
+  } catch(e) {}
   salvar();
-  return db.exec('SELECT last_insert_rowid() as id')[0]?.values[0][0];
+  return lastId;
 }
 function parseOcc(row) {
   if (!row) return null;
