@@ -18,7 +18,7 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'malba-thereza-2025-secret-key';
-const JWT_EXPIRA = '8h';
+const JWT_EXPIRA = '24h'; // 1 dia completo
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
@@ -32,13 +32,15 @@ function autenticar(req, res, next) {
   try {
     req.usuario = jwt.verify(auth.slice(7), JWT_SECRET);
     next();
-  } catch {
-    res.status(401).json({ erro: 'Token inválido ou expirado' });
+  } catch(err) {
+    console.log('[auth] Token rejeitado:', err.message);
+    res.status(401).json({ erro: 'Token inválido ou expirado. Faça login novamente.' });
   }
 }
 
 function exigePerfil(...perfis) {
   return (req, res, next) => {
+    if (!req.usuario) return res.status(401).json({ erro: 'Não autenticado' });
     if (!perfis.includes(req.usuario.perfil)) {
       return res.status(403).json({ erro: 'Sem permissão' });
     }
