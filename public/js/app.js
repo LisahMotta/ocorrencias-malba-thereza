@@ -706,7 +706,7 @@ window._abrirComp = (id) => {
         <div class="fg"><label>Conselho Tutelar?</label><select id="cConselhoTutelar"><option value="">Selecione...</option><option${o.conselhoTutelar==='Sim'?' selected':''}>Sim</option><option${o.conselhoTutelar==='Não'?' selected':''}>Não</option><option${o.conselhoTutelar==='Não se aplica'?' selected':''}>Não se aplica</option></select></div>
         <div class="fg"><label>Lançado no Placon?</label><select id="cPlacon"><option value="">Selecione...</option><option${o.placon==='Sim'?' selected':''}>Sim</option><option${o.placon==='Não'?' selected':''}>Não</option><option${o.placon==='Pendente'?' selected':''}>Pendente</option></select></div>
       </div>
-      ${_v('cPlacon')==='Sim'||o.placon==='Sim'?'':`<div class="ab or" style="margin-top:8px;font-size:12px">📋 Lembrete: registrar esta ocorrência na <strong>Plataforma CONVIVA (Placon)</strong> após encerrar.</div>`}
+      ${o.placon==='Sim'?'':`<div class="ab or" style="margin-top:8px;font-size:12px">📋 Lembrete: registrar esta ocorrência na <strong>Plataforma CONVIVA (Placon)</strong> após encerrar.</div>`}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
         <button class="bp" style="flex:1;min-width:140px" onclick="window._salvarComp(${id})">Salvar e Encerrar</button>
         <button class="bn" style="flex:1;min-width:100px;padding:10px" onclick="closeModal()">Cancelar</button>
