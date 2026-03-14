@@ -1,5 +1,5 @@
 // sw.js — Service Worker do PWA Ocorrências Malba Thereza
-const CACHE = 'ocorrencias-v1';
+const CACHE = 'sisroe-v3';
 
 // Arquivos que ficam em cache para funcionar offline
 const ARQUIVOS = [
@@ -38,6 +38,9 @@ self.addEventListener('activate', (e) => {
 
 // Fetch — estratégia: rede primeiro, cache como fallback
 self.addEventListener('fetch', (e) => {
+  // Ignorar qualquer coisa que não seja http/https PRIMEIRO
+  if (!e.request.url.startsWith('http://') && !e.request.url.startsWith('https://')) return;
+
   const url = new URL(e.request.url);
 
   // Requisições de API sempre vão para a rede
@@ -51,6 +54,9 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
+  // Ignorar chrome-extension e outros esquemas não suportados
+  if (!e.request.url.startsWith('http')) return;
+
   // WebSocket — não interceptar
   if (e.request.url.startsWith('ws')) return;
 
@@ -58,9 +64,11 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     fetch(e.request)
       .then(resp => {
-        // Atualiza cache com versão nova
-        const clone = resp.clone();
-        caches.open(CACHE).then(cache => cache.put(e.request, clone));
+        // Só cacheia URLs http/https (ignora chrome-extension e outros)
+        if (e.request.url.startsWith('http')) {
+          const clone = resp.clone();
+          caches.open(CACHE).then(cache => cache.put(e.request, clone));
+        }
         return resp;
       })
       .catch(() => caches.match(e.request))
