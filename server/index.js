@@ -267,10 +267,20 @@ app.post('/api/usuarios', autenticar, exigePerfil('diretor', 'vice'), async (req
 app.patch('/api/usuarios/:id/perfil', autenticar, exigePerfil('diretor', 'vice'), (req, res) => {
   const { perfil } = req.body;
   if (!perfil) return res.status(400).json({ erro: 'Perfil obrigatório' });
-  // Impede alterar o próprio perfil
   if (parseInt(req.params.id) === req.usuario.id) return res.status(400).json({ erro: 'Não é possível alterar seu próprio perfil' });
-  db.atualizarPerfil(parseInt(req.params.id), perfil);
-  res.json({ ok: true });
+  try {
+    db.atualizarPerfil(parseInt(req.params.id), perfil);
+    // Verifica se salvou corretamente
+    const u = db.getUsuario(parseInt(req.params.id));
+    console.log(`[perfil] Usuário ${u.nome} → ${perfil} (salvo: ${u.perfil})`);
+    if (u.perfil !== perfil) throw new Error('Perfil não foi salvo corretamente');
+    // Notifica todos via WebSocket para recarregar se necessário
+    broadcast({ type: 'perfil_atualizado', userId: parseInt(req.params.id), perfil });
+    res.json({ ok: true, perfil: u.perfil });
+  } catch(err) {
+    console.error('[perfil] ERRO:', err.message);
+    res.status(500).json({ erro: err.message });
+  }
 });
 
 // Resetar senha

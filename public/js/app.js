@@ -297,6 +297,14 @@ function _iniciarWS() {
     });
   });
 
+  onEvento('perfil_atualizado', (msg) => {
+    // Se o perfil do usuário logado foi alterado, força novo login
+    if (cu && msg.userId === cu.id) {
+      alert('⚠️ Seu perfil foi alterado para ' + (PL[msg.perfil]||msg.perfil) + '.\nFaça login novamente para continuar.');
+      window._doLogout();
+    }
+  });
+
   onEvento('occ_atualizada', (msg) => {
     const idx = occ.findIndex(o => o.id === msg.occ.id);
     if (idx >= 0) occ[idx] = msg.occ;
@@ -909,10 +917,11 @@ window._editarPerfil = (id, nome, perfilAtual) => {
 window._salvarPerfil = async (id) => {
   const perfil = document.getElementById('novoCargoSel').value;
   const resp = await apiFetch('/api/usuarios/'+id+'/perfil', { method:'PATCH', body:JSON.stringify({ perfil }) });
+  if (!resp) return;
   const data = await resp.json();
   if (!resp.ok) { alert('Erro: ' + data.erro); return; }
   closeModal();
-  alert('✅ Cargo alterado com sucesso!');
+  alert('✅ Cargo alterado! O usuário precisará fazer login novamente para que a mudança tenha efeito.');
   renderGestao();
 };
 
