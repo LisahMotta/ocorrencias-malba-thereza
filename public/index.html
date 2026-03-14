@@ -53,6 +53,7 @@
     <button onclick="showTab('ocorrencias',this)">Ocorrências</button>
     <button id="tabRel" onclick="showTab('relatorio',this)" style="display:none">Relatórios</button>
     <button id="tabAlunos" onclick="showTab('alunos',this)" style="display:none">👤 Alunos</button>
+    <button id="tabSeg" onclick="showTab('segmento',this)" style="display:none">📊 Meu Segmento</button>
     <button id="tabGes" onclick="showTab('gestao',this)" style="display:none">Gestão</button>
   </div>
   <div class="ct">
@@ -186,6 +187,11 @@
         <button class="bn mg" onclick="window._gerarRel()">Gerar Relatório</button>
       </div>
       <div id="relOutput"></div>
+    </div>
+
+    <!-- SEGMENTO COORDENADOR -->
+    <div id="tab-segmento" style="display:none">
+      <div class="es">Carregando...</div>
     </div>
 
     <!-- ALUNOS -->

@@ -70,7 +70,50 @@ const GL = { urgencia:'Urgência/Emergência', grave:'Grave', media:'Média', le
 const SL = { pendente:'Aguard. complemento', encerrado:'Encerrado' };
 const GORDEM = ['leve','media','grave','urgencia'];
 const PODE_EDIT = ['poc','coordenador','vice','diretor'];
-const PODE_REL  = ['coordenador','vice','diretor'];
+const PODE_REL  = ['poc','coordenador','vice','diretor'];
+
+// Configuração de segmento por coordenador
+const COORD_SEGMENTOS = {
+  'ARIADNE DA SILVA RODRIGUES': {
+    periodo: 'Manhã',
+    turmas: ['6º Ano A','6º Ano B','7º Ano A','7º Ano B','8º Ano A','8º Ano B',
+             '9º Ano A','9º Ano B','9º Ano C',
+             '1ª Série A','1ª Série B','1ª Série C','2ª Série A'],
+    desc: '6º Ano A → 2ª Série A — Ensino Fundamental II e Médio',
+  },
+  'RENATA VALÉRIA': {
+    periodo: 'Tarde',
+    turmas: ['1º Ano A','1º Ano B','2º Ano A','2º Ano B','3º Ano A','3º Ano B',
+             '4º Ano A','4º Ano B','5º Ano A','5º Ano B','6º Ano A','6º Ano B'],
+    desc: '1º Ano A → 6º Ano B — Ensino Fundamental I e II',
+  },
+  'WAGNER GONÇALVES DA SILVA JUNIOR FERRO FAZAN': {
+    periodo: 'Noite',
+    turmas: ['2ª Série B','2ª Série C','2ª Série D','3ª Série A','3ª Série B','3ª Série C'],
+    desc: '2ª Série B → 3ª Série C — Ensino Médio',
+  },
+};
+
+// Sugestões de intervenção por tipo de ocorrência
+const INTERVENCOES = {
+  'Aluno dormiu durante a aula': ['Conversa individual sobre rotina de sono','Contato com família','Encaminhar para orientação pedagógica'],
+  'Aluno sem material escolar': ['Contato com família','Verificar vulnerabilidade socioeconômica','Disponibilizar material temporariamente'],
+  'Aluno com celular em uso indevido': ['Recolher o celular','Orientar sobre regras','Comunicar família em reincidência'],
+  'Aluno recusou-se a realizar atividade': ['Conversa individual','Investigar dificuldades de aprendizagem','Encaminhar para reforço'],
+  'Aluno perturbou / atrapalhou a aula': ['Advertência verbal','Mudança de lugar','Contato com família em reincidência'],
+  'Aluno saiu da sala sem autorização': ['Advertência','Comunicar família','Monitorar comportamento'],
+  'Aluno chegou atrasado repetidamente': ['Conversa individual','Contato com família','Registrar frequência'],
+  'Aluno com linguagem inadequada (palavrão)': ['Orientação sobre convivência','Contato com família','Mediação de conflitos'],
+  'Aluno sem uniforme escolar': ['Orientar sobre regulamento','Comunicar família','Verificar condição financeira'],
+  'Aluno danificou material da escola': ['Comunicar família','Solicitar ressarcimento','Conversa sobre responsabilidade'],
+  'Aluno com comportamento desrespeitoso com professor': ['Advertência formal','Reunião com família','Encaminhar para direção'],
+  'Agressão verbal entre estudantes e/ou servidores': ['Mediação imediata','Escuta individual','Reunião com famílias','Encaminhar ao Conselho Tutelar se reincidente'],
+  'Bullying / Cyberbullying / Humilhação sistêmica': ['Intervenção imediata','Rodas de conversa','Projeto de convivência','Envolver toda turma'],
+  'Ameaça (palavra, escrito ou gesto)': ['Registrar BO','Comunicar família','Afastamento preventivo se necessário'],
+  'Racismo / injúria racial': ['Notificação obrigatória','Rodas de debate','Projeto de consciência racial'],
+  'Homofobia / Transfobia': ['Suporte ao estudante','Orientar toda turma','Protocolo de proteção'],
+  'Dano ao patrimônio público': ['Comunicar família','Solicitar ressarcimento','Medida socioeducativa'],
+};
 const TB0 = [
   {n:'A1', l:'Aluno dormiu durante a aula'},
   {n:'A2', l:'Aluno sem material escolar'},
@@ -347,6 +390,7 @@ function _renderMain() {
   document.getElementById('optUrg').style.display = isB1 ? '' : 'none';
   document.getElementById('tabRel').style.display = PODE_REL.includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabAlunos').style.display = PODE_REL.includes(cu.perfil) ? '' : 'none';
+  document.getElementById('tabSeg').style.display = (cu.perfil==='coordenador' && COORD_SEGMENTOS[cu.nome]) ? '' : 'none';
   document.getElementById('tabGes').style.display = ['diretor','vice'].includes(cu.perfil) ? '' : 'none';
 
   const icons = {professor:'👨‍🏫',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};
@@ -790,7 +834,7 @@ window.closeModal = (e) => {
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
 window.showTab = (name, btn) => {
-  ['dashboard','registrar','ocorrencias','relatorio','alunos','gestao'].forEach(t => {
+  ['dashboard','registrar','ocorrencias','relatorio','alunos','segmento','gestao'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===name ? '' : 'none';
   });
   document.querySelectorAll('.nt button').forEach(b=>b.classList.remove('act'));
@@ -799,6 +843,7 @@ window.showTab = (name, btn) => {
   if(name==='gestao') renderGestao();
   if(name==='dashboard') renderDash();
   if(name==='alunos') { _initAbaAlunos(); window.renderAlunos(); }
+  if(name==='segmento') window.renderSegmento();
 };
 
 let usuariosDB = []; // usuários carregados do banco
@@ -1356,6 +1401,180 @@ function _dispararDownload(blob, nomeArquivo) {
 function _dataHoje() {
   return new Date().toISOString().slice(0,10).replace(/-/g,'');
 }
+
+// ─── DASHBOARD DO SEGMENTO (Coordenadores) ───────────────────────────────────
+
+window.renderSegmento = function() {
+  const seg = COORD_SEGMENTOS[cu.nome];
+  if (!seg) return;
+
+  const periodoSel = document.getElementById('segPeriodo')?.value || 'mes';
+  const tipoFiltro = document.getElementById('segTipo')?.value || '';
+  const hoje = new Date();
+
+  // Calcular intervalo de datas
+  let dataInicio;
+  if (periodoSel === 'semana') {
+    dataInicio = new Date(hoje); dataInicio.setDate(hoje.getDate() - 7);
+  } else if (periodoSel === 'mes') {
+    dataInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  } else if (periodoSel === 'bimestre') {
+    const bim = Math.floor(hoje.getMonth() / 2);
+    dataInicio = new Date(hoje.getFullYear(), bim * 2, 1);
+  } else { // ano
+    dataInicio = new Date(hoje.getFullYear(), 0, 1);
+  }
+
+  // Filtrar ocorrências do segmento
+  let lista = occ.filter(o => {
+    if (!o || !o.turma || !o.data) return false;
+    if (!seg.turmas.includes(o.turma)) return false;
+    let d;
+    if (o.data.includes('/')) {
+      const [dd,mm,yyyy] = o.data.split('/');
+      d = new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd));
+    } else { d = new Date(o.data); }
+    return d >= dataInicio && d <= hoje;
+  });
+
+  if (tipoFiltro) lista = lista.filter(o => o.tipo === tipoFiltro);
+
+  // Stats gerais
+  const total = lista.length;
+  const pend  = lista.filter(o => o.status === 'pendente').length;
+  const enc   = lista.filter(o => o.status === 'encerrado').length;
+
+  // Mapa alunos
+  const mapaAluno = {};
+  lista.forEach(o => {
+    (o.alunos||[]).forEach(a => {
+      const k = a.ra||a.nome;
+      if (!mapaAluno[k]) mapaAluno[k] = { nome:a.nome, ra:a.ra||'—', turma:o.turma, occ:[] };
+      mapaAluno[k].occ.push(o);
+    });
+  });
+  const alunosAlerta = Object.values(mapaAluno)
+    .filter(a => a.occ.length >= 3)
+    .sort((a,b) => b.occ.length - a.occ.length);
+
+  // Mapa tipos
+  const mapaTipo = {};
+  lista.forEach(o => { mapaTipo[o.tipo] = (mapaTipo[o.tipo]||0)+1; });
+  const topTipos = Object.entries(mapaTipo).sort((a,b)=>b[1]-a[1]);
+
+  // Mapa turmas
+  const mapaTurma = {};
+  lista.forEach(o => { mapaTurma[o.turma] = (mapaTurma[o.turma]||0)+1; });
+  const topTurmas = Object.entries(mapaTurma).sort((a,b)=>b[1]-a[1]);
+  const maxT = topTurmas[0]?.[1] || 1;
+
+  // Labels período
+  const PER = {semana:'últimos 7 dias', mes:'este mês', bimestre:'este bimestre', ano:'este ano'};
+
+  // Tipos únicos para filtro
+  const tiposUnicos = [...new Set(occ.filter(o=>o&&seg.turmas.includes(o.turma)).map(o=>o.tipo))].sort();
+
+  const el = document.getElementById('tab-segmento');
+  if (!el) return;
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+      <div>
+        <div class="st" style="margin:0;border:none;padding:0">📊 Meu Segmento — ${seg.periodo}</div>
+        <div style="font-size:12px;color:var(--mu);margin-top:2px">${seg.desc}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <select id="segPeriodo" onchange="window.renderSegmento()" style="font-size:12px;padding:4px 8px;border:0.5px solid #ccc;border-radius:8px;background:#fff">
+          <option value="semana"${periodoSel==='semana'?' selected':''}>Última semana</option>
+          <option value="mes"${periodoSel==='mes'?' selected':''}>Este mês</option>
+          <option value="bimestre"${periodoSel==='bimestre'?' selected':''}>Este bimestre</option>
+          <option value="ano"${periodoSel==='ano'?' selected':''}>Este ano</option>
+        </select>
+        <select id="segTipo" onchange="window.renderSegmento()" style="font-size:12px;padding:4px 8px;border:0.5px solid #ccc;border-radius:8px;background:#fff">
+          <option value="">Todos os tipos</option>
+          ${tiposUnicos.map(t=>`<option value="${t}"${t===tipoFiltro?' selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="sg" style="margin-bottom:1rem">
+      <div class="sc mg"><div class="sn">${total}</div><div class="sl">Ocorrências (${PER[periodoSel]})</div></div>
+      <div class="sc re"><div class="sn">${alunosAlerta.length}</div><div class="sl">Alunos em alerta (3+)</div></div>
+      <div class="sc or"><div class="sn">${pend}</div><div class="sl">Aguard. complemento</div></div>
+      <div class="sc gr"><div class="sn">${enc}</div><div class="sl">Encerradas</div></div>
+    </div>
+
+    <!-- ALUNOS EM ALERTA -->
+    ${alunosAlerta.length ? `
+    <div class="fc" style="margin-bottom:1rem">
+      <div class="st" style="font-size:13px;margin-bottom:10px">🚨 Alunos em Alerta — 3+ ocorrências no período</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${alunosAlerta.map(a=>`
+          <div onclick="window._verHistoricoAluno('${a.ra}','${a.nome}')"
+            style="background:var(--rel);border:1.5px solid var(--re);border-radius:8px;padding:8px 12px;cursor:pointer;min-width:200px;flex:1">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="background:var(--re);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${a.occ.length}</span>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--re)">${a.nome}</div>
+                <div style="font-size:11px;color:var(--mu)">${a.turma} · RA: ${a.ra}</div>
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>` : `<div class="ab gr" style="margin-bottom:1rem">✅ Nenhum aluno com 3+ ocorrências no período.</div>`}
+
+    <!-- TIPOS MAIS FREQUENTES + INTERVENÇÕES -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div class="fc">
+        <div class="st" style="font-size:13px;margin-bottom:10px">📈 Tipos mais frequentes</div>
+        ${topTipos.length ? topTipos.slice(0,8).map(([tipo,n])=>{
+          const pct = Math.round((n/total)*100);
+          return `<div style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+              <span style="max-width:75%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tipo}</span>
+              <strong>${n} (${pct}%)</strong>
+            </div>
+            <div style="background:#f0f0f0;border-radius:4px;height:8px">
+              <div style="background:var(--mg);width:${pct}%;height:100%;border-radius:4px"></div>
+            </div>
+          </div>`;
+        }).join('') : '<div class="es">Nenhuma ocorrência no período.</div>'}
+      </div>
+
+      <div class="fc">
+        <div class="st" style="font-size:13px;margin-bottom:10px">💡 Sugestões de Intervenção</div>
+        ${topTipos.slice(0,3).map(([tipo])=>{
+          const sugs = INTERVENCOES[tipo];
+          if (!sugs) return '';
+          return `<div style="margin-bottom:10px">
+            <div style="font-size:12px;font-weight:600;color:var(--mg);margin-bottom:4px">${tipo}</div>
+            <ul style="list-style:none;padding:0">
+              ${sugs.map(s=>`<li style="font-size:12px;padding:2px 0;display:flex;gap:6px">
+                <span style="color:var(--mg);flex-shrink:0">→</span><span>${s}</span>
+              </li>`).join('')}
+            </ul>
+          </div>`;
+        }).join('') || '<div class="es">Selecione um período com ocorrências.</div>'}
+      </div>
+    </div>
+
+    <!-- RANKING DE TURMAS -->
+    <div class="fc">
+      <div class="st" style="font-size:13px;margin-bottom:10px">🏫 Ranking de Turmas</div>
+      ${topTurmas.length ? `<div style="display:flex;flex-direction:column;gap:6px">
+        ${topTurmas.map(([turma,n],i)=>`
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:11px;font-weight:700;color:${i===0?'var(--re)':i===1?'var(--or)':'var(--mu)'};min-width:20px;text-align:center">${i+1}º</span>
+            <span style="width:90px;font-size:12px;flex-shrink:0">${turma}</span>
+            <div style="flex:1;background:#f0f0f0;border-radius:4px;height:14px;overflow:hidden">
+              <div style="background:${i===0?'var(--re)':i===1?'var(--or)':'var(--mg)'};width:${Math.round((n/maxT)*100)}%;height:100%;border-radius:4px"></div>
+            </div>
+            <span style="font-size:13px;font-weight:700;color:var(--mg);min-width:20px;text-align:right">${n}</span>
+          </div>`).join('')}
+      </div>` : '<div class="es">Nenhuma ocorrência no período.</div>'}
+    </div>`;
+};
 
 // ─── RESET ───────────────────────────────────────────────────────────────────
 
