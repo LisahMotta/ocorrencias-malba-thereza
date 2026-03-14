@@ -12,6 +12,12 @@
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
 <link rel="stylesheet" href="/css/app.css">
+<style>
+.senha-wrap{position:relative}
+.senha-wrap input{padding-right:40px!important}
+.btn-olho{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--mu);font-size:16px;padding:0;line-height:1}
+.btn-olho:hover{color:var(--mg)}
+</style>
 </head>
 <body>
 <div id="app">
@@ -28,8 +34,11 @@
     <div class="fg"><label>Selecione seu nome</label>
       <select id="loginUsuario"><option value="">Selecione...</option></select></div>
     <div class="fg"><label>Senha</label>
-      <input type="password" id="loginPass" placeholder="••••••••"
-        onkeydown="if(event.key==='Enter')window._doLogin()"/></div>
+      <div class="senha-wrap">
+        <input type="password" id="loginPass" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')window._doLogin()"/>
+        <button type="button" class="btn-olho" onclick="window._toggleSenha('loginPass',this)" title="Mostrar/ocultar senha">👁</button>
+      </div></div>
     <div id="loginErro" style="color:var(--re);font-size:13px;display:none;margin-bottom:8px"></div>
     <button class="bp" onclick="window._doLogin()">Entrar</button>
   </div>
@@ -280,9 +289,9 @@
   <div class="md" onclick="event.stopPropagation()" style="max-width:420px">
     <div class="mh"><span class="mt2">🔑 Trocar Senha</span><button class="mc" onclick="fecharModalSenha()">✕</button></div>
     <div class="ab bl" style="margin-bottom:1rem">Por segurança, troque a senha padrão <strong>Malba@2025</strong> por uma senha pessoal.</div>
-    <div class="fg"><label>Senha atual</label><input type="password" id="senhaAtual" placeholder="••••••••"/></div>
-    <div class="fg"><label>Nova senha (mínimo 6 caracteres)</label><input type="password" id="senhaNova" placeholder="••••••••"/></div>
-    <div class="fg"><label>Confirmar nova senha</label><input type="password" id="senhaConf" placeholder="••••••••"/></div>
+    <div class="fg"><label>Senha atual</label><div class="senha-wrap"><input type="password" id="senhaAtual" placeholder="••••••••"/><button type="button" class="btn-olho" onclick="window._toggleSenha('senhaAtual',this)">👁</button></div></div>
+    <div class="fg"><label>Nova senha (mínimo 6 caracteres)</label><div class="senha-wrap"><input type="password" id="senhaNova" placeholder="••••••••"/><button type="button" class="btn-olho" onclick="window._toggleSenha('senhaNova',this)">👁</button></div></div>
+    <div class="fg"><label>Confirmar nova senha</label><div class="senha-wrap"><input type="password" id="senhaConf" placeholder="••••••••"/><button type="button" class="btn-olho" onclick="window._toggleSenha('senhaConf',this)">👁</button></div></div>
     <div id="senhaErro" style="color:var(--re);font-size:13px;display:none;margin-bottom:8px"></div>
     <button class="bp" onclick="window._trocarSenha()">Salvar nova senha</button>
   </div>
@@ -290,6 +299,15 @@
 
 </div><!-- #app -->
 
+<script>
+window._toggleSenha = (id, btn) => {
+  const input = document.getElementById(id);
+  if (!input) return;
+  const mostrar = input.type === 'password';
+  input.type = mostrar ? 'text' : 'password';
+  btn.textContent = mostrar ? '🙈' : '👁';
+};
+</script>
 <script type="module" src="/js/app.js"></script>
 <script>
 // Registrar Service Worker (PWA)
