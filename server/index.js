@@ -53,11 +53,15 @@ const clients = new Map();
 
 function broadcast(payload) {
   const msg = JSON.stringify(payload);
-  clients.forEach(sockets => {
-    sockets.forEach(ws => {
-      if (ws.readyState === ws.OPEN) ws.send(msg);
-    });
+  let enviados = 0;
+  // Usa wss.clients para garantir que TODOS os sockets conectados recebam
+  wss.clients.forEach(ws => {
+    if (ws.readyState === ws.OPEN) {
+      ws.send(msg);
+      enviados++;
+    }
   });
+  console.log(`[broadcast] ${payload.type} → ${enviados} cliente(s) conectado(s)`);
 }
 
 // ─── WEBSOCKET ────────────────────────────────────────────────────────────────
@@ -74,6 +78,7 @@ wss.on('connection', (ws) => {
         userId = String(payload.id);
         if (!clients.has(userId)) clients.set(userId, new Set());
         clients.get(userId).add(ws);
+        console.log(`[WS] Usuário autenticado: ${payload.nome} (${payload.perfil}) — total conectados: ${wss.clients.size}`);
         ws.send(JSON.stringify({
           type: 'init',
           ocorrencias: db.listarOcc(),
@@ -154,6 +159,7 @@ app.post('/api/ocorrencias', autenticar, (req, res) => {
     registradoPorNome: req.usuario.nome,
     registradoPorPerfil: req.usuario.perfil,
   });
+  console.log(`[nova_ocorrencia] id=${nova.id} por ${nova.registradoPorNome} — clientes conectados: ${wss.clients.size}`);
   broadcast({ type: 'nova_ocorrencia', occ: nova });
   res.json(nova);
 });
