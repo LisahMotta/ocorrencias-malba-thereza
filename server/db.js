@@ -134,8 +134,10 @@ module.exports = {
   resetarOcorrencias: () => {
     run('DELETE FROM ocorrencias');
     run('DELETE FROM chats');
-    run("DELETE FROM sqlite_sequence WHERE name='ocorrencias'");
-    run("DELETE FROM sqlite_sequence WHERE name='chats'");
+    // sqlite_sequence só existe se tiver usado AUTOINCREMENT — ignora erro se não existir
+    try { db.run("DELETE FROM sqlite_sequence WHERE name='ocorrencias'"); } catch(e) {}
+    try { db.run("DELETE FROM sqlite_sequence WHERE name='chats'"); } catch(e) {}
+    salvar();
   },
 
   listarChat: (occId) => queryAll('SELECT * FROM chats WHERE occ_id = ? ORDER BY id ASC', [occId]),
