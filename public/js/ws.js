@@ -29,12 +29,26 @@ export function conectar(token) {
     console.log('[WS] Conectado!');
     socket.send(JSON.stringify({ type: 'auth', token }));
     disparar('status', 'conectado');
+
+    // Keepalive — envia mensagem a cada 20s para evitar timeout do Railway
+    const keepalive = setInterval(() => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'ping' }));
+      } else {
+        clearInterval(keepalive);
+      }
+    }, 20000);
   };
 
   socket.onmessage = (ev) => {
     let msg; try { msg = JSON.parse(ev.data); } catch { return; }
     disparar(msg.type, msg);
   };
+
+  // Responde ao ping do servidor para manter conexão viva no Railway
+  socket.addEventListener('message', (ev) => {
+    if (ev.data === 'ping') socket.send('pong');
+  });
 
   socket.onclose = (e) => {
     console.log('[WS] Desconectado. Código:', e.code);

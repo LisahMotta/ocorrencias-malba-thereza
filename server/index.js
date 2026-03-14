@@ -65,7 +65,18 @@ function broadcast(payload) {
 }
 
 // ─── WEBSOCKET ────────────────────────────────────────────────────────────────
+// Heartbeat — mantém conexão viva no Railway (timeout de 30s)
+setInterval(() => {
+  wss.clients.forEach(ws => {
+    if (ws.isAlive === false) { ws.terminate(); return; }
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 25000);
+
 wss.on('connection', (ws) => {
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
   let userId = null;
 
   ws.on('message', (raw) => {
@@ -153,15 +164,20 @@ app.post('/api/auth/trocar-senha', autenticar, async (req, res) => {
 app.get('/api/ocorrencias', autenticar, (req, res) => res.json(db.listarOcc()));
 
 app.post('/api/ocorrencias', autenticar, (req, res) => {
-  const nova = db.inserirOcc({
-    ...req.body,
-    registradoPorId: req.usuario.id,
-    registradoPorNome: req.usuario.nome,
-    registradoPorPerfil: req.usuario.perfil,
-  });
-  console.log(`[nova_ocorrencia] id=${nova.id} por ${nova.registradoPorNome} — clientes conectados: ${wss.clients.size}`);
-  broadcast({ type: 'nova_ocorrencia', occ: nova });
-  res.json(nova);
+  try {
+    const nova = db.inserirOcc({
+      ...req.body,
+      registradoPorId: req.usuario.id,
+      registradoPorNome: req.usuario.nome,
+      registradoPorPerfil: req.usuario.perfil,
+    });
+    console.log(`[nova_ocorrencia] id=${nova.id} por ${nova.registradoPorNome} — clientes: ${wss.clients.size}`);
+    broadcast({ type: 'nova_ocorrencia', occ: nova });
+    res.json(nova);
+  } catch(err) {
+    console.error('[nova_ocorrencia] ERRO:', err.message);
+    res.status(500).json({ erro: err.message });
+  }
 });
 
 app.patch('/api/ocorrencias/:id/complementar', autenticar, exigePerfil(...PODE_EDIT), (req, res) => {
