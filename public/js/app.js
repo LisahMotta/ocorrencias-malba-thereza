@@ -245,6 +245,7 @@ window._doLogin = async () => {
 window._doLogout = () => {
   limparSessao();
   cu = null; sTipo = null; selAlunos = []; atuais = [];
+  document.getElementById('rodape-app').style.display = 'none';
   // Resetar botão de login
   const btn = document.querySelector('#loginScreen .bp');
   if (btn) { btn.textContent = 'Entrar'; btn.disabled = false; }
@@ -380,6 +381,7 @@ function _atualizarBadgeChat() {
 function _renderMain() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainScreen').style.display = 'block';
+  document.getElementById('rodape-app').style.display = 'block';
   document.getElementById('topName').textContent = cu.nome.split(' ').slice(0,2).join(' ');
   document.getElementById('topRole').textContent = PL[cu.perfil];
 
