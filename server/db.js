@@ -14,7 +14,9 @@ let db = null;
 
 function salvar() {
   const data = db.export();
-  fs.writeFileSync(DB_PATH, Buffer.from(data));
+  const tmp = DB_PATH + '.tmp';
+  fs.writeFileSync(tmp, Buffer.from(data));
+  fs.renameSync(tmp, DB_PATH);
 }
 
 async function inicializar() {
@@ -50,6 +52,12 @@ async function inicializar() {
       remetente_perfil TEXT NOT NULL, hora TEXT NOT NULL,
       criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS auditoria (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      usuario_id INTEGER, usuario_nome TEXT,
+      acao TEXT NOT NULL, detalhes TEXT,
+      criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
   `);
   // ─── MIGRAÇÕES AUTOMÁTICAS ─────────────────────────────────────────────────
   // Adiciona colunas novas sem apagar dados existentes
@@ -59,6 +67,9 @@ async function inicializar() {
     "ALTER TABLE ocorrencias ADD COLUMN complementado_por_perfil TEXT",
     "ALTER TABLE ocorrencias ADD COLUMN placon TEXT",
     "ALTER TABLE usuarios ADD COLUMN perfil_anterior TEXT",
+    "CREATE INDEX IF NOT EXISTS idx_occ_status ON ocorrencias(status)",
+    "CREATE INDEX IF NOT EXISTS idx_occ_data   ON ocorrencias(data)",
+    "CREATE INDEX IF NOT EXISTS idx_chat_occ   ON chats(occ_id)",
   ];
   // Recriar tabela ocorrencias se faltar coluna crítica (banco muito antigo)
   try {
@@ -170,4 +181,19 @@ module.exports = {
     );
     return { id, ...d };
   },
+
+  // ─── AUDITORIA ──────────────────────────────────────────────────────────────
+  inserirAuditoria: (usuarioId, usuarioNome, acao, detalhes = null) => {
+    try {
+      run(
+        'INSERT INTO auditoria (usuario_id, usuario_nome, acao, detalhes) VALUES (?, ?, ?, ?)',
+        [usuarioId || null, usuarioNome || null, acao, detalhes ? JSON.stringify(detalhes) : null]
+      );
+    } catch(e) { console.error('[auditoria] Erro ao registrar:', e.message); }
+  },
+  listarAuditoria: (limite = 200) =>
+    queryAll('SELECT * FROM auditoria ORDER BY id DESC LIMIT ?', [limite]).map(r => ({
+      ...r,
+      detalhes: r.detalhes ? JSON.parse(r.detalhes) : null,
+    })),
 };

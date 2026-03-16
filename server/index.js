@@ -1,6 +1,7 @@
 const express = require('express');
 const { WebSocketServer } = require('ws');
 const http = require('http');
+const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
@@ -49,6 +50,15 @@ function exigePerfil(...perfis) {
 }
 
 const PODE_EDIT = ['poc', 'coordenador', 'vice', 'diretor'];
+
+// ─── RATE LIMITING (login) ────────────────────────────────────────────────────
+const tentativasLogin = new Map(); // ip → { count, bloqueadoAte }
+setInterval(() => {
+  const agora = Date.now();
+  tentativasLogin.forEach((v, k) => {
+    if (!v.bloqueadoAte || agora > v.bloqueadoAte + 10 * 60 * 1000) tentativasLogin.delete(k);
+  });
+}, 10 * 60 * 1000);
 
 // ─── CLIENTES WEBSOCKET ───────────────────────────────────────────────────────
 const clients = new Map();
@@ -182,13 +192,32 @@ function _todosChats() {
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 app.post('/api/auth/login', async (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  const agora = Date.now();
+  const t = tentativasLogin.get(ip) || { count: 0, bloqueadoAte: null };
+  if (t.bloqueadoAte && agora < t.bloqueadoAte) {
+    const restam = Math.ceil((t.bloqueadoAte - agora) / 1000 / 60);
+    return res.status(429).json({ erro: `Muitas tentativas. Tente novamente em ${restam} minuto(s).` });
+  }
+
   const { nome, senha } = req.body;
   if (!nome || !senha) return res.status(400).json({ erro: 'Informe nome e senha' });
   const usuario = db.getUsuarioNome(nome.trim().toUpperCase());
   if (!usuario) return res.status(401).json({ erro: 'Usuário não encontrado' });
   if (!usuario.ativo) return res.status(401).json({ erro: 'Usuário inativo' });
   const ok = await bcrypt.compare(senha, usuario.senha);
-  if (!ok) return res.status(401).json({ erro: 'Senha incorreta' });
+  if (!ok) {
+    t.count++;
+    if (t.count >= 5) {
+      t.bloqueadoAte = agora + 5 * 60 * 1000;
+      console.log(`[auth] IP ${ip} bloqueado por 5min após ${t.count} tentativas`);
+    }
+    tentativasLogin.set(ip, t);
+    return res.status(401).json({ erro: 'Senha incorreta' });
+  }
+
+  tentativasLogin.delete(ip);
+  db.inserirAuditoria(usuario.id, usuario.nome, 'login', { ip, perfil: usuario.perfil });
   const token = jwt.sign(
     { id: usuario.id, nome: usuario.nome, perfil: usuario.perfil },
     JWT_SECRET, { expiresIn: JWT_EXPIRA }
@@ -205,6 +234,7 @@ app.post('/api/auth/trocar-senha', autenticar, async (req, res) => {
   if (!ok) return res.status(401).json({ erro: 'Senha atual incorreta' });
   const hash = await bcrypt.hash(novaSenha, 10);
   db.atualizarSenha(req.usuario.id, hash);
+  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'trocar_senha', null);
   res.json({ ok: true });
 });
 
@@ -212,6 +242,10 @@ app.post('/api/auth/trocar-senha', autenticar, async (req, res) => {
 app.get('/api/ocorrencias', autenticar, (req, res) => res.json(db.listarOcc()));
 
 app.post('/api/ocorrencias', autenticar, (req, res) => {
+  const { tipo, numero, data, hora, local, gravidade, turma } = req.body;
+  if (!tipo || !numero || !data || !hora || !local || !gravidade || !turma) {
+    return res.status(400).json({ erro: 'Campos obrigatórios ausentes: tipo, numero, data, hora, local, gravidade, turma' });
+  }
   try {
     const nova = db.inserirOcc({
       ...req.body,
@@ -220,6 +254,7 @@ app.post('/api/ocorrencias', autenticar, (req, res) => {
       registradoPorPerfil: req.usuario.perfil,
     });
     console.log(`[nova_ocorrencia] id=${nova.id} por ${nova.registradoPorNome} — clientes: ${wss.clients.size}`);
+    db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'nova_ocorrencia', { occId: nova.id, tipo: nova.tipo, turma: nova.turma });
     broadcast({ type: 'nova_ocorrencia', occ: nova });
     res.json(nova);
   } catch(err) {
@@ -236,6 +271,7 @@ app.patch('/api/ocorrencias/:id/complementar', autenticar, exigePerfil(...PODE_E
     complementadoPorPerfil:req.usuario.perfil,
   });
   if (!occ) return res.status(404).json({ erro: 'Não encontrada' });
+  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'complementar_ocorrencia', { occId: occ.id, tipo: occ.tipo });
   broadcast({ type: 'occ_atualizada', occ });
   res.json(occ);
 });
@@ -243,11 +279,21 @@ app.patch('/api/ocorrencias/:id/complementar', autenticar, exigePerfil(...PODE_E
 app.patch('/api/ocorrencias/:id/editar', autenticar, exigePerfil(...PODE_EDIT), (req, res) => {
   const occ = db.editarOcc(parseInt(req.params.id), req.body);
   if (!occ) return res.status(404).json({ erro: 'Não encontrada' });
+  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'editar_ocorrencia', { occId: occ.id, campos: Object.keys(req.body) });
   broadcast({ type: 'occ_atualizada', occ });
   res.json(occ);
 });
 
 // ─── GESTÃO ───────────────────────────────────────────────────────────────────
+
+// Lista pública — usada na tela de login (sem autenticação)
+app.get('/api/usuarios/lista-publica', (req, res) => {
+  const lista = db.listarUsuarios().filter(u => u.ativo).map(u => ({
+    id: u.id, nome: u.nome, perfil: u.perfil,
+  }));
+  res.json(lista);
+});
+
 app.get('/api/usuarios', autenticar, exigePerfil('diretor', 'coordenador', 'vice'), (req, res) => {
   res.json(db.listarUsuarios());
 });
@@ -260,6 +306,7 @@ app.post('/api/usuarios', autenticar, exigePerfil('diretor', 'vice'), async (req
   if (existe) return res.status(400).json({ erro: 'Usuário já existe com este nome' });
   const hash = await bcrypt.hash('Malba@2025', 10);
   const id = db.inserirUsuario(nome.trim().toUpperCase(), perfil, hash);
+  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'criar_usuario', { novoUsuario: nome.trim().toUpperCase(), perfil });
   res.json({ ok: true, id, nome: nome.trim().toUpperCase(), perfil, novaSenha: 'Malba@2025' });
 });
 
@@ -274,6 +321,7 @@ app.patch('/api/usuarios/:id/perfil', autenticar, exigePerfil('diretor', 'vice')
     const u = db.getUsuario(parseInt(req.params.id));
     console.log(`[perfil] Usuário ${u.nome} → ${perfil} (salvo: ${u.perfil})`);
     if (u.perfil !== perfil) throw new Error('Perfil não foi salvo corretamente');
+    db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'alterar_perfil', { usuarioAlvo: u.nome, perfilAnterior: u.perfil_anterior, perfilNovo: perfil });
     // Notifica todos via WebSocket para recarregar se necessário
     broadcast({ type: 'perfil_atualizado', userId: parseInt(req.params.id), perfil });
     res.json({ ok: true, perfil: u.perfil });
@@ -285,15 +333,19 @@ app.patch('/api/usuarios/:id/perfil', autenticar, exigePerfil('diretor', 'vice')
 
 // Resetar senha
 app.post('/api/usuarios/:id/resetar-senha', autenticar, exigePerfil('diretor', 'vice'), async (req, res) => {
+  const alvo = db.getUsuario(parseInt(req.params.id));
   const hash = await bcrypt.hash('Malba@2025', 10);
   db.atualizarSenha(parseInt(req.params.id), hash);
+  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'resetar_senha', { usuarioAlvo: alvo?.nome });
   res.json({ ok: true, novaSenha: 'Malba@2025' });
 });
 
 // Ativar/desativar usuário
 app.post('/api/usuarios/:id/toggle', autenticar, exigePerfil('diretor', 'vice'), (req, res) => {
   if (parseInt(req.params.id) === req.usuario.id) return res.status(400).json({ erro: 'Não é possível desativar sua própria conta' });
+  const alvo = db.getUsuario(parseInt(req.params.id));
   db.toggleUsuario(parseInt(req.params.id), req.body.ativo ? 1 : 0);
+  db.inserirAuditoria(req.usuario.id, req.usuario.nome, req.body.ativo ? 'ativar_usuario' : 'desativar_usuario', { usuarioAlvo: alvo?.nome });
   res.json({ ok: true });
 });
 
@@ -301,6 +353,7 @@ app.post('/api/usuarios/:id/toggle', autenticar, exigePerfil('diretor', 'vice'),
 
 // Backup JSON completo
 app.get('/api/backup/json', autenticar, exigePerfil('diretor','coordenador','vice'), (req, res) => {
+  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'exportar_backup', { formato: 'json' });
   const ocorrencias = db.listarOcc();
   const usuarios = db.listarUsuarios();
   const payload = {
@@ -316,6 +369,7 @@ app.get('/api/backup/json', autenticar, exigePerfil('diretor','coordenador','vic
 
 // Backup CSV — ocorrências
 app.get('/api/backup/csv', autenticar, exigePerfil('diretor','coordenador','vice'), (req, res) => {
+  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'exportar_backup', { formato: 'csv' });
   const ocorrencias = db.listarOcc();
 
   const cabecalho = [
@@ -355,9 +409,17 @@ app.get('/api/backup/csv', autenticar, exigePerfil('diretor','coordenador','vice
   res.send(csv);
 });
 
+// ─── AUDITORIA ────────────────────────────────────────────────────────────────
+app.get('/api/auditoria', autenticar, exigePerfil('diretor', 'vice'), (req, res) => {
+  const limite = Math.min(parseInt(req.query.limite) || 200, 500);
+  res.json(db.listarAuditoria(limite));
+});
+
 // ─── RESET (só diretor) ──────────────────────────────────────────────────────
 app.post('/api/admin/resetar-ocorrencias', autenticar, exigePerfil('diretor','vice'), (req, res) => {
   try {
+    const total = db.listarOcc().length;
+    db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'resetar_ocorrencias', { totalApagadas: total });
     db.resetarOcorrencias();
     broadcast({ type: 'init', ocorrencias: [], chats: {} });
     res.json({ ok: true, msg: 'Todas as ocorrências foram apagadas.' });
@@ -370,6 +432,36 @@ app.post('/api/admin/resetar-ocorrencias', autenticar, exigePerfil('diretor','vi
 // ─── SPA ──────────────────────────────────────────────────────────────────────
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
 
+// ─── BACKUP AUTOMÁTICO ───────────────────────────────────────────────────────
+function _fazerBackupAutomatico() {
+  try {
+    const backupDir = path.join(
+      process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(__dirname, '../data'),
+      'backups'
+    );
+    fs.mkdirSync(backupDir, { recursive: true });
+    const nome = `backup_${new Date().toISOString().slice(0, 10)}.db`;
+    const destino = path.join(backupDir, nome);
+    const origem = path.join(
+      process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(__dirname, '../data'),
+      'ocorrencias.db'
+    );
+    if (fs.existsSync(origem)) {
+      fs.copyFileSync(origem, destino);
+      console.log(`[backup-auto] Salvo: ${nome}`);
+      // Manter apenas os últimos 30 backups
+      const arquivos = fs.readdirSync(backupDir)
+        .filter(f => f.startsWith('backup_') && f.endsWith('.db'))
+        .sort();
+      if (arquivos.length > 30) {
+        arquivos.slice(0, arquivos.length - 30).forEach(f => {
+          try { fs.unlinkSync(path.join(backupDir, f)); } catch {}
+        });
+      }
+    }
+  } catch(e) { console.error('[backup-auto] Erro:', e.message); }
+}
+
 // ─── START ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 db.inicializar().then(() => {
@@ -378,6 +470,11 @@ db.inicializar().then(() => {
     console.log(`   Banco: sql.js | JWT: ${JWT_EXPIRA}`);
     console.log(`   👉 Primeiro uso? rode: npm run seed\n`);
   });
+  // Backup automático diário (executa 1h após o start e depois a cada 24h)
+  setTimeout(() => {
+    _fazerBackupAutomatico();
+    setInterval(_fazerBackupAutomatico, 24 * 60 * 60 * 1000);
+  }, 60 * 60 * 1000);
 }).catch(err => {
   console.error('Erro ao inicializar banco:', err);
   process.exit(1);
