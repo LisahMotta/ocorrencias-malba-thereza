@@ -14,7 +14,9 @@ let db = null;
 
 function salvar() {
   const data = db.export();
-  fs.writeFileSync(DB_PATH, Buffer.from(data));
+  const tmp = DB_PATH + '.tmp';
+  fs.writeFileSync(tmp, Buffer.from(data));
+  fs.renameSync(tmp, DB_PATH);
 }
 
 async function inicializar() {

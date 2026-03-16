@@ -212,6 +212,10 @@ app.post('/api/auth/trocar-senha', autenticar, async (req, res) => {
 app.get('/api/ocorrencias', autenticar, (req, res) => res.json(db.listarOcc()));
 
 app.post('/api/ocorrencias', autenticar, (req, res) => {
+  const { tipo, numero, data, hora, local, gravidade, turma } = req.body;
+  if (!tipo || !numero || !data || !hora || !local || !gravidade || !turma) {
+    return res.status(400).json({ erro: 'Campos obrigatórios ausentes: tipo, numero, data, hora, local, gravidade, turma' });
+  }
   try {
     const nova = db.inserirOcc({
       ...req.body,
