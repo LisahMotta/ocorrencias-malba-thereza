@@ -58,6 +58,16 @@ let USUARIOS = [
   {id:49,nome:'RENATA VALÉRIA',perfil:'coordenador'},
   {id:50,nome:'MARIA CRISTINA DA SILVA',perfil:'vice'},
   {id:51,nome:'SANDRA REGINA XAVIER DA SILVA',perfil:'diretor'},
+  {id:52,nome:'KÁTIA MARA FERREIRA DIAS MARTINS',perfil:'professor'},
+  {id:53,nome:'ALINE BAUMGARTER',perfil:'professor'},
+  {id:54,nome:'ELISABETH APARECIDA BERNARDES DE FARIA',perfil:'professor'},
+  {id:55,nome:'LILIAN DAS GRAÇAS DA SILVA NEVES',perfil:'professor'},
+  {id:56,nome:'PEDRO DINIZ SILVEIRA DAS NEVES',perfil:'professor'},
+  {id:57,nome:'LUCIMAR DE OLIVEIRA SANTOS',perfil:'professor'},
+  {id:58,nome:'MARIA APARECIDA GOMES FRANCISCO',perfil:'professor'},
+  {id:59,nome:'RODOLFO JESUS DO PRADO FILHO',perfil:'professor'},
+  {id:60,nome:'ROSEMARY ALVES FERREIRA ANDRADE EUGÊNIO',perfil:'professor'},
+  {id:61,nome:'VANESSA OSÓRIO VENTURA',perfil:'professor'},
 ];
 
 const PL = {
