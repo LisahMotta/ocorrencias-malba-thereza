@@ -467,13 +467,38 @@ window.filtrarAlunos = () => {
 };
 function renderAlunos(lista) {
   const c = document.getElementById('listaAlunos');
-  if (!lista.length) { c.innerHTML='<div style="padding:1rem;text-align:center;font-size:13px;color:var(--mu)">Nenhum aluno encontrado.</div>'; return; }
+  const q = (document.getElementById('filtroAluno').value || '').trim();
+  if (!lista.length) {
+    const btnManual = q
+      ? `<button class="bn" style="margin-top:8px;font-size:12px;padding:5px 14px" onclick="window._adicionarAlunoManual('${q.replace(/'/g,"\\'").toUpperCase()}')">➕ Adicionar "<strong>${q.toUpperCase()}</strong>" manualmente</button>`
+      : '';
+    c.innerHTML = `<div style="padding:1rem;text-align:center;font-size:13px;color:var(--mu)">Nenhum aluno encontrado.${btnManual ? '<br>' + btnManual : ''}</div>`;
+    return;
+  }
   c.innerHTML = lista.map((a,i) => {
     const s = selAlunos.some(x=>x.ra===a.ra);
     return `<div class="ai${s?' sel':''}" onclick="window._togAluno('${a.ra}',this)"><input type="checkbox"${s?' checked':''} onclick="event.stopPropagation();window._togAluno('${a.ra}',this.closest('.ai'))"/><span class="anum">${i+1}.</span><span class="an">${a.nome}</span></div>`;
   }).join('');
   document.getElementById('lblCount').textContent = selAlunos.length+' selecionado(s)';
 }
+
+window._adicionarAlunoManual = (nomePreenchido) => {
+  const nome = (nomePreenchido || '').trim().toUpperCase() ||
+    (prompt('Nome completo do aluno:') || '').trim().toUpperCase();
+  if (!nome) return;
+  // Evita duplicata pelo mesmo nome
+  if (selAlunos.some(a => a.nome.toUpperCase() === nome)) {
+    alert('Aluno "' + nome + '" já está selecionado.');
+    return;
+  }
+  const ra = 'manual-' + Date.now();
+  selAlunos.push({ ra, nome, manual: true });
+  document.getElementById('lblCount').textContent = selAlunos.length + ' selecionado(s)';
+  renderTags();
+  // Limpa o filtro e reexibe lista
+  document.getElementById('filtroAluno').value = '';
+  renderAlunos(atuais);
+};
 window._togAluno = (ra, el) => {
   const a = atuais.find(x=>x.ra===ra); if(!a) return;
   const i = selAlunos.findIndex(x=>x.ra===ra);
@@ -489,7 +514,7 @@ window._remAluno = (ra) => {
 };
 function renderTags() {
   document.getElementById('tagsAlunos').innerHTML = selAlunos.map(a =>
-    `<span class="at2">${a.nome}<button onclick="window._remAluno('${a.ra}')">×</button></span>`
+    `<span class="at2${a.manual?' at2-manual':''}" title="${a.manual?'Adicionado manualmente':'RA: '+a.ra}">${a.manual?'✎ ':''}${a.nome}<button onclick="window._remAluno('${a.ra}')">×</button></span>`
   ).join('');
 }
 
