@@ -894,7 +894,17 @@ window.showTab = (name, btn) => {
   if(name==='ocorrencias') renderOcc();
   if(name==='gestao') { renderGestao(); if(['diretor','vice'].includes(cu?.perfil)) window._carregarAuditoria(); }
   if(name==='dashboard') renderDash();
-  if(name==='alunos') { _initAbaAlunos(); window.renderAlunos(); }
+  if(name==='alunos') {
+    _initAbaAlunos();
+    window.renderAlunos();
+    // Mostrar seção de pesquisa/sinalização apenas para equipe gestora
+    const sec = document.getElementById('aPesquisaSection');
+    if (sec) {
+      const podeMonitorar = ['poc','coordenador','vice','diretor'].includes(cu?.perfil);
+      sec.style.display = podeMonitorar ? '' : 'none';
+      if (podeMonitorar) { _initPesquisaAlunos(); window._carregarMonitorados(); }
+    }
+  }
   if(name==='segmento') window.renderSegmento();
 };
 
@@ -1482,6 +1492,129 @@ window._verHistoricoAluno = function(ra, nome) {
 window.fecharModalAluno = () => document.getElementById('modalAluno').classList.remove('show');
 
 function _esc(str) { return String(str||'').replace(/'/g,"\'"); }
+
+// ─── ALUNOS MONITORADOS ───────────────────────────────────────────────────────
+
+let _monitorados = []; // cache local
+
+function _initPesquisaAlunos() {
+  // Popular select de turma na pesquisa
+  const sel = document.getElementById('aPesquisaTurma');
+  if (sel && sel.options.length <= 1) {
+    _ordTurmas(Object.keys(TD)).forEach(t => {
+      const o = document.createElement('option');
+      o.value = t; o.textContent = t;
+      sel.appendChild(o);
+    });
+  }
+}
+
+window._carregarMonitorados = async function() {
+  const el = document.getElementById('aMonitoradosList');
+  if (!el) return;
+  try {
+    const resp = await apiFetch('/api/alunos-monitorados');
+    if (!resp || !resp.ok) { el.innerHTML = '<p style="font-size:13px;color:var(--re);text-align:center;padding:.5rem">Erro ao carregar.</p>'; return; }
+    _monitorados = await resp.json();
+    _renderMonitorados();
+  } catch(e) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--re);text-align:center;padding:.5rem">Erro ao carregar.</p>';
+  }
+};
+
+function _renderMonitorados() {
+  const el = document.getElementById('aMonitoradosList');
+  if (!el) return;
+  if (!_monitorados.length) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--mu);text-align:center;padding:.5rem">Nenhum aluno sinalizado.</p>';
+    return;
+  }
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
+    ${_monitorados.map(m => {
+      const nOcc = occ.filter(o => o && o.alunos && o.alunos.some(a => (a.ra||a.nome) === m.ra || a.nome === m.nome)).length;
+      return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:var(--gol);border:1px solid #FDE68A;border-radius:8px">
+        <span style="font-size:18px;flex-shrink:0">⚠️</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--go)">${m.nome}</div>
+          <div style="font-size:11px;color:var(--mu);margin-top:1px">${m.turma||'—'} · RA: ${m.ra}</div>
+          ${m.motivo?`<div style="font-size:12px;color:#92400E;margin-top:4px;padding:4px 8px;background:rgba(255,255,255,.6);border-radius:4px"><strong>Motivo:</strong> ${m.motivo}</div>`:''}
+          <div style="font-size:10px;color:var(--mu);margin-top:3px">Sinalizado por ${m.sinalizado_por||'—'} · ${m.sinalizado_em||''} · ${nOcc} ocorrência(s)</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <button onclick="window._verHistoricoAluno('${_esc(m.ra)}','${_esc(m.nome)}')"
+            style="font-size:11px;padding:3px 8px;border:1px solid var(--bd);border-radius:6px;background:#fff;cursor:pointer">Ver histórico</button>
+          <button onclick="window._removerMonitorado('${_esc(m.ra)}','${_esc(m.nome)}')"
+            style="font-size:11px;padding:3px 8px;border:1px solid #FECACA;border-radius:6px;background:#fff;color:var(--re);cursor:pointer">Remover</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+window._pesquisarAluno = function() {
+  const q = (document.getElementById('aPesquisaInput')?.value || '').trim().toLowerCase();
+  const turmaFiltro = document.getElementById('aPesquisaTurma')?.value || '';
+  const el = document.getElementById('aPesquisaResultado');
+  if (!el) return;
+
+  if (!q && !turmaFiltro) { el.innerHTML = ''; return; }
+
+  // Coletar todos alunos do turmas.json
+  const todos = [];
+  Object.entries(TD).forEach(([turma, dados]) => {
+    if (turmaFiltro && turma !== turmaFiltro) return;
+    (dados.alunos || []).forEach(a => todos.push({ nome: a.nome, ra: a.ra, turma }));
+  });
+
+  const filtrados = todos.filter(a => !q || a.nome.toLowerCase().includes(q)).slice(0, 20);
+
+  if (!filtrados.length) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--mu);text-align:center;padding:.5rem">Nenhum aluno encontrado.</p>';
+    return;
+  }
+
+  el.innerHTML = filtrados.map(a => {
+    const jaMon = _monitorados.some(m => m.ra === a.ra || m.nome === a.nome);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#fff;border:0.5px solid var(--bd);border-radius:7px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.nome}</div>
+        <div style="font-size:11px;color:var(--mu)">${a.turma} · RA: ${a.ra}</div>
+      </div>
+      ${jaMon
+        ? `<span style="font-size:11px;color:var(--go);background:var(--gol);padding:2px 8px;border-radius:12px;white-space:nowrap">⚠️ Sinalizado</span>`
+        : `<button onclick="window._abrirModalSinalizar('${_esc(a.ra)}','${_esc(a.nome)}','${_esc(a.turma)}')"
+            style="font-size:11px;padding:4px 10px;background:var(--go);color:#fff;border:none;border-radius:6px;cursor:pointer;white-space:nowrap">Sinalizar</button>`
+      }
+    </div>`;
+  }).join('');
+};
+
+window._abrirModalSinalizar = function(ra, nome, turma) {
+  const motivo = prompt(`Sinalizar ${nome} para atenção especial.\n\nInforme o motivo (opcional):`);
+  if (motivo === null) return; // cancelou
+  window._sinalizarAluno(ra, nome, turma, motivo.trim());
+};
+
+window._sinalizarAluno = async function(ra, nome, turma, motivo) {
+  const resp = await apiFetch('/api/alunos-monitorados', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ra, nome, turma, motivo }),
+  });
+  if (!resp || !resp.ok) { toastErro('Erro ao sinalizar aluno.'); return; }
+  toastOk(`${nome} sinalizado para atenção especial.`);
+  await window._carregarMonitorados();
+  window._pesquisarAluno(); // atualiza resultados de busca
+};
+
+window._removerMonitorado = async function(ra, nome) {
+  if (!confirm(`Remover sinalização de ${nome}?`)) return;
+  const resp = await apiFetch(`/api/alunos-monitorados/${encodeURIComponent(ra)}`, { method: 'DELETE' });
+  if (!resp || !resp.ok) { toastErro('Erro ao remover sinalização.'); return; }
+  toastOk(`Sinalização de ${nome} removida.`);
+  await window._carregarMonitorados();
+  window._pesquisarAluno();
+};
 
 // ─── BACKUP ──────────────────────────────────────────────────────────────────
 

@@ -409,6 +409,30 @@ app.get('/api/backup/csv', autenticar, exigePerfil('diretor','coordenador','vice
   res.send(csv);
 });
 
+// ─── ALUNOS MONITORADOS ───────────────────────────────────────────────────────
+const PODE_MONITORAR = ['poc', 'coordenador', 'vice', 'diretor'];
+
+app.get('/api/alunos-monitorados', autenticar, exigePerfil(...PODE_MONITORAR), (req, res) => {
+  res.json(db.listarMonitorados());
+});
+
+app.post('/api/alunos-monitorados', autenticar, exigePerfil(...PODE_MONITORAR), (req, res) => {
+  const { ra, nome, turma, motivo } = req.body;
+  if (!ra || !nome) return res.status(400).json({ erro: 'RA e nome obrigatórios' });
+  db.inserirMonitorado(ra, nome, turma, motivo, req.usuario.nome);
+  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'sinalizar_aluno', { ra, nome, turma, motivo });
+  res.json({ ok: true });
+});
+
+app.delete('/api/alunos-monitorados/:ra', autenticar, exigePerfil(...PODE_MONITORAR), (req, res) => {
+  const ra = decodeURIComponent(req.params.ra);
+  const lista = db.listarMonitorados();
+  const aluno = lista.find(a => a.ra === ra);
+  db.removerMonitorado(ra);
+  if (aluno) db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'remover_monitoramento', { ra, nome: aluno.nome });
+  res.json({ ok: true });
+});
+
 // ─── AUDITORIA ────────────────────────────────────────────────────────────────
 app.get('/api/auditoria', autenticar, exigePerfil('diretor', 'vice'), (req, res) => {
   const limite = Math.min(parseInt(req.query.limite) || 200, 500);

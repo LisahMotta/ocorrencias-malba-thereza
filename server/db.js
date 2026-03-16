@@ -58,6 +58,14 @@ async function inicializar() {
       acao TEXT NOT NULL, detalhes TEXT,
       criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS alunos_monitorados (
+      ra TEXT PRIMARY KEY,
+      nome TEXT NOT NULL,
+      turma TEXT,
+      motivo TEXT,
+      sinalizado_por TEXT,
+      sinalizado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
   `);
   // ─── MIGRAÇÕES AUTOMÁTICAS ─────────────────────────────────────────────────
   // Adiciona colunas novas sem apagar dados existentes
@@ -196,4 +204,11 @@ module.exports = {
       ...r,
       detalhes: r.detalhes ? JSON.parse(r.detalhes) : null,
     })),
+
+  // ─── ALUNOS MONITORADOS ─────────────────────────────────────────────────────
+  listarMonitorados: () => queryAll('SELECT * FROM alunos_monitorados ORDER BY sinalizado_em DESC'),
+  inserirMonitorado: (ra, nome, turma, motivo, sinalizadoPor) =>
+    run('INSERT OR REPLACE INTO alunos_monitorados (ra, nome, turma, motivo, sinalizado_por) VALUES (?, ?, ?, ?, ?)',
+      [ra, nome, turma || '', motivo || '', sinalizadoPor || '']),
+  removerMonitorado: (ra) => run('DELETE FROM alunos_monitorados WHERE ra = ?', [ra]),
 };

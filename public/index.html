@@ -215,6 +215,31 @@
         </div>
       </div>
 
+      <!-- PESQUISA DE ALUNOS (só gestão) -->
+      <div id="aPesquisaSection" style="display:none;margin-bottom:1rem">
+        <div class="fc">
+          <div class="st" style="font-size:13px;margin-bottom:10px">🔍 Pesquisar e Sinalizar Aluno</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+            <input id="aPesquisaInput" type="text" placeholder="Digite o nome do aluno..." oninput="window._pesquisarAluno()"
+              style="flex:1;min-width:180px;font-size:13px;padding:8px 12px;border:1px solid var(--bd);border-radius:8px;outline:none;font-family:inherit"/>
+            <select id="aPesquisaTurma" onchange="window._pesquisarAluno()"
+              style="font-size:12px;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;background:#fff;font-family:inherit">
+              <option value="">Todas as turmas</option>
+            </select>
+          </div>
+          <div id="aPesquisaResultado" style="display:flex;flex-direction:column;gap:4px;max-height:260px;overflow-y:auto"></div>
+        </div>
+
+        <!-- ALUNOS SINALIZADOS -->
+        <div class="fc" style="margin-top:1rem;border-color:#FEF3C7">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div class="st" style="font-size:13px;margin:0;color:var(--go)">⚠️ Alunos com Atenção Especial</div>
+            <button class="bn" style="font-size:11px;padding:3px 10px" onclick="window._carregarMonitorados()">🔄</button>
+          </div>
+          <div id="aMonitoradosList"><p style="font-size:13px;color:var(--mu);text-align:center;padding:.5rem">Carregando...</p></div>
+        </div>
+      </div>
+
       <!-- ALERTAS -->
       <div id="aAlerta" style="margin-bottom:1rem"></div>
 
