@@ -806,7 +806,7 @@ window.showTab = (name, btn) => {
   document.querySelectorAll('.nt button').forEach(b=>b.classList.remove('act'));
   if(btn) btn.classList.add('act');
   if(name==='ocorrencias') renderOcc();
-  if(name==='gestao') renderGestao();
+  if(name==='gestao') { renderGestao(); if(['diretor','vice'].includes(cu?.perfil)) window._carregarAuditoria(); }
   if(name==='dashboard') renderDash();
   if(name==='alunos') { _initAbaAlunos(); window.renderAlunos(); }
   if(name==='segmento') window.renderSegmento();
@@ -885,7 +885,65 @@ async function renderGestao() {
   });
 
   document.getElementById('gestaoList').innerHTML = html;
+
+  // Exibe seção de auditoria só para diretor/vice
+  const audSec = document.getElementById('auditoriaSection');
+  if (audSec) audSec.style.display = ['diretor','vice'].includes(cu.perfil) ? '' : 'none';
 }
+
+// ─── AUDITORIA ────────────────────────────────────────────────────────────────
+const _ACAO_LABEL = {
+  login:                  { icon: '🔑', label: 'Login' },
+  trocar_senha:           { icon: '🔒', label: 'Trocou a própria senha' },
+  nova_ocorrencia:        { icon: '📝', label: 'Registrou ocorrência' },
+  complementar_ocorrencia:{ icon: '✅', label: 'Complementou ocorrência' },
+  editar_ocorrencia:      { icon: '✏️', label: 'Editou ocorrência' },
+  criar_usuario:          { icon: '👤', label: 'Criou usuário' },
+  alterar_perfil:         { icon: '🔄', label: 'Alterou perfil de usuário' },
+  resetar_senha:          { icon: '🔑', label: 'Resetou senha de usuário' },
+  ativar_usuario:         { icon: '✅', label: 'Ativou usuário' },
+  desativar_usuario:      { icon: '🚫', label: 'Desativou usuário' },
+  exportar_backup:        { icon: '💾', label: 'Exportou backup' },
+  resetar_ocorrencias:    { icon: '🗑', label: 'Apagou todas as ocorrências' },
+};
+
+window._carregarAuditoria = async () => {
+  const el = document.getElementById('auditoriaList');
+  el.innerHTML = '<p style="font-size:13px;color:var(--mu);text-align:center;padding:1rem">Carregando...</p>';
+  const resp = await apiFetch('/api/auditoria?limite=200');
+  if (!resp || !resp.ok) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--re);text-align:center;padding:1rem">Erro ao carregar logs.</p>';
+    return;
+  }
+  const logs = await resp.json();
+  if (!logs.length) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--mu);text-align:center;padding:1rem">Nenhum registro encontrado.</p>';
+    return;
+  }
+  el.innerHTML = logs.map(l => {
+    const { icon, label } = _ACAO_LABEL[l.acao] || { icon: '•', label: l.acao };
+    let detalhe = '';
+    if (l.detalhes) {
+      const d = l.detalhes;
+      if (d.occId)         detalhe += ` · Ocorrência #${d.occId}`;
+      if (d.tipo)          detalhe += ` · ${d.tipo}`;
+      if (d.turma)         detalhe += ` · ${d.turma}`;
+      if (d.novoUsuario)   detalhe += ` · ${d.novoUsuario} (${d.perfil||''})`;
+      if (d.usuarioAlvo)   detalhe += ` · ${d.usuarioAlvo}`;
+      if (d.perfilNovo)    detalhe += ` → ${PL[d.perfilNovo]||d.perfilNovo}`;
+      if (d.formato)       detalhe += ` (${d.formato.toUpperCase()})`;
+      if (d.totalApagadas !== undefined) detalhe += ` · ${d.totalApagadas} registros`;
+      if (d.ip)            detalhe += ` · IP: ${d.ip}`;
+    }
+    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)">
+      <span style="font-size:16px;line-height:1.4">${icon}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--tx)">${label}<span style="font-weight:400;color:var(--mu)">${detalhe}</span></div>
+        <div style="font-size:12px;color:var(--mu);margin-top:2px">${l.usuario_nome || '—'} · ${l.criado_em}</div>
+      </div>
+    </div>`;
+  }).join('');
+};
 
 window._adicionarUsuario = async () => {
   const nome = document.getElementById('novoNome').value.trim().toUpperCase();
