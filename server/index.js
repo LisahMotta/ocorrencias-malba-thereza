@@ -50,6 +50,15 @@ function exigePerfil(...perfis) {
 
 const PODE_EDIT = ['poc', 'coordenador', 'vice', 'diretor'];
 
+// ─── RATE LIMITING (login) ────────────────────────────────────────────────────
+const tentativasLogin = new Map(); // ip → { count, bloqueadoAte }
+setInterval(() => {
+  const agora = Date.now();
+  tentativasLogin.forEach((v, k) => {
+    if (!v.bloqueadoAte || agora > v.bloqueadoAte + 10 * 60 * 1000) tentativasLogin.delete(k);
+  });
+}, 10 * 60 * 1000);
+
 // ─── CLIENTES WEBSOCKET ───────────────────────────────────────────────────────
 const clients = new Map();
 
@@ -182,13 +191,31 @@ function _todosChats() {
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 app.post('/api/auth/login', async (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  const agora = Date.now();
+  const t = tentativasLogin.get(ip) || { count: 0, bloqueadoAte: null };
+  if (t.bloqueadoAte && agora < t.bloqueadoAte) {
+    const restam = Math.ceil((t.bloqueadoAte - agora) / 1000 / 60);
+    return res.status(429).json({ erro: `Muitas tentativas. Tente novamente em ${restam} minuto(s).` });
+  }
+
   const { nome, senha } = req.body;
   if (!nome || !senha) return res.status(400).json({ erro: 'Informe nome e senha' });
   const usuario = db.getUsuarioNome(nome.trim().toUpperCase());
   if (!usuario) return res.status(401).json({ erro: 'Usuário não encontrado' });
   if (!usuario.ativo) return res.status(401).json({ erro: 'Usuário inativo' });
   const ok = await bcrypt.compare(senha, usuario.senha);
-  if (!ok) return res.status(401).json({ erro: 'Senha incorreta' });
+  if (!ok) {
+    t.count++;
+    if (t.count >= 5) {
+      t.bloqueadoAte = agora + 5 * 60 * 1000;
+      console.log(`[auth] IP ${ip} bloqueado por 5min após ${t.count} tentativas`);
+    }
+    tentativasLogin.set(ip, t);
+    return res.status(401).json({ erro: 'Senha incorreta' });
+  }
+
+  tentativasLogin.delete(ip);
   const token = jwt.sign(
     { id: usuario.id, nome: usuario.nome, perfil: usuario.perfil },
     JWT_SECRET, { expiresIn: JWT_EXPIRA }
@@ -252,6 +279,15 @@ app.patch('/api/ocorrencias/:id/editar', autenticar, exigePerfil(...PODE_EDIT), 
 });
 
 // ─── GESTÃO ───────────────────────────────────────────────────────────────────
+
+// Lista pública — usada na tela de login (sem autenticação)
+app.get('/api/usuarios/lista-publica', (req, res) => {
+  const lista = db.listarUsuarios().filter(u => u.ativo).map(u => ({
+    id: u.id, nome: u.nome, perfil: u.perfil,
+  }));
+  res.json(lista);
+});
+
 app.get('/api/usuarios', autenticar, exigePerfil('diretor', 'coordenador', 'vice'), (req, res) => {
   res.json(db.listarUsuarios());
 });

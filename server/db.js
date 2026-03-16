@@ -61,6 +61,9 @@ async function inicializar() {
     "ALTER TABLE ocorrencias ADD COLUMN complementado_por_perfil TEXT",
     "ALTER TABLE ocorrencias ADD COLUMN placon TEXT",
     "ALTER TABLE usuarios ADD COLUMN perfil_anterior TEXT",
+    "CREATE INDEX IF NOT EXISTS idx_occ_status ON ocorrencias(status)",
+    "CREATE INDEX IF NOT EXISTS idx_occ_data   ON ocorrencias(data)",
+    "CREATE INDEX IF NOT EXISTS idx_chat_occ   ON chats(occ_id)",
   ];
   // Recriar tabela ocorrencias se faltar coluna crítica (banco muito antigo)
   try {

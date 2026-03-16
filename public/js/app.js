@@ -5,59 +5,7 @@ import { iniciarChat, fecharChat, receberMsgChat, sincronizarChats } from './cha
 import { salvarSessao, limparSessao, getToken, getUsuario, temSessao, apiFetch } from './auth.js';
 
 // ─── DADOS ────────────────────────────────────────────────────────────────────
-const USUARIOS = [
-  {id:1,nome:'ADRIANA PEREIRA DOS SANTOS',perfil:'professor'},
-  {id:2,nome:'ANA CLAUDIA PINHEIRO DA SILVA CRUZ',perfil:'professor'},
-  {id:3,nome:'ARIADNE DA SILVA RODRIGUES',perfil:'coordenador'},
-  {id:4,nome:'ARINE IWAMOTO SANCHES FAGUNDES',perfil:'professor'},
-  {id:5,nome:'BRUNO PACHECO DOS SANTOS',perfil:'vice'},
-  {id:6,nome:'CAMILO DE LELIS AMARAL',perfil:'professor'},
-  {id:7,nome:'CRISTIANE SERPA QUILICI',perfil:'professor'},
-  {id:8,nome:'CRISTINA MARIA MARTINS LANDIM RIBEIRO',perfil:'professor'},
-  {id:9,nome:'DALVA MARIA SILVÉRIO',perfil:'professor'},
-  {id:10,nome:'DANIEL CÉSAR DE OLIVEIRA',perfil:'professor'},
-  {id:11,nome:'DIANA RIBEIRO ANDRADE LIMA',perfil:'professor'},
-  {id:12,nome:'EDMILSON APARECIDO DE SOUSA',perfil:'professor'},
-  {id:13,nome:'ERICA DE PAULA APARECIDA CABERLIM',perfil:'professor'},
-  {id:14,nome:'ERICK RODRIGUES DE CARVALHO',perfil:'professor'},
-  {id:15,nome:'EUNICE APARECIDA DE FARIA QUADROS',perfil:'professor'},
-  {id:16,nome:'GABRIEL GUIDO DE ALMEIDA',perfil:'professor'},
-  {id:17,nome:'GIOVANNA PONTES SANTOS',perfil:'professor'},
-  {id:18,nome:'IVANILDA DE JESUS PAIVA',perfil:'professor'},
-  {id:19,nome:'JESSICA KAREN DOS SANTOS SOLEO',perfil:'professor'},
-  {id:20,nome:'JOÃO FLAVIO FRAGA',perfil:'professor'},
-  {id:21,nome:'JUSCELENE SUMARA LESSA LANCELOTTI DI LUCCIO',perfil:'professor'},
-  {id:22,nome:'KARINA DE SOUZA RIBEIRO',perfil:'professor'},
-  {id:23,nome:'KARINA KOIBUCHI SAKANE',perfil:'professor'},
-  {id:24,nome:'LAURENTINA ELIAS DUARTE',perfil:'professor'},
-  {id:25,nome:'LEACIRA FREITAS DE ANDRADES SIMAN',perfil:'professor'},
-  {id:26,nome:'LUANA CRISTINA FERREIRA DE OLIVEIRA',perfil:'professor'},
-  {id:27,nome:'MAGALI RAMOS FERREIRA',perfil:'professor'},
-  {id:28,nome:'MARIA CRISTINA DE ALMEIDA PORTO SILVA',perfil:'professor'},
-  {id:29,nome:'MARIA DE FÁTIMA DIAS',perfil:'professor'},
-  {id:30,nome:'MAYARA SELMA PURCINO MACEDO',perfil:'professor'},
-  {id:31,nome:'MEIRE APARECIDA GAEFKE',perfil:'professor'},
-  {id:32,nome:'NILCELENA SOUZA PORTILHO',perfil:'professor'},
-  {id:33,nome:'PAULO CESAR ROCHA GOMES',perfil:'professor'},
-  {id:34,nome:'RENATA APARECIDA MOYSES DE FREITAS',perfil:'professor'},
-  {id:35,nome:'ROSEANE MOREIRA DA SILVA SALES',perfil:'professor'},
-  {id:36,nome:'SAMANTHA MARINA RIBEIRO MARTINS LEITE',perfil:'professor'},
-  {id:37,nome:'SILVANA MÁRCIA DE SOUZA',perfil:'professor'},
-  {id:38,nome:'SILVIA FERREIRA LOPES DE OLIVEIRA',perfil:'professor'},
-  {id:39,nome:'SIOMARA VILELA PRADO FONSECA',perfil:'professor'},
-  {id:40,nome:'SOLANGE SANTOS ARAÚJO',perfil:'professor'},
-  {id:41,nome:'SONIA MARIA DA SILVA GABRIEL',perfil:'professor'},
-  {id:42,nome:'THAÍS JOSÉ SOARES',perfil:'vice'},
-  {id:43,nome:'THIAGO JOSÉ DIOGO ALVES OLIVEIRA',perfil:'professor'},
-  {id:44,nome:'VICENTE CESAR DA SILVA',perfil:'professor'},
-  {id:45,nome:'VIVIANE SANTOS DE OLIVEIRA',perfil:'professor'},
-  {id:46,nome:'WALDINEIA CRISTINA RODRIGUES DOS SANTOS',perfil:'professor'},
-  {id:47,nome:'WELLINGTON ROBERTO GALVAO BORGES DE OLIVEIRA',perfil:'professor'},
-  {id:48,nome:'WAGNER GONÇALVES DA SILVA JUNIOR FERRO FAZAN',perfil:'coordenador'},
-  {id:49,nome:'RENATA VALÉRIA',perfil:'coordenador'},
-  {id:50,nome:'MARIA CRISTINA DA SILVA',perfil:'vice'},
-  {id:51,nome:'SANDRA REGINA XAVIER DA SILVA',perfil:'diretor'},
-];
+let USUARIOS = []; // carregado do servidor em init()
 
 const PL = {
   professor:'Professor',
@@ -186,9 +134,12 @@ let chatNaoLidos = {};  // occId → count
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
-  // Carrega turmas
-  const resp = await fetch('/assets/turmas.json');
-  TD = await resp.json();
+  const [turmasResp, usuariosResp] = await Promise.all([
+    fetch('/assets/turmas.json'),
+    fetch('/api/usuarios/lista-publica'),
+  ]);
+  TD = await turmasResp.json();
+  USUARIOS = await usuariosResp.json();
 
   _montarLoginSelect();
   _montarTurmasSelect();
