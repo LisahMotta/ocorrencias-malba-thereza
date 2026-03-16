@@ -345,10 +345,13 @@ function _iniciarWS() {
   });
 
   onEvento('perfil_atualizado', (msg) => {
-    // Se o perfil do usuário logado foi alterado, força novo login
     if (cu && msg.userId === cu.id) {
+      // Perfil do próprio usuário alterado — força novo login
       alert('⚠️ Seu perfil foi alterado para ' + (PL[msg.perfil]||msg.perfil) + '.\nFaça login novamente para continuar.');
       window._doLogout();
+    } else if (cu && ['diretor','vice'].includes(cu.perfil)) {
+      // Diretor/vice vê a lista atualizada em tempo real
+      renderGestao();
     }
   });
 
@@ -1024,13 +1027,19 @@ window._editarPerfil = (id, nome, perfilAtual) => {
 
 window._salvarPerfil = async (id) => {
   const perfil = document.getElementById('novoCargoSel').value;
+  const btn = document.querySelector('#modalBody .bp');
+  if (btn) { btn.textContent = 'Salvando...'; btn.disabled = true; }
   const resp = await apiFetch('/api/usuarios/'+id+'/perfil', { method:'PATCH', body:JSON.stringify({ perfil }) });
-  if (!resp) return;
+  if (!resp) { if (btn) { btn.textContent = 'Salvar'; btn.disabled = false; } return; }
   const data = await resp.json();
-  if (!resp.ok) { alert('Erro: ' + data.erro); return; }
+  if (!resp.ok) {
+    if (btn) { btn.textContent = 'Salvar'; btn.disabled = false; }
+    alert('Erro ao salvar cargo: ' + data.erro);
+    return;
+  }
   closeModal();
-  alert('✅ Cargo alterado! O usuário precisará fazer login novamente para que a mudança tenha efeito.');
-  renderGestao();
+  await renderGestao();
+  alert('✅ Cargo alterado para ' + (PL[perfil]||perfil) + '.\nO usuário precisará fazer login novamente.');
 };
 
 window._resetSenha = async (id, nome) => {
