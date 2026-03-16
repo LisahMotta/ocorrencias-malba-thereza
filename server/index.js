@@ -520,28 +520,33 @@ async function _autoSeed() {
     { nome: 'WALDINEIA CRISTINA RODRIGUES DOS SANTOS',      perfil: 'professor'   },
     { nome: 'WELLINGTON ROBERTO GALVAO BORGES DE OLIVEIRA', perfil: 'professor'   },
     // Agentes de Organização Escolar
-    { nome: 'KÁTIA MARA FERREIRA DIAS MARTINS',             perfil: 'professor'   },
-    { nome: 'ALINE BAUMGARTER',                             perfil: 'professor'   },
-    { nome: 'ELISABETH APARECIDA BERNARDES DE FARIA',       perfil: 'professor'   },
-    { nome: 'LILIAN DAS GRAÇAS DA SILVA NEVES',             perfil: 'professor'   },
-    { nome: 'PEDRO DINIZ SILVEIRA DAS NEVES',               perfil: 'professor'   },
-    { nome: 'LUCIMAR DE OLIVEIRA SANTOS',                   perfil: 'professor'   },
-    { nome: 'MARIA APARECIDA GOMES FRANCISCO',              perfil: 'professor'   },
-    { nome: 'RODOLFO JESUS DO PRADO FILHO',                 perfil: 'professor'   },
+    { nome: 'KÁTIA MARA FERREIRA DIAS MARTINS',             perfil: 'agente'      },
+    { nome: 'ALINE BAUMGARTER',                             perfil: 'agente'      },
+    { nome: 'ELISABETH APARECIDA BERNARDES DE FARIA',       perfil: 'agente'      },
+    { nome: 'LILIAN DAS GRAÇAS DA SILVA NEVES',             perfil: 'agente'      },
+    { nome: 'PEDRO DINIZ SILVEIRA DAS NEVES',               perfil: 'agente'      },
+    { nome: 'LUCIMAR DE OLIVEIRA SANTOS',                   perfil: 'agente'      },
+    { nome: 'MARIA APARECIDA GOMES FRANCISCO',              perfil: 'agente'      },
+    { nome: 'RODOLFO JESUS DO PRADO FILHO',                 perfil: 'agente'      },
     // Secretaria de Escola
-    { nome: 'ROSEMARY ALVES FERREIRA ANDRADE EUGÊNIO',      perfil: 'professor'   },
+    { nome: 'ROSEMARY ALVES FERREIRA ANDRADE EUGÊNIO',      perfil: 'secretaria'  },
     // Gerente de Organização Escolar
-    { nome: 'VANESSA OSÓRIO VENTURA',                       perfil: 'professor'   },
+    { nome: 'VANESSA OSÓRIO VENTURA',                       perfil: 'gerente'     },
   ];
-  let criados = 0;
+  let criados = 0, atualizados = 0;
   for (const u of lista) {
-    if (!db.getUsuarioNome(u.nome)) {
+    const existente = db.getUsuarioNome(u.nome);
+    if (!existente) {
       db.inserirUsuario(u.nome, u.perfil, hash);
       criados++;
+    } else if (existente.perfil !== u.perfil) {
+      db.atualizarPerfil(existente.id, u.perfil);
+      atualizados++;
     }
   }
   if (criados > 0) console.log(`✅ ${criados} usuário(s) novo(s) criado(s) com senha padrão Malba@2025\n`);
-  else console.log('✅ Todos os usuários já cadastrados.\n');
+  if (atualizados > 0) console.log(`✅ ${atualizados} perfil(is) atualizado(s)\n`);
+  if (criados === 0 && atualizados === 0) console.log('✅ Todos os usuários já cadastrados e atualizados.\n');
 }
 
 // ─── START ────────────────────────────────────────────────────────────────────

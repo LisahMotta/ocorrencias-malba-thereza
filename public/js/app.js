@@ -58,20 +58,23 @@ let USUARIOS = [
   {id:49,nome:'RENATA VALÉRIA',perfil:'coordenador'},
   {id:50,nome:'MARIA CRISTINA DA SILVA',perfil:'vice'},
   {id:51,nome:'SANDRA REGINA XAVIER DA SILVA',perfil:'diretor'},
-  {id:52,nome:'KÁTIA MARA FERREIRA DIAS MARTINS',perfil:'professor'},
-  {id:53,nome:'ALINE BAUMGARTER',perfil:'professor'},
-  {id:54,nome:'ELISABETH APARECIDA BERNARDES DE FARIA',perfil:'professor'},
-  {id:55,nome:'LILIAN DAS GRAÇAS DA SILVA NEVES',perfil:'professor'},
-  {id:56,nome:'PEDRO DINIZ SILVEIRA DAS NEVES',perfil:'professor'},
-  {id:57,nome:'LUCIMAR DE OLIVEIRA SANTOS',perfil:'professor'},
-  {id:58,nome:'MARIA APARECIDA GOMES FRANCISCO',perfil:'professor'},
-  {id:59,nome:'RODOLFO JESUS DO PRADO FILHO',perfil:'professor'},
-  {id:60,nome:'ROSEMARY ALVES FERREIRA ANDRADE EUGÊNIO',perfil:'professor'},
-  {id:61,nome:'VANESSA OSÓRIO VENTURA',perfil:'professor'},
+  {id:52,nome:'KÁTIA MARA FERREIRA DIAS MARTINS',perfil:'agente'},
+  {id:53,nome:'ALINE BAUMGARTER',perfil:'agente'},
+  {id:54,nome:'ELISABETH APARECIDA BERNARDES DE FARIA',perfil:'agente'},
+  {id:55,nome:'LILIAN DAS GRAÇAS DA SILVA NEVES',perfil:'agente'},
+  {id:56,nome:'PEDRO DINIZ SILVEIRA DAS NEVES',perfil:'agente'},
+  {id:57,nome:'LUCIMAR DE OLIVEIRA SANTOS',perfil:'agente'},
+  {id:58,nome:'MARIA APARECIDA GOMES FRANCISCO',perfil:'agente'},
+  {id:59,nome:'RODOLFO JESUS DO PRADO FILHO',perfil:'agente'},
+  {id:60,nome:'ROSEMARY ALVES FERREIRA ANDRADE EUGÊNIO',perfil:'secretaria'},
+  {id:61,nome:'VANESSA OSÓRIO VENTURA',perfil:'gerente'},
 ];
 
 const PL = {
   professor:'Professor',
+  agente:'Agente de Organização Escolar',
+  secretaria:'Secretária de Escola',
+  gerente:'Gerente de Organização Escolar',
   poc:'P.O.C. (Prof. Orientador de Convivência)',
   coordenador:'Coordenador Pedagógico',
   vice:'Vice-Diretor',
@@ -413,9 +416,12 @@ function _renderMain() {
   document.getElementById('tabSeg').style.display = (cu.perfil==='coordenador' && COORD_SEGMENTOS[cu.nome]) ? '' : 'none';
   document.getElementById('tabGes').style.display = ['diretor','vice'].includes(cu.perfil) ? '' : 'none';
 
-  const icons = {professor:'👨‍🏫',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};
+  const icons = {professor:'👨‍🏫',agente:'🏫',secretaria:'📝',gerente:'🗂️',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};
   const descs = {
     professor:'Registra ocorrências do Bloco II com relato. Complemento e providências serão feitos pela equipe gestora.',
+    agente:'Registra ocorrências do Bloco II com relato. Complemento e providências serão feitos pela equipe gestora.',
+    secretaria:'Registra ocorrências do Bloco II com relato. Complemento e providências serão feitos pela equipe gestora.',
+    gerente:'Registra ocorrências do Bloco II com relato. Complemento e providências serão feitos pela equipe gestora.',
     poc:'Registra Blocos I e II. Pode complementar, editar gravidade e abrir chat com professores.',
     coordenador:'Acesso completo: registro, complemento, edição, relatórios, chat e geração de documento.',
     vice:'Acesso completo: registro, complemento, edição, relatórios, chat e geração de documento.',
@@ -566,7 +572,7 @@ window._selTipo = (num, btn, nivel) => {
     return;
   }
   const p = PROT[nivel]||PROT.grave;
-  const ehProf = cu.perfil==='professor';
+  const ehProf = ['professor','agente','secretaria','gerente'].includes(cu.perfil);
   const rowsProf = p.professor.map((s,i)=>`<div class="ps"><span class="pn">${i+1}</span><span>${s}</span></div>`).join('');
   const rowsGest = ehProf
     ? p.gestao.map((s,i)=>`<div class="ps" style="opacity:.4"><span class="pn" style="background:#bbb">${p.professor.length+i+1}</span><span>${s}</span></div>`).join('')
@@ -591,7 +597,7 @@ function cardHTML(o) {
   const regNome = o.registradoPorNome || '—';
   const regPerfil = o.registradoPorPerfil || '';
   const nomes = o.alunos&&o.alunos.length ? o.alunos.map(a=>a.nome).join(', ') : '—';
-  const pchip = regPerfil==='professor'?'background:#E8EAF6;color:#3949AB':regPerfil==='poc'?'background:var(--orl);color:var(--or)':'background:var(--mgl);color:var(--mg)';
+  const pchip = ['professor','agente','secretaria','gerente'].includes(regPerfil)?'background:#E8EAF6;color:#3949AB':regPerfil==='poc'?'background:var(--orl);color:var(--or)':'background:var(--mgl);color:var(--mg)';
   const naoLidos = chatNaoLidos[String(o.id)] || 0;
   const badgeChat = naoLidos > 0 ? `<span style="background:var(--re);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-left:4px">${naoLidos}</span>` : '';
   const badgePlacon = o.placon === 'Sim'
@@ -624,7 +630,7 @@ function cardHTML(o) {
 
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────
 function renderDash() {
-  const ehProf = cu && cu.perfil === 'professor';
+  const ehProf = cu && ['professor','agente','secretaria','gerente'].includes(cu.perfil);
   // Professor só vê suas próprias ocorrências no dashboard
   const lista = occ.filter(o=>o&&o.gravidade&&(ehProf?(o.registradoPorId==cu.id||o.registradoPorNome===cu.nome):true));
   const total=lista.length, urg=lista.filter(o=>o.gravidade==='urgencia').length;
@@ -649,8 +655,8 @@ window.renderOcc = function renderOcc() {
   const fT=document.getElementById('fTurma').value;
   const fG=document.getElementById('fGrav').value;
   const fS=document.getElementById('fStatus').value;
-  // Professor só vê as próprias ocorrências; gestão vê todas
-  const ehProf = cu && cu.perfil === 'professor';
+  // Professor/agentes só vêem as próprias ocorrências; gestão vê todas
+  const ehProf = cu && ['professor','agente','secretaria','gerente'].includes(cu.perfil);
   let lista=occ.filter(o=>o&&o.gravidade).sort((a,b)=>b.id-a.id);
   if(ehProf) lista=lista.filter(o=>o.registradoPorId==cu.id||o.registradoPorNome===cu.nome);
   if(fN) lista=lista.filter(o=>TD[o.turma]&&TD[o.turma].nivel===fN);
