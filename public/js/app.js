@@ -332,7 +332,8 @@ function _iniciarWS() {
   });
 
   onEvento('nova_ocorrencia', (msg) => {
-    if (!cu || !msg.occ) return; // ignora se não estiver logado
+    console.log('[nova_ocorrencia] evento recebido', msg.occ?.id, 'cu:', cu?.nome, 'perfil:', cu?.perfil);
+    if (!cu || !msg.occ) { console.log('[nova_ocorrencia] ignorado — sem cu ou occ'); return; }
     const idx = occ.findIndex(o => o && o.id === msg.occ.id);
     if (idx >= 0) occ[idx] = msg.occ;
     else occ.unshift(msg.occ);

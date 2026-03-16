@@ -17,11 +17,13 @@ function getContainer() {
 // onChat(occId) → callback chamado ao clicar em "Abrir Chat"
 export function mostrarNotifOcorrencia(occ, usuarioAtual, onChat) {
   const perfisGestao = ['poc','coordenador','vice','diretor'];
-  if (!perfisGestao.includes(usuarioAtual.perfil)) return;
+  console.log('[notif] mostrarNotifOcorrencia — perfil:', usuarioAtual?.perfil, 'regPorId:', occ?.registradoPorId, 'meuId:', usuarioAtual?.id, 'regPorNome:', occ?.registradoPorNome, 'meuNome:', usuarioAtual?.nome);
+  if (!perfisGestao.includes(usuarioAtual.perfil)) { console.log('[notif] bloqueado — perfil não é gestão:', usuarioAtual.perfil); return; }
 
   // Não notifica quem registrou (comparação flexível de tipo)
-  if (occ.registradoPorId == usuarioAtual.id) return;
-  if (occ.registradoPorNome === usuarioAtual.nome) return;
+  if (occ.registradoPorId == usuarioAtual.id) { console.log('[notif] bloqueado — mesmo registrante (id)'); return; }
+  if (occ.registradoPorNome === usuarioAtual.nome) { console.log('[notif] bloqueado — mesmo registrante (nome)'); return; }
+  console.log('[notif] ✅ exibindo notificação para', usuarioAtual.nome);
 
   const c = getContainer();
   const card = document.createElement('div');
