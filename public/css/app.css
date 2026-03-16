@@ -428,6 +428,8 @@ body::before{
 }
 .aph span{font-size:.82rem;font-weight:600;color:var(--mg)}
 .aph small{font-size:.68rem;color:var(--mg);opacity:.7}
+.bn-link{background:none;border:none;cursor:pointer;font-size:.68rem;color:var(--mg);text-decoration:underline;padding:0;opacity:.8}
+.bn-link:hover{opacity:1}
 
 .afw{padding:10px 12px;border-bottom:1px solid var(--bd);background:var(--mgll)}
 .afw input{
@@ -460,6 +462,7 @@ body::before{
   padding:4px 12px;font-size:.75rem;font-weight:600;
 }
 .at2 button{background:none;border:none;cursor:pointer;color:var(--mg);font-size:16px;line-height:1;padding:0}
+.at2-manual{background:rgba(255,152,0,.12);border-color:rgba(255,152,0,.4);color:#b36200}
 
 /* ═══ PROTOCOLO ═══ */
 .pb{
