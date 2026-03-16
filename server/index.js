@@ -462,13 +462,77 @@ function _fazerBackupAutomatico() {
   } catch(e) { console.error('[backup-auto] Erro:', e.message); }
 }
 
+// ─── AUTO-SEED ───────────────────────────────────────────────────────────────
+async function _autoSeed() {
+  const usuarios = db.listarUsuarios();
+  if (usuarios.length > 0) return; // banco já populado
+  console.log('\n🌱 Banco vazio — executando seed automático...');
+  const bcrypt = require('bcryptjs');
+  const hash = await bcrypt.hash('Malba@2025', 10);
+  const lista = [
+    { nome: 'SANDRA REGINA XAVIER DA SILVA',                perfil: 'diretor'     },
+    { nome: 'BRUNO PACHECO DOS SANTOS',                     perfil: 'vice'        },
+    { nome: 'THAÍS JOSÉ SOARES',                            perfil: 'vice'        },
+    { nome: 'MARIA CRISTINA DA SILVA',                      perfil: 'vice'        },
+    { nome: 'ARIADNE DA SILVA RODRIGUES',                   perfil: 'coordenador' },
+    { nome: 'WAGNER GONÇALVES DA SILVA JUNIOR FERRO FAZAN', perfil: 'coordenador' },
+    { nome: 'RENATA VALÉRIA',                               perfil: 'coordenador' },
+    { nome: 'ADRIANA PEREIRA DOS SANTOS',                   perfil: 'professor'   },
+    { nome: 'ANA CLAUDIA PINHEIRO DA SILVA CRUZ',           perfil: 'professor'   },
+    { nome: 'ARINE IWAMOTO SANCHES FAGUNDES',               perfil: 'professor'   },
+    { nome: 'CAMILO DE LELIS AMARAL',                       perfil: 'professor'   },
+    { nome: 'CRISTIANE SERPA QUILICI',                      perfil: 'professor'   },
+    { nome: 'CRISTINA MARIA MARTINS LANDIM RIBEIRO',        perfil: 'professor'   },
+    { nome: 'DALVA MARIA SILVÉRIO',                         perfil: 'professor'   },
+    { nome: 'DANIEL CÉSAR DE OLIVEIRA',                     perfil: 'professor'   },
+    { nome: 'DIANA RIBEIRO ANDRADE LIMA',                   perfil: 'professor'   },
+    { nome: 'EDMILSON APARECIDO DE SOUSA',                  perfil: 'professor'   },
+    { nome: 'ERICA DE PAULA APARECIDA CABERLIM',            perfil: 'professor'   },
+    { nome: 'ERICK RODRIGUES DE CARVALHO',                  perfil: 'professor'   },
+    { nome: 'EUNICE APARECIDA DE FARIA QUADROS',            perfil: 'professor'   },
+    { nome: 'GABRIEL GUIDO DE ALMEIDA',                     perfil: 'professor'   },
+    { nome: 'GIOVANNA PONTES SANTOS',                       perfil: 'professor'   },
+    { nome: 'IVANILDA DE JESUS PAIVA',                      perfil: 'professor'   },
+    { nome: 'JESSICA KAREN DOS SANTOS SOLEO',               perfil: 'professor'   },
+    { nome: 'JOÃO FLAVIO FRAGA',                            perfil: 'professor'   },
+    { nome: 'JUSCELENE SUMARA LESSA LANCELOTTI DI LUCCIO',  perfil: 'professor'   },
+    { nome: 'KARINA DE SOUZA RIBEIRO',                      perfil: 'professor'   },
+    { nome: 'KARINA KOIBUCHI SAKANE',                       perfil: 'professor'   },
+    { nome: 'LAURENTINA ELIAS DUARTE',                      perfil: 'professor'   },
+    { nome: 'LEACIRA FREITAS DE ANDRADES SIMAN',            perfil: 'professor'   },
+    { nome: 'LUANA CRISTINA FERREIRA DE OLIVEIRA',          perfil: 'professor'   },
+    { nome: 'MAGALI RAMOS FERREIRA',                        perfil: 'professor'   },
+    { nome: 'MARIA CRISTINA DE ALMEIDA PORTO SILVA',        perfil: 'professor'   },
+    { nome: 'MARIA DE FÁTIMA DIAS',                         perfil: 'professor'   },
+    { nome: 'MAYARA SELMA PURCINO MACEDO',                  perfil: 'professor'   },
+    { nome: 'MEIRE APARECIDA GAEFKE',                       perfil: 'professor'   },
+    { nome: 'NILCELENA SOUZA PORTILHO',                     perfil: 'professor'   },
+    { nome: 'PAULO CESAR ROCHA GOMES',                      perfil: 'professor'   },
+    { nome: 'RENATA APARECIDA MOYSES DE FREITAS',           perfil: 'professor'   },
+    { nome: 'ROSEANE MOREIRA DA SILVA SALES',               perfil: 'professor'   },
+    { nome: 'SAMANTHA MARINA RIBEIRO MARTINS LEITE',        perfil: 'professor'   },
+    { nome: 'SILVANA MÁRCIA DE SOUZA',                      perfil: 'professor'   },
+    { nome: 'SILVIA FERREIRA LOPES DE OLIVEIRA',            perfil: 'professor'   },
+    { nome: 'SIOMARA VILELA PRADO FONSECA',                 perfil: 'professor'   },
+    { nome: 'SOLANGE SANTOS ARAÚJO',                        perfil: 'professor'   },
+    { nome: 'SONIA MARIA DA SILVA GABRIEL',                 perfil: 'professor'   },
+    { nome: 'THIAGO JOSÉ DIOGO ALVES OLIVEIRA',             perfil: 'professor'   },
+    { nome: 'VICENTE CESAR DA SILVA',                       perfil: 'professor'   },
+    { nome: 'VIVIANE SANTOS DE OLIVEIRA',                   perfil: 'professor'   },
+    { nome: 'WALDINEIA CRISTINA RODRIGUES DOS SANTOS',      perfil: 'professor'   },
+    { nome: 'WELLINGTON ROBERTO GALVAO BORGES DE OLIVEIRA', perfil: 'professor'   },
+  ];
+  for (const u of lista) db.inserirUsuario(u.nome, u.perfil, hash);
+  console.log(`✅ ${lista.length} usuários criados com senha padrão Malba@2025\n`);
+}
+
 // ─── START ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-db.inicializar().then(() => {
+db.inicializar().then(async () => {
+  await _autoSeed();
   server.listen(PORT, () => {
     console.log(`\n✅ Servidor rodando em http://localhost:${PORT}`);
     console.log(`   Banco: sql.js | JWT: ${JWT_EXPIRA}`);
-    console.log(`   👉 Primeiro uso? rode: npm run seed\n`);
   });
   // Backup automático diário (executa 1h após o start e depois a cada 24h)
   setTimeout(() => {
