@@ -134,12 +134,17 @@ let chatNaoLidos = {};  // occId → count
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
-  const [turmasResp, usuariosResp] = await Promise.all([
-    fetch('/assets/turmas.json'),
-    fetch('/api/usuarios/lista-publica'),
-  ]);
-  TD = await turmasResp.json();
-  USUARIOS = await usuariosResp.json();
+  try {
+    const [turmasResp, usuariosResp] = await Promise.all([
+      fetch('/assets/turmas.json'),
+      fetch('/api/usuarios/lista-publica'),
+    ]);
+    TD = await turmasResp.json();
+    const lista = await usuariosResp.json();
+    if (Array.isArray(lista) && lista.length > 0) USUARIOS = lista;
+  } catch(e) {
+    console.error('[init] Erro ao carregar dados iniciais:', e);
+  }
 
   _montarLoginSelect();
   _montarTurmasSelect();
@@ -149,6 +154,14 @@ async function init() {
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 function _montarLoginSelect() {
   const sel = document.getElementById('loginUsuario');
+  if (!USUARIOS.length) {
+    const o = document.createElement('option');
+    o.value = '';
+    o.textContent = '⚠️ Erro ao carregar usuários — recarregue a página';
+    o.disabled = true;
+    sel.appendChild(o);
+    return;
+  }
   USUARIOS.forEach(u => {
     const o = document.createElement('option');
     o.value = u.id;
