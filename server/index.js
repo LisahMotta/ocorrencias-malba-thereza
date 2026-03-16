@@ -464,9 +464,7 @@ function _fazerBackupAutomatico() {
 
 // ─── AUTO-SEED ───────────────────────────────────────────────────────────────
 async function _autoSeed() {
-  const usuarios = db.listarUsuarios();
-  if (usuarios.length > 0) return; // banco já populado
-  console.log('\n🌱 Banco vazio — executando seed automático...');
+  console.log('\n🌱 Verificando usuários no banco...');
   const bcrypt = require('bcryptjs');
   const hash = await bcrypt.hash('Malba@2025', 10);
   const lista = [
@@ -521,9 +519,29 @@ async function _autoSeed() {
     { nome: 'VIVIANE SANTOS DE OLIVEIRA',                   perfil: 'professor'   },
     { nome: 'WALDINEIA CRISTINA RODRIGUES DOS SANTOS',      perfil: 'professor'   },
     { nome: 'WELLINGTON ROBERTO GALVAO BORGES DE OLIVEIRA', perfil: 'professor'   },
+    // Agentes de Organização Escolar
+    { nome: 'KÁTIA MARA FERREIRA DIAS MARTINS',             perfil: 'professor'   },
+    { nome: 'ALINE BAUMGARTER',                             perfil: 'professor'   },
+    { nome: 'ELISABETH APARECIDA BERNARDES DE FARIA',       perfil: 'professor'   },
+    { nome: 'LILIAN DAS GRAÇAS DA SILVA NEVES',             perfil: 'professor'   },
+    { nome: 'PEDRO DINIZ SILVEIRA DAS NEVES',               perfil: 'professor'   },
+    { nome: 'LUCIMAR DE OLIVEIRA SANTOS',                   perfil: 'professor'   },
+    { nome: 'MARIA APARECIDA GOMES FRANCISCO',              perfil: 'professor'   },
+    { nome: 'RODOLFO JESUS DO PRADO FILHO',                 perfil: 'professor'   },
+    // Secretaria de Escola
+    { nome: 'ROSEMARY ALVES FERREIRA ANDRADE EUGÊNIO',      perfil: 'professor'   },
+    // Gerente de Organização Escolar
+    { nome: 'VANESSA OSÓRIO VENTURA',                       perfil: 'professor'   },
   ];
-  for (const u of lista) db.inserirUsuario(u.nome, u.perfil, hash);
-  console.log(`✅ ${lista.length} usuários criados com senha padrão Malba@2025\n`);
+  let criados = 0;
+  for (const u of lista) {
+    if (!db.getUsuarioNome(u.nome)) {
+      db.inserirUsuario(u.nome, u.perfil, hash);
+      criados++;
+    }
+  }
+  if (criados > 0) console.log(`✅ ${criados} usuário(s) novo(s) criado(s) com senha padrão Malba@2025\n`);
+  else console.log('✅ Todos os usuários já cadastrados.\n');
 }
 
 // ─── START ────────────────────────────────────────────────────────────────────
