@@ -3,6 +3,7 @@ import { conectar, onEvento, enviar } from './ws.js';
 import { mostrarNotifOcorrencia, pedirPermissaoNotif } from './notif.js';
 import { iniciarChat, fecharChat, receberMsgChat, sincronizarChats } from './chat.js';
 import { salvarSessao, limparSessao, getToken, getUsuario, temSessao, apiFetch } from './auth.js';
+import { toast, toastOk, toastErro, toastAviso } from './toast.js';
 
 // ─── DADOS ────────────────────────────────────────────────────────────────────
 let USUARIOS = [
@@ -285,7 +286,7 @@ window._trocarSenha = async () => {
   const data = await resp.json();
   if (!resp.ok) { erroEl.textContent = data.erro; erroEl.style.display = 'block'; return; }
   fecharModalSenha();
-  alert('✅ Senha alterada com sucesso!');
+  toastOk('Senha alterada com sucesso!');
 };
 
 async function _autenticar(usuario) {
@@ -348,8 +349,8 @@ function _iniciarWS() {
   onEvento('perfil_atualizado', (msg) => {
     if (cu && msg.userId === cu.id) {
       // Perfil do próprio usuário alterado — força novo login
-      alert('⚠️ Seu perfil foi alterado para ' + (PL[msg.perfil]||msg.perfil) + '.\nFaça login novamente para continuar.');
-      window._doLogout();
+      toastAviso('Seu perfil foi alterado para ' + (PL[msg.perfil]||msg.perfil) + '.\nRedirecionando para o login em 4s...');
+      setTimeout(() => window._doLogout(), 4000);
     } else if (cu && ['diretor','vice'].includes(cu.perfil)) {
       // Diretor/vice vê a lista atualizada em tempo real
       renderGestao();
@@ -488,7 +489,7 @@ window._adicionarAlunoManual = (nomePreenchido) => {
   if (!nome) return;
   // Evita duplicata pelo mesmo nome
   if (selAlunos.some(a => a.nome.toUpperCase() === nome)) {
-    alert('Aluno "' + nome + '" já está selecionado.');
+    toastAviso('Aluno "' + nome + '" já está selecionado.');
     return;
   }
   const ra = 'manual-' + Date.now();
@@ -653,13 +654,13 @@ window.renderOcc = function renderOcc() {
 
 // ─── REGISTRAR ────────────────────────────────────────────────────────────────
 window._registrarOcorrencia = async () => {
-  if(!sTipo){alert('Selecione o tipo de ocorrência.');return;}
+  if(!sTipo){toastErro('Selecione o tipo de ocorrência.');return;}
   const data=document.getElementById('occData').value;
   const hora=document.getElementById('occHora').value;
   const local=document.getElementById('occLocal').value;
   const grav=document.getElementById('occGrav').value;
   const turma=document.getElementById('occTurma').value;
-  if(!data||!hora||!local||!grav||!turma){alert('Preencha: tipo, data, horário, local, gravidade e turma.');return;}
+  if(!data||!hora||!local||!grav||!turma){toastErro('Preencha: tipo, data, horário, local, gravidade e turma.');return;}
 
   const relato=document.getElementById('occRelato').value;
   const desc=isGest()?document.getElementById('occDesc').value:'';
@@ -678,11 +679,11 @@ window._registrarOcorrencia = async () => {
   };
 
   const resp = await apiFetch('/api/ocorrencias', { method:'POST', body:JSON.stringify(payload) });
-  if (!resp || !resp.ok) { alert('Erro ao registrar. Tente novamente.'); return; }
+  if (!resp || !resp.ok) { toastErro('Erro ao registrar. Tente novamente.'); return; }
   // Não adiciona aqui — o WebSocket (evento nova_ocorrencia) cuida disso para todos
   _limparForm();
   showTab('ocorrencias', document.querySelectorAll('.nt button')[2]);
-  alert('Ocorrência registrada!\n'+(isGest()?'Use "📄 Gerar Documento" para visualizar.':'Aguardando complemento da equipe gestora.'));
+  toastOk('Ocorrência registrada!\n' + (isGest() ? 'Use "📄 Gerar Documento" para visualizar.' : 'Aguardando complemento da equipe gestora.'));
 };
 
 function _limparForm() {
@@ -754,7 +755,7 @@ window._abrirEdit = (id) => {
 window._salvarEdit = async (id) => {
   const o=occ.find(x=>x.id===id); if(!o) return;
   const ng=document.getElementById('eGrav').value;
-  if(GORDEM.indexOf(ng)<GORDEM.indexOf(o.gravidade)){alert('A gravidade não pode ser reduzida.');return;}
+  if(GORDEM.indexOf(ng)<GORDEM.indexOf(o.gravidade)){toastErro('A gravidade não pode ser reduzida.');return;}
   const tv=document.getElementById('eTipo').value.split('||');
   const todos=[...TU,...TG]; const tipo=todos.find(t=>t.n===tv[0]);
   const body={gravidade:ng,numero:tv[0],tipo:tipo?tipo.l:o.tipo,relato:document.getElementById('eRelato').value,editadoPorId:cu.id};
@@ -803,7 +804,7 @@ window._abrirComp = (id) => {
 window._salvarComp = async (id) => {
   const o=occ.find(x=>x.id===id); if(!o) return;
   const d=document.getElementById('cDesc').value;
-  if(!d.trim()){alert('Preencha a descrição detalhada.');return;}
+  if(!d.trim()){toastErro('Preencha a descrição detalhada.');return;}
   const relatosAlunos=o.alunos&&o.alunos.length
     ? o.alunos.map((_,i)=>{const el=document.getElementById('cRelAl_'+i);return el?el.value:'';})
     : [document.getElementById('cRelAl_0')?.value||''];
@@ -823,11 +824,11 @@ window._salvarComp = async (id) => {
   if (!resp) return; // token expirado — auth.js já fez reload
   if (!resp.ok) {
     const erro = await resp.json().catch(() => ({erro: 'Erro desconhecido'}));
-    alert('Erro ao salvar: ' + (erro.erro || resp.status));
+    toastErro('Erro ao salvar: ' + (erro.erro || resp.status));
     return;
   }
   closeModal();
-  alert('Encerrada! Use "📄 Gerar Documento" para visualizar e imprimir.');
+  toastOk('Encerrada! Use "📄 Gerar Documento" para visualizar e imprimir.');
 };
 
 // ─── CHAT ─────────────────────────────────────────────────────────────────────
@@ -1060,20 +1061,20 @@ window._salvarPerfil = async (id) => {
   const data = await resp.json();
   if (!resp.ok) {
     if (btn) { btn.textContent = 'Salvar'; btn.disabled = false; }
-    alert('Erro ao salvar cargo: ' + data.erro);
+    toastErro('Erro ao salvar cargo: ' + data.erro);
     return;
   }
   closeModal();
   await renderGestao();
-  alert('✅ Cargo alterado para ' + (PL[perfil]||perfil) + '.\nO usuário precisará fazer login novamente.');
+  toastOk('Cargo alterado para ' + (PL[perfil]||perfil) + '.\nO usuário precisará fazer login novamente.');
 };
 
 window._resetSenha = async (id, nome) => {
   if (!confirm('Redefinir senha de ' + nome + ' para Malba@2025?')) return;
   const resp = await apiFetch('/api/usuarios/'+id+'/resetar-senha', { method:'POST' });
   const data = await resp.json();
-  if (!resp.ok) { alert('Erro ao redefinir senha.'); return; }
-  alert('✅ Senha redefinida para: Malba@2025');
+  if (!resp.ok) { toastErro('Erro ao redefinir senha.'); return; }
+  toastOk('Senha redefinida para: Malba@2025');
 };
 
 window._toggleUsuario = async (id, nome, ativo) => {
@@ -1081,7 +1082,7 @@ window._toggleUsuario = async (id, nome, ativo) => {
   if (!confirm(`Deseja ${acao} o usuário ${nome}?`)) return;
   const resp = await apiFetch('/api/usuarios/'+id+'/toggle', { method:'POST', body:JSON.stringify({ ativo: !ativo }) });
   const data = await resp.json();
-  if (!resp.ok) { alert('Erro: ' + data.erro); return; }
+  if (!resp.ok) { toastErro('Erro: ' + data.erro); return; }
   renderGestao();
 };
 
@@ -1469,7 +1470,7 @@ function _esc(str) { return String(str||'').replace(/'/g,"\'"); }
 
 window._baixarBackup = async () => {
   const resp = await apiFetch('/api/backup/json');
-  if (!resp || !resp.ok) { alert('Erro ao gerar backup.'); return; }
+  if (!resp || !resp.ok) { toastErro('Erro ao gerar backup.'); return; }
   const data = await resp.json();
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   _dispararDownload(blob, `ocorrencias_backup_${_dataHoje()}.json`);
@@ -1479,7 +1480,7 @@ window._baixarBackup = async () => {
 
 window._baixarBackupCSV = async () => {
   const resp = await apiFetch('/api/backup/csv');
-  if (!resp || !resp.ok) { alert('Erro ao gerar backup CSV.'); return; }
+  if (!resp || !resp.ok) { toastErro('Erro ao gerar backup CSV.'); return; }
   const texto = await resp.text();
   const blob = new Blob(['﻿' + texto], { type: 'text/csv;charset=utf-8' });
   _dispararDownload(blob, `ocorrencias_backup_${_dataHoje()}.csv`);
@@ -1678,12 +1679,12 @@ window.renderSegmento = function() {
 
 window._confirmarReset = async () => {
   const conf = prompt('Digite CONFIRMAR para apagar todas as ocorrências:');
-  if (conf !== 'CONFIRMAR') { alert('Operação cancelada.'); return; }
+  if (conf !== 'CONFIRMAR') { toast('Operação cancelada.', 'info', 3000); return; }
   const resp = await apiFetch('/api/admin/resetar-ocorrencias', { method: 'POST' });
-  if (!resp || !resp.ok) { alert('Erro ao apagar. Tente novamente.'); return; }
+  if (!resp || !resp.ok) { toastErro('Erro ao apagar. Tente novamente.'); return; }
   occ = []; chats = {};
   renderDash(); renderOcc();
-  alert('✅ Todas as ocorrências foram apagadas.');
+  toastOk('Todas as ocorrências foram apagadas.');
 };
 
 // ─── BOOTSTRAP ────────────────────────────────────────────────────────────────
