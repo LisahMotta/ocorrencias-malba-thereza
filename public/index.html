@@ -258,6 +258,15 @@
       <!-- USUÁRIOS -->
       <div class="st">Gestão de Usuários</div>
       <div class="ol" id="gestaoList"></div>
+
+      <!-- AUDITORIA (só diretor/vice) -->
+      <div id="auditoriaSection" style="display:none;margin-top:1.5rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="st" style="margin:0">📋 Log de Auditoria</div>
+          <button class="bn" style="font-size:12px;padding:4px 12px" onclick="window._carregarAuditoria()">🔄 Atualizar</button>
+        </div>
+        <div id="auditoriaList"><p style="font-size:13px;color:var(--mu);text-align:center;padding:1rem">Clique em Atualizar para carregar os logs.</p></div>
+      </div>
     </div>
 
   </div>

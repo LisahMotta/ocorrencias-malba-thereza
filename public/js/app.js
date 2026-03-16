@@ -5,7 +5,59 @@ import { iniciarChat, fecharChat, receberMsgChat, sincronizarChats } from './cha
 import { salvarSessao, limparSessao, getToken, getUsuario, temSessao, apiFetch } from './auth.js';
 
 // ─── DADOS ────────────────────────────────────────────────────────────────────
-let USUARIOS = []; // carregado do servidor em init()
+let USUARIOS = [
+  {id:1,nome:'ADRIANA PEREIRA DOS SANTOS',perfil:'professor'},
+  {id:2,nome:'ANA CLAUDIA PINHEIRO DA SILVA CRUZ',perfil:'professor'},
+  {id:3,nome:'ARIADNE DA SILVA RODRIGUES',perfil:'coordenador'},
+  {id:4,nome:'ARINE IWAMOTO SANCHES FAGUNDES',perfil:'professor'},
+  {id:5,nome:'BRUNO PACHECO DOS SANTOS',perfil:'vice'},
+  {id:6,nome:'CAMILO DE LELIS AMARAL',perfil:'professor'},
+  {id:7,nome:'CRISTIANE SERPA QUILICI',perfil:'professor'},
+  {id:8,nome:'CRISTINA MARIA MARTINS LANDIM RIBEIRO',perfil:'professor'},
+  {id:9,nome:'DALVA MARIA SILVÉRIO',perfil:'professor'},
+  {id:10,nome:'DANIEL CÉSAR DE OLIVEIRA',perfil:'professor'},
+  {id:11,nome:'DIANA RIBEIRO ANDRADE LIMA',perfil:'professor'},
+  {id:12,nome:'EDMILSON APARECIDO DE SOUSA',perfil:'professor'},
+  {id:13,nome:'ERICA DE PAULA APARECIDA CABERLIM',perfil:'professor'},
+  {id:14,nome:'ERICK RODRIGUES DE CARVALHO',perfil:'professor'},
+  {id:15,nome:'EUNICE APARECIDA DE FARIA QUADROS',perfil:'professor'},
+  {id:16,nome:'GABRIEL GUIDO DE ALMEIDA',perfil:'professor'},
+  {id:17,nome:'GIOVANNA PONTES SANTOS',perfil:'professor'},
+  {id:18,nome:'IVANILDA DE JESUS PAIVA',perfil:'professor'},
+  {id:19,nome:'JESSICA KAREN DOS SANTOS SOLEO',perfil:'professor'},
+  {id:20,nome:'JOÃO FLAVIO FRAGA',perfil:'professor'},
+  {id:21,nome:'JUSCELENE SUMARA LESSA LANCELOTTI DI LUCCIO',perfil:'professor'},
+  {id:22,nome:'KARINA DE SOUZA RIBEIRO',perfil:'professor'},
+  {id:23,nome:'KARINA KOIBUCHI SAKANE',perfil:'professor'},
+  {id:24,nome:'LAURENTINA ELIAS DUARTE',perfil:'professor'},
+  {id:25,nome:'LEACIRA FREITAS DE ANDRADES SIMAN',perfil:'professor'},
+  {id:26,nome:'LUANA CRISTINA FERREIRA DE OLIVEIRA',perfil:'professor'},
+  {id:27,nome:'MAGALI RAMOS FERREIRA',perfil:'professor'},
+  {id:28,nome:'MARIA CRISTINA DE ALMEIDA PORTO SILVA',perfil:'professor'},
+  {id:29,nome:'MARIA DE FÁTIMA DIAS',perfil:'professor'},
+  {id:30,nome:'MAYARA SELMA PURCINO MACEDO',perfil:'professor'},
+  {id:31,nome:'MEIRE APARECIDA GAEFKE',perfil:'professor'},
+  {id:32,nome:'NILCELENA SOUZA PORTILHO',perfil:'professor'},
+  {id:33,nome:'PAULO CESAR ROCHA GOMES',perfil:'professor'},
+  {id:34,nome:'RENATA APARECIDA MOYSES DE FREITAS',perfil:'professor'},
+  {id:35,nome:'ROSEANE MOREIRA DA SILVA SALES',perfil:'professor'},
+  {id:36,nome:'SAMANTHA MARINA RIBEIRO MARTINS LEITE',perfil:'professor'},
+  {id:37,nome:'SILVANA MÁRCIA DE SOUZA',perfil:'professor'},
+  {id:38,nome:'SILVIA FERREIRA LOPES DE OLIVEIRA',perfil:'professor'},
+  {id:39,nome:'SIOMARA VILELA PRADO FONSECA',perfil:'professor'},
+  {id:40,nome:'SOLANGE SANTOS ARAÚJO',perfil:'professor'},
+  {id:41,nome:'SONIA MARIA DA SILVA GABRIEL',perfil:'professor'},
+  {id:42,nome:'THAÍS JOSÉ SOARES',perfil:'vice'},
+  {id:43,nome:'THIAGO JOSÉ DIOGO ALVES OLIVEIRA',perfil:'professor'},
+  {id:44,nome:'VICENTE CESAR DA SILVA',perfil:'professor'},
+  {id:45,nome:'VIVIANE SANTOS DE OLIVEIRA',perfil:'professor'},
+  {id:46,nome:'WALDINEIA CRISTINA RODRIGUES DOS SANTOS',perfil:'professor'},
+  {id:47,nome:'WELLINGTON ROBERTO GALVAO BORGES DE OLIVEIRA',perfil:'professor'},
+  {id:48,nome:'WAGNER GONÇALVES DA SILVA JUNIOR FERRO FAZAN',perfil:'coordenador'},
+  {id:49,nome:'RENATA VALÉRIA',perfil:'coordenador'},
+  {id:50,nome:'MARIA CRISTINA DA SILVA',perfil:'vice'},
+  {id:51,nome:'SANDRA REGINA XAVIER DA SILVA',perfil:'diretor'},
+];
 
 const PL = {
   professor:'Professor',
@@ -135,15 +187,10 @@ let chatNaoLidos = {};  // occId → count
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
   try {
-    const [turmasResp, usuariosResp] = await Promise.all([
-      fetch('/assets/turmas.json'),
-      fetch('/api/usuarios/lista-publica'),
-    ]);
-    TD = await turmasResp.json();
-    const lista = await usuariosResp.json();
-    if (Array.isArray(lista) && lista.length > 0) USUARIOS = lista;
+    const resp = await fetch('/assets/turmas.json');
+    TD = await resp.json();
   } catch(e) {
-    console.error('[init] Erro ao carregar dados iniciais:', e);
+    console.error('[init] Erro ao carregar turmas:', e);
   }
 
   _montarLoginSelect();
@@ -154,14 +201,6 @@ async function init() {
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 function _montarLoginSelect() {
   const sel = document.getElementById('loginUsuario');
-  if (!USUARIOS.length) {
-    const o = document.createElement('option');
-    o.value = '';
-    o.textContent = '⚠️ Erro ao carregar usuários — recarregue a página';
-    o.disabled = true;
-    sel.appendChild(o);
-    return;
-  }
   USUARIOS.forEach(u => {
     const o = document.createElement('option');
     o.value = u.id;
@@ -806,7 +845,7 @@ window.showTab = (name, btn) => {
   document.querySelectorAll('.nt button').forEach(b=>b.classList.remove('act'));
   if(btn) btn.classList.add('act');
   if(name==='ocorrencias') renderOcc();
-  if(name==='gestao') renderGestao();
+  if(name==='gestao') { renderGestao(); if(['diretor','vice'].includes(cu?.perfil)) window._carregarAuditoria(); }
   if(name==='dashboard') renderDash();
   if(name==='alunos') { _initAbaAlunos(); window.renderAlunos(); }
   if(name==='segmento') window.renderSegmento();
@@ -885,7 +924,65 @@ async function renderGestao() {
   });
 
   document.getElementById('gestaoList').innerHTML = html;
+
+  // Exibe seção de auditoria só para diretor/vice
+  const audSec = document.getElementById('auditoriaSection');
+  if (audSec) audSec.style.display = ['diretor','vice'].includes(cu.perfil) ? '' : 'none';
 }
+
+// ─── AUDITORIA ────────────────────────────────────────────────────────────────
+const _ACAO_LABEL = {
+  login:                  { icon: '🔑', label: 'Login' },
+  trocar_senha:           { icon: '🔒', label: 'Trocou a própria senha' },
+  nova_ocorrencia:        { icon: '📝', label: 'Registrou ocorrência' },
+  complementar_ocorrencia:{ icon: '✅', label: 'Complementou ocorrência' },
+  editar_ocorrencia:      { icon: '✏️', label: 'Editou ocorrência' },
+  criar_usuario:          { icon: '👤', label: 'Criou usuário' },
+  alterar_perfil:         { icon: '🔄', label: 'Alterou perfil de usuário' },
+  resetar_senha:          { icon: '🔑', label: 'Resetou senha de usuário' },
+  ativar_usuario:         { icon: '✅', label: 'Ativou usuário' },
+  desativar_usuario:      { icon: '🚫', label: 'Desativou usuário' },
+  exportar_backup:        { icon: '💾', label: 'Exportou backup' },
+  resetar_ocorrencias:    { icon: '🗑', label: 'Apagou todas as ocorrências' },
+};
+
+window._carregarAuditoria = async () => {
+  const el = document.getElementById('auditoriaList');
+  el.innerHTML = '<p style="font-size:13px;color:var(--mu);text-align:center;padding:1rem">Carregando...</p>';
+  const resp = await apiFetch('/api/auditoria?limite=200');
+  if (!resp || !resp.ok) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--re);text-align:center;padding:1rem">Erro ao carregar logs.</p>';
+    return;
+  }
+  const logs = await resp.json();
+  if (!logs.length) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--mu);text-align:center;padding:1rem">Nenhum registro encontrado.</p>';
+    return;
+  }
+  el.innerHTML = logs.map(l => {
+    const { icon, label } = _ACAO_LABEL[l.acao] || { icon: '•', label: l.acao };
+    let detalhe = '';
+    if (l.detalhes) {
+      const d = l.detalhes;
+      if (d.occId)         detalhe += ` · Ocorrência #${d.occId}`;
+      if (d.tipo)          detalhe += ` · ${d.tipo}`;
+      if (d.turma)         detalhe += ` · ${d.turma}`;
+      if (d.novoUsuario)   detalhe += ` · ${d.novoUsuario} (${d.perfil||''})`;
+      if (d.usuarioAlvo)   detalhe += ` · ${d.usuarioAlvo}`;
+      if (d.perfilNovo)    detalhe += ` → ${PL[d.perfilNovo]||d.perfilNovo}`;
+      if (d.formato)       detalhe += ` (${d.formato.toUpperCase()})`;
+      if (d.totalApagadas !== undefined) detalhe += ` · ${d.totalApagadas} registros`;
+      if (d.ip)            detalhe += ` · IP: ${d.ip}`;
+    }
+    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)">
+      <span style="font-size:16px;line-height:1.4">${icon}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--tx)">${label}<span style="font-weight:400;color:var(--mu)">${detalhe}</span></div>
+        <div style="font-size:12px;color:var(--mu);margin-top:2px">${l.usuario_nome || '—'} · ${l.criado_em}</div>
+      </div>
+    </div>`;
+  }).join('');
+};
 
 window._adicionarUsuario = async () => {
   const nome = document.getElementById('novoNome').value.trim().toUpperCase();
