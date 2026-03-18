@@ -91,7 +91,7 @@ wss.on('connection', (ws) => {
   ws.on('pong', () => { ws.isAlive = true; });
   let userId = null;
 
-  ws.on('message', (raw) => {
+  ws.on('message', async (raw) => {
     let msg;
     try { msg = JSON.parse(raw); } catch { return; }
 
@@ -102,7 +102,7 @@ wss.on('connection', (ws) => {
         if (!clients.has(userId)) clients.set(userId, new Set());
         clients.get(userId).add(ws);
         console.log(`[WS] Usuário autenticado: ${payload.nome} (${payload.perfil}) — total conectados: ${wss.clients.size}`);
-        const todasOcc = db.listarOcc();
+        const todasOcc = await db.listarOcc();
         // Ocorrências pendentes das últimas 2h — para notificar gestor que acabou de conectar
         const doisHAtras = Date.now() - (2 * 60 * 60 * 1000);
         const pendentesRecentes = todasOcc.filter(o => {
@@ -119,7 +119,7 @@ wss.on('connection', (ws) => {
         ws.send(JSON.stringify({
           type: 'init',
           ocorrencias: todasOcc,
-          chats: _todosChats(),
+          chats: await _todosChats(),
           pendentesRecentes, // gestor vai exibir notificações perdidas
         }));
       } catch {
@@ -130,20 +130,20 @@ wss.on('connection', (ws) => {
 
     if (msg.type === 'chat_msg') {
       if (!userId) return;
-      const usuario = db.getUsuario(parseInt(userId));
+      const usuario = await db.getUsuario(parseInt(userId));
       if (!usuario) return;
 
       // Gestão sempre pode enviar
       // Professor só pode se a gestão já iniciou a conversa nesta ocorrência
       if (!PODE_EDIT.includes(usuario.perfil)) {
-        const msgsOcc = db.listarChat(msg.occId);
+        const msgsOcc = await db.listarChat(msg.occId);
         const gestaoJaFalou = msgsOcc.some(m =>
           PODE_EDIT.includes(m.remetente_perfil || m.remetentePerfil)
         );
         if (!gestaoJaFalou) return; // bloqueia professor se gestão não iniciou
       }
       const hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      const nova = db.inserirChat({
+      const nova = await db.inserirChat({
         occId: msg.occId, texto: msg.texto,
         remetenteId: parseInt(userId), remetenteNome: usuario.nome,
         remetentePerfil: usuario.perfil, hora,
@@ -170,10 +170,11 @@ wss.on('connection', (ws) => {
   });
 });
 
-function _todosChats() {
+async function _todosChats() {
   const resultado = {};
-  db.listarOcc().forEach(o => {
-    const msgs = db.listarChat(o.id);
+  const occs = await db.listarOcc();
+  for (const o of occs) {
+    const msgs = await db.listarChat(o.id);
     if (msgs.length) {
       // Normaliza: remetenteId como número, occId como número
       resultado[String(o.id)] = msgs.map(m => ({
@@ -186,7 +187,7 @@ function _todosChats() {
         hora: m.hora || '',
       }));
     }
-  });
+  }
   return resultado;
 }
 
@@ -202,7 +203,7 @@ app.post('/api/auth/login', async (req, res) => {
 
   const { nome, senha } = req.body;
   if (!nome || !senha) return res.status(400).json({ erro: 'Informe nome e senha' });
-  const usuario = db.getUsuarioNome(nome.trim().toUpperCase());
+  const usuario = await db.getUsuarioNome(nome.trim().toUpperCase());
   if (!usuario) return res.status(401).json({ erro: 'Usuário não encontrado' });
   if (!usuario.ativo) return res.status(401).json({ erro: 'Usuário inativo' });
   const ok = await bcrypt.compare(senha, usuario.senha);
@@ -217,7 +218,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   tentativasLogin.delete(ip);
-  db.inserirAuditoria(usuario.id, usuario.nome, 'login', { ip, perfil: usuario.perfil });
+  await db.inserirAuditoria(usuario.id, usuario.nome, 'login', { ip, perfil: usuario.perfil });
   const token = jwt.sign(
     { id: usuario.id, nome: usuario.nome, perfil: usuario.perfil },
     JWT_SECRET, { expiresIn: JWT_EXPIRA }
@@ -229,32 +230,32 @@ app.post('/api/auth/trocar-senha', autenticar, async (req, res) => {
   const { senhaAtual, novaSenha } = req.body;
   if (!senhaAtual || !novaSenha) return res.status(400).json({ erro: 'Preencha todos os campos' });
   if (novaSenha.length < 6) return res.status(400).json({ erro: 'Nova senha deve ter pelo menos 6 caracteres' });
-  const usuario = db.getUsuario(req.usuario.id);
+  const usuario = await db.getUsuario(req.usuario.id);
   const ok = await bcrypt.compare(senhaAtual, usuario.senha);
   if (!ok) return res.status(401).json({ erro: 'Senha atual incorreta' });
   const hash = await bcrypt.hash(novaSenha, 10);
-  db.atualizarSenha(req.usuario.id, hash);
-  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'trocar_senha', null);
+  await db.atualizarSenha(req.usuario.id, hash);
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'trocar_senha', null);
   res.json({ ok: true });
 });
 
 // ─── OCORRÊNCIAS ──────────────────────────────────────────────────────────────
-app.get('/api/ocorrencias', autenticar, (req, res) => res.json(db.listarOcc()));
+app.get('/api/ocorrencias', autenticar, async (req, res) => res.json(await db.listarOcc()));
 
-app.post('/api/ocorrencias', autenticar, (req, res) => {
+app.post('/api/ocorrencias', autenticar, async (req, res) => {
   const { tipo, numero, data, hora, local, gravidade, turma } = req.body;
   if (!tipo || !numero || !data || !hora || !local || !gravidade || !turma) {
     return res.status(400).json({ erro: 'Campos obrigatórios ausentes: tipo, numero, data, hora, local, gravidade, turma' });
   }
   try {
-    const nova = db.inserirOcc({
+    const nova = await db.inserirOcc({
       ...req.body,
       registradoPorId: req.usuario.id,
       registradoPorNome: req.usuario.nome,
       registradoPorPerfil: req.usuario.perfil,
     });
     console.log(`[nova_ocorrencia] id=${nova.id} por ${nova.registradoPorNome} — clientes: ${wss.clients.size}`);
-    db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'nova_ocorrencia', { occId: nova.id, tipo: nova.tipo, turma: nova.turma });
+    await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'nova_ocorrencia', { occId: nova.id, tipo: nova.tipo, turma: nova.turma });
     broadcast({ type: 'nova_ocorrencia', occ: nova });
     res.json(nova);
   } catch(err) {
@@ -263,23 +264,23 @@ app.post('/api/ocorrencias', autenticar, (req, res) => {
   }
 });
 
-app.patch('/api/ocorrencias/:id/complementar', autenticar, exigePerfil(...PODE_EDIT), (req, res) => {
-  const occ = db.complementarOcc(parseInt(req.params.id), {
+app.patch('/api/ocorrencias/:id/complementar', autenticar, exigePerfil(...PODE_EDIT), async (req, res) => {
+  const occ = await db.complementarOcc(parseInt(req.params.id), {
     ...req.body,
     complementadoPorId:    req.usuario.id,
     complementadoPorNome:  req.usuario.nome,
     complementadoPorPerfil:req.usuario.perfil,
   });
   if (!occ) return res.status(404).json({ erro: 'Não encontrada' });
-  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'complementar_ocorrencia', { occId: occ.id, tipo: occ.tipo });
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'complementar_ocorrencia', { occId: occ.id, tipo: occ.tipo });
   broadcast({ type: 'occ_atualizada', occ });
   res.json(occ);
 });
 
-app.patch('/api/ocorrencias/:id/editar', autenticar, exigePerfil(...PODE_EDIT), (req, res) => {
-  const occ = db.editarOcc(parseInt(req.params.id), req.body);
+app.patch('/api/ocorrencias/:id/editar', autenticar, exigePerfil(...PODE_EDIT), async (req, res) => {
+  const occ = await db.editarOcc(parseInt(req.params.id), req.body);
   if (!occ) return res.status(404).json({ erro: 'Não encontrada' });
-  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'editar_ocorrencia', { occId: occ.id, campos: Object.keys(req.body) });
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'editar_ocorrencia', { occId: occ.id, campos: Object.keys(req.body) });
   broadcast({ type: 'occ_atualizada', occ });
   res.json(occ);
 });
@@ -287,41 +288,41 @@ app.patch('/api/ocorrencias/:id/editar', autenticar, exigePerfil(...PODE_EDIT), 
 // ─── GESTÃO ───────────────────────────────────────────────────────────────────
 
 // Lista pública — usada na tela de login (sem autenticação)
-app.get('/api/usuarios/lista-publica', (req, res) => {
-  const lista = db.listarUsuarios().filter(u => u.ativo).map(u => ({
+app.get('/api/usuarios/lista-publica', async (req, res) => {
+  const lista = (await db.listarUsuarios()).filter(u => u.ativo).map(u => ({
     id: u.id, nome: u.nome, perfil: u.perfil,
   }));
   res.json(lista);
 });
 
-app.get('/api/usuarios', autenticar, exigePerfil('diretor', 'coordenador', 'vice'), (req, res) => {
-  res.json(db.listarUsuarios());
+app.get('/api/usuarios', autenticar, exigePerfil('diretor', 'coordenador', 'vice'), async (req, res) => {
+  res.json(await db.listarUsuarios());
 });
 
 // Adicionar novo usuário
 app.post('/api/usuarios', autenticar, exigePerfil('diretor', 'vice'), async (req, res) => {
   const { nome, perfil } = req.body;
   if (!nome || !perfil) return res.status(400).json({ erro: 'Nome e perfil obrigatórios' });
-  const existe = db.getUsuarioNome(nome.trim().toUpperCase());
+  const existe = await db.getUsuarioNome(nome.trim().toUpperCase());
   if (existe) return res.status(400).json({ erro: 'Usuário já existe com este nome' });
   const hash = await bcrypt.hash('Malba@2025', 10);
-  const id = db.inserirUsuario(nome.trim().toUpperCase(), perfil, hash);
-  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'criar_usuario', { novoUsuario: nome.trim().toUpperCase(), perfil });
+  const id = await db.inserirUsuario(nome.trim().toUpperCase(), perfil, hash);
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'criar_usuario', { novoUsuario: nome.trim().toUpperCase(), perfil });
   res.json({ ok: true, id, nome: nome.trim().toUpperCase(), perfil, novaSenha: 'Malba@2025' });
 });
 
 // Alterar perfil do usuário
-app.patch('/api/usuarios/:id/perfil', autenticar, exigePerfil('diretor', 'vice'), (req, res) => {
+app.patch('/api/usuarios/:id/perfil', autenticar, exigePerfil('diretor', 'vice'), async (req, res) => {
   const { perfil } = req.body;
   if (!perfil) return res.status(400).json({ erro: 'Perfil obrigatório' });
   if (parseInt(req.params.id) === req.usuario.id) return res.status(400).json({ erro: 'Não é possível alterar seu próprio perfil' });
   try {
-    db.atualizarPerfil(parseInt(req.params.id), perfil);
+    await db.atualizarPerfil(parseInt(req.params.id), perfil);
     // Verifica se salvou corretamente
-    const u = db.getUsuario(parseInt(req.params.id));
+    const u = await db.getUsuario(parseInt(req.params.id));
     console.log(`[perfil] Usuário ${u.nome} → ${perfil} (salvo: ${u.perfil})`);
     if (u.perfil !== perfil) throw new Error('Perfil não foi salvo corretamente');
-    db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'alterar_perfil', { usuarioAlvo: u.nome, perfilAnterior: u.perfil_anterior, perfilNovo: perfil });
+    await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'alterar_perfil', { usuarioAlvo: u.nome, perfilAnterior: u.perfil_anterior, perfilNovo: perfil });
     // Notifica todos via WebSocket para recarregar se necessário
     broadcast({ type: 'perfil_atualizado', userId: parseInt(req.params.id), perfil });
     res.json({ ok: true, perfil: u.perfil });
@@ -333,29 +334,29 @@ app.patch('/api/usuarios/:id/perfil', autenticar, exigePerfil('diretor', 'vice')
 
 // Resetar senha
 app.post('/api/usuarios/:id/resetar-senha', autenticar, exigePerfil('diretor', 'vice'), async (req, res) => {
-  const alvo = db.getUsuario(parseInt(req.params.id));
+  const alvo = await db.getUsuario(parseInt(req.params.id));
   const hash = await bcrypt.hash('Malba@2025', 10);
-  db.atualizarSenha(parseInt(req.params.id), hash);
-  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'resetar_senha', { usuarioAlvo: alvo?.nome });
+  await db.atualizarSenha(parseInt(req.params.id), hash);
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'resetar_senha', { usuarioAlvo: alvo?.nome });
   res.json({ ok: true, novaSenha: 'Malba@2025' });
 });
 
 // Ativar/desativar usuário
-app.post('/api/usuarios/:id/toggle', autenticar, exigePerfil('diretor', 'vice'), (req, res) => {
+app.post('/api/usuarios/:id/toggle', autenticar, exigePerfil('diretor', 'vice'), async (req, res) => {
   if (parseInt(req.params.id) === req.usuario.id) return res.status(400).json({ erro: 'Não é possível desativar sua própria conta' });
-  const alvo = db.getUsuario(parseInt(req.params.id));
-  db.toggleUsuario(parseInt(req.params.id), req.body.ativo ? 1 : 0);
-  db.inserirAuditoria(req.usuario.id, req.usuario.nome, req.body.ativo ? 'ativar_usuario' : 'desativar_usuario', { usuarioAlvo: alvo?.nome });
+  const alvo = await db.getUsuario(parseInt(req.params.id));
+  await db.toggleUsuario(parseInt(req.params.id), req.body.ativo ? 1 : 0);
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, req.body.ativo ? 'ativar_usuario' : 'desativar_usuario', { usuarioAlvo: alvo?.nome });
   res.json({ ok: true });
 });
 
 // ─── BACKUP ──────────────────────────────────────────────────────────────────
 
 // Backup JSON completo
-app.get('/api/backup/json', autenticar, exigePerfil('diretor','coordenador','vice'), (req, res) => {
-  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'exportar_backup', { formato: 'json' });
-  const ocorrencias = db.listarOcc();
-  const usuarios = db.listarUsuarios();
+app.get('/api/backup/json', autenticar, exigePerfil('diretor','coordenador','vice'), async (req, res) => {
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'exportar_backup', { formato: 'json' });
+  const ocorrencias = await db.listarOcc();
+  const usuarios = await db.listarUsuarios();
   const payload = {
     geradoEm: new Date().toISOString(),
     geradoPor: req.usuario.nome,
@@ -368,9 +369,9 @@ app.get('/api/backup/json', autenticar, exigePerfil('diretor','coordenador','vic
 });
 
 // Backup CSV — ocorrências
-app.get('/api/backup/csv', autenticar, exigePerfil('diretor','coordenador','vice'), (req, res) => {
-  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'exportar_backup', { formato: 'csv' });
-  const ocorrencias = db.listarOcc();
+app.get('/api/backup/csv', autenticar, exigePerfil('diretor','coordenador','vice'), async (req, res) => {
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'exportar_backup', { formato: 'csv' });
+  const ocorrencias = await db.listarOcc();
 
   const cabecalho = [
     'ID','Número','Tipo','Data','Hora','Local','Gravidade','Turma',
@@ -412,39 +413,39 @@ app.get('/api/backup/csv', autenticar, exigePerfil('diretor','coordenador','vice
 // ─── ALUNOS MONITORADOS ───────────────────────────────────────────────────────
 const PODE_MONITORAR = ['poc', 'coordenador', 'vice', 'diretor'];
 
-app.get('/api/alunos-monitorados', autenticar, exigePerfil(...PODE_MONITORAR), (req, res) => {
-  res.json(db.listarMonitorados());
+app.get('/api/alunos-monitorados', autenticar, exigePerfil(...PODE_MONITORAR), async (req, res) => {
+  res.json(await db.listarMonitorados());
 });
 
-app.post('/api/alunos-monitorados', autenticar, exigePerfil(...PODE_MONITORAR), (req, res) => {
+app.post('/api/alunos-monitorados', autenticar, exigePerfil(...PODE_MONITORAR), async (req, res) => {
   const { ra, nome, turma, motivo } = req.body;
   if (!ra || !nome) return res.status(400).json({ erro: 'RA e nome obrigatórios' });
-  db.inserirMonitorado(ra, nome, turma, motivo, req.usuario.nome);
-  db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'sinalizar_aluno', { ra, nome, turma, motivo });
+  await db.inserirMonitorado(ra, nome, turma, motivo, req.usuario.nome);
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'sinalizar_aluno', { ra, nome, turma, motivo });
   res.json({ ok: true });
 });
 
-app.delete('/api/alunos-monitorados/:ra', autenticar, exigePerfil(...PODE_MONITORAR), (req, res) => {
+app.delete('/api/alunos-monitorados/:ra', autenticar, exigePerfil(...PODE_MONITORAR), async (req, res) => {
   const ra = decodeURIComponent(req.params.ra);
-  const lista = db.listarMonitorados();
+  const lista = await db.listarMonitorados();
   const aluno = lista.find(a => a.ra === ra);
-  db.removerMonitorado(ra);
-  if (aluno) db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'remover_monitoramento', { ra, nome: aluno.nome });
+  await db.removerMonitorado(ra);
+  if (aluno) await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'remover_monitoramento', { ra, nome: aluno.nome });
   res.json({ ok: true });
 });
 
 // ─── AUDITORIA ────────────────────────────────────────────────────────────────
-app.get('/api/auditoria', autenticar, exigePerfil('diretor', 'vice'), (req, res) => {
+app.get('/api/auditoria', autenticar, exigePerfil('diretor', 'vice'), async (req, res) => {
   const limite = Math.min(parseInt(req.query.limite) || 200, 500);
-  res.json(db.listarAuditoria(limite));
+  res.json(await db.listarAuditoria(limite));
 });
 
 // ─── RESET (só diretor) ──────────────────────────────────────────────────────
-app.post('/api/admin/resetar-ocorrencias', autenticar, exigePerfil('diretor','vice'), (req, res) => {
+app.post('/api/admin/resetar-ocorrencias', autenticar, exigePerfil('diretor','vice'), async (req, res) => {
   try {
-    const total = db.listarOcc().length;
-    db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'resetar_ocorrencias', { totalApagadas: total });
-    db.resetarOcorrencias();
+    const occs = await db.listarOcc();
+    await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'resetar_ocorrencias', { totalApagadas: occs.length });
+    await db.resetarOcorrencias();
     broadcast({ type: 'init', ocorrencias: [], chats: {} });
     res.json({ ok: true, msg: 'Todas as ocorrências foram apagadas.' });
   } catch (err) {
@@ -456,8 +457,10 @@ app.post('/api/admin/resetar-ocorrencias', autenticar, exigePerfil('diretor','vi
 // ─── SPA ──────────────────────────────────────────────────────────────────────
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
 
-// ─── BACKUP AUTOMÁTICO ───────────────────────────────────────────────────────
+// ─── BACKUP AUTOMÁTICO (apenas SQLite) ───────────────────────────────────────
 function _fazerBackupAutomatico() {
+  // No modo PostgreSQL, o banco persiste automaticamente — sem necessidade de backup de arquivo
+  if (process.env.DATABASE_URL) return;
   try {
     const backupDir = path.join(
       process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(__dirname, '../data'),
@@ -559,12 +562,12 @@ async function _autoSeed() {
   ];
   let criados = 0, atualizados = 0;
   for (const u of lista) {
-    const existente = db.getUsuarioNome(u.nome);
+    const existente = await db.getUsuarioNome(u.nome);
     if (!existente) {
-      db.inserirUsuario(u.nome, u.perfil, hash);
+      await db.inserirUsuario(u.nome, u.perfil, hash);
       criados++;
     } else if (existente.perfil !== u.perfil) {
-      db.atualizarPerfil(existente.id, u.perfil);
+      await db.atualizarPerfil(existente.id, u.perfil);
       atualizados++;
     }
   }
@@ -575,17 +578,23 @@ async function _autoSeed() {
 
 // ─── START ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
+const DB_TIPO = process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite';
 db.inicializar().then(async () => {
   await _autoSeed();
   server.listen(PORT, () => {
     console.log(`\n✅ Servidor rodando em http://localhost:${PORT}`);
-    console.log(`   Banco: sql.js | JWT: ${JWT_EXPIRA}`);
+    console.log(`   Banco: ${DB_TIPO} | JWT: ${JWT_EXPIRA}`);
+    if (!process.env.DATABASE_URL) {
+      console.log('   ⚠️  Usando SQLite local — configure DATABASE_URL (PostgreSQL) para persistência no Railway');
+    }
   });
-  // Backup automático diário (executa 1h após o start e depois a cada 24h)
-  setTimeout(() => {
-    _fazerBackupAutomatico();
-    setInterval(_fazerBackupAutomatico, 24 * 60 * 60 * 1000);
-  }, 60 * 60 * 1000);
+  // Backup automático diário (apenas SQLite — executa 1h após o start e depois a cada 24h)
+  if (!process.env.DATABASE_URL) {
+    setTimeout(() => {
+      _fazerBackupAutomatico();
+      setInterval(_fazerBackupAutomatico, 24 * 60 * 60 * 1000);
+    }, 60 * 60 * 1000);
+  }
 }).catch(err => {
   console.error('Erro ao inicializar banco:', err);
   process.exit(1);
