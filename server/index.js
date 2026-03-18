@@ -570,9 +570,14 @@ async function _autoSeed() {
     // Gerente de Organização Escolar
     { nome: 'VANESSA OSÓRIO VENTURA',                       perfil: 'gerente'     },
   ];
+  // Busca todos os usuários de uma vez, incluindo inativos (getUsuarioNome filtra
+  // por ativo=1 e causaria recriação de usuários desativados com senha padrão)
+  const todosUsuarios = await db.listarUsuarios();
+  const mapaUsuarios = new Map(todosUsuarios.map(u => [u.nome, u]));
+
   let criados = 0, atualizados = 0;
   for (const u of lista) {
-    const existente = await db.getUsuarioNome(u.nome);
+    const existente = mapaUsuarios.get(u.nome);
     if (!existente) {
       await db.inserirUsuario(u.nome, u.perfil, hash);
       criados++;

@@ -595,8 +595,10 @@ const isEdit = () => PODE_EDIT.includes(cu.perfil);
 const isImprimir = () => PODE_EDIT.includes(cu.perfil);
 
 function _setDatas() {
-  const d=document.getElementById('occData'); if(d) d.value=new Date().toISOString().split('T')[0];
-  const h=document.getElementById('occHora'); if(h) h.value=new Date().toTimeString().slice(0,5);
+  const now = new Date();
+  const localDate = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const d=document.getElementById('occData'); if(d) d.value=localDate;
+  const h=document.getElementById('occHora'); if(h) h.value=now.toTimeString().slice(0,5);
 }
 
 // ─── CARDS ───────────────────────────────────────────────────────────────────
