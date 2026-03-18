@@ -662,6 +662,7 @@ window.renderOcc = function renderOcc() {
   const fT=document.getElementById('fTurma').value;
   const fG=document.getElementById('fGrav').value;
   const fS=document.getElementById('fStatus').value;
+  const fD=document.getElementById('fData')?.value; // formato YYYY-MM-DD
   // Professor/agentes só vêem as próprias ocorrências; gestão vê todas
   const ehProf = cu && ['professor','agente','secretaria','gerente'].includes(cu.perfil);
   let lista=occ.filter(o=>o&&o.gravidade).sort((a,b)=>b.id-a.id);
@@ -670,6 +671,14 @@ window.renderOcc = function renderOcc() {
   if(fT) lista=lista.filter(o=>o.turma===fT);
   if(fG) lista=lista.filter(o=>o.gravidade===fG);
   if(fS) lista=lista.filter(o=>o.status===fS);
+  if(fD) lista=lista.filter(o=>{
+    if(!o.data) return false;
+    let dd,mm,yyyy;
+    if(o.data.includes('/')) { [dd,mm,yyyy]=o.data.split('/'); }
+    else { [yyyy,mm,dd]=o.data.split('-'); }
+    const iso=`${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+    return iso===fD;
+  });
   document.getElementById('occList').innerHTML=lista.length
     ? lista.map(cardHTML).join('')
     : '<div class="es">Nenhuma ocorrência encontrada.</div>';
