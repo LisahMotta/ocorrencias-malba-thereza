@@ -96,8 +96,16 @@ wss.on('connection', (ws) => {
     try { msg = JSON.parse(raw); } catch { return; }
 
     if (msg.type === 'auth') {
+      // Etapa 1: verificar JWT — erros aqui forçam novo login no cliente
+      let payload;
       try {
-        const payload = jwt.verify(msg.token, JWT_SECRET);
+        payload = jwt.verify(msg.token, JWT_SECRET);
+      } catch {
+        ws.send(JSON.stringify({ type: 'erro', msg: 'Token inválido' }));
+        return;
+      }
+      // Etapa 2: carregar dados — erros aqui não devem forçar logout
+      try {
         userId = String(payload.id);
         if (!clients.has(userId)) clients.set(userId, new Set());
         clients.get(userId).add(ws);
@@ -120,10 +128,12 @@ wss.on('connection', (ws) => {
           type: 'init',
           ocorrencias: todasOcc,
           chats: await _todosChats(),
-          pendentesRecentes, // gestor vai exibir notificações perdidas
+          pendentesRecentes,
         }));
-      } catch {
-        ws.send(JSON.stringify({ type: 'erro', msg: 'Token inválido' }));
+      } catch(e) {
+        console.error('[WS auth] Erro ao carregar dados:', e.message);
+        // Envia init vazio para não deixar o cliente preso — não força logout
+        ws.send(JSON.stringify({ type: 'init', ocorrencias: [], chats: {}, pendentesRecentes: [] }));
       }
       return;
     }

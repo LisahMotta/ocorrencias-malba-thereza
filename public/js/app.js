@@ -322,6 +322,12 @@ function _iniciarWS() {
     el.textContent = s === 'conectado' ? '● online' : '● offline';
   });
 
+  // Token inválido ou expirado — força novo login sem alertas desnecessários
+  onEvento('erro', () => {
+    limparSessao();
+    window._doLogout();
+  });
+
   onEvento('init', (msg) => {
     occ = msg.ocorrencias || [];
     chats = msg.chats || {};
@@ -1838,14 +1844,28 @@ window._confirmarReset = async () => {
 };
 
 // ─── BOOTSTRAP ────────────────────────────────────────────────────────────────
+function _tokenAindaValido() {
+  try {
+    const token = getToken();
+    if (!token) return false;
+    // Decodifica payload JWT (sem verificar assinatura — só checa expiração)
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return payload.exp * 1000 > Date.now();
+  } catch { return false; }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await init();
   _montarTurmasSelectReal();
   _montarGridTiposReal();
 
-  // Auto-login se tiver sessão salva
+  // Auto-login apenas se a sessão existir E o token ainda não tiver expirado
   if (temSessao()) {
-    const usuario = getUsuario();
-    if (usuario) await _autenticar(usuario);
+    if (_tokenAindaValido()) {
+      const usuario = getUsuario();
+      if (usuario) await _autenticar(usuario);
+    } else {
+      limparSessao(); // Token expirado — limpa silenciosamente e mostra login
+    }
   }
 });
