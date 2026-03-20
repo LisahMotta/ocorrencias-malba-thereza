@@ -1859,9 +1859,9 @@ window._confirmarReset = async () => {
 
 // ─── CARÔMETRO ────────────────────────────────────────────────────────────────
 let _cDados = [];          // lista de metadados carregados do servidor
-const _cBlobUrls = {};     // cache de object URLs por RA
+const _cBlobUrls = {};     // cache de object URLs por RA (apenas em memória, sem URL pública)
 
-async function _fetchFotoUrl(ra) {
+async function _fetchFotoBlob(ra) {
   if (_cBlobUrls[ra]) return _cBlobUrls[ra];
   try {
     const resp = await fetch(`/api/foto/${encodeURIComponent(ra)}`, {
@@ -1873,6 +1873,36 @@ async function _fetchFotoUrl(ra) {
     _cBlobUrls[ra] = url;
     return url;
   } catch { return null; }
+}
+
+// Desenha a foto no canvas com marca d'água diagonal (nome do usuário + data)
+function _desenharComMarcaDagua(canvas, blobUrl) {
+  return new Promise(resolve => {
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // Marca d'água: nome do usuário + data, diagonal, semi-transparente
+      const texto = `${cu?.nome || 'Usuário'} · ${new Date().toLocaleDateString('pt-BR')}`;
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(-Math.PI / 4);
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      // Sombra para legibilidade em qualquer fundo
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 2;
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.fillText(texto, 0, -10);
+      ctx.fillText(texto, 0, 10);
+      ctx.restore();
+      resolve();
+    };
+    img.onerror = resolve;
+    img.src = blobUrl;
+  });
 }
 
 window._carregarCarometro = async () => {
@@ -1919,11 +1949,11 @@ window._renderCarometro = async () => {
 
   const podeEditar = ['vice','diretor'].includes(cu?.perfil);
 
-  // Renderiza cards com placeholders e carrega fotos em paralelo
+  // Usa <canvas> em vez de <img>: sem URL exposta, sem clique direito, marca d'água aplicada
   grid.innerHTML = filtrados.map(d => `
-    <div class="fc" style="padding:10px;text-align:center;position:relative" data-ra="${d.ra}">
-      <img id="cImg_${d.ra}" src="" alt="${d.nome}"
-        style="width:90px;height:110px;object-fit:cover;border-radius:8px;background:var(--sb);display:block;margin:0 auto 8px">
+    <div class="fc" style="padding:10px;text-align:center;position:relative;user-select:none" data-ra="${d.ra}">
+      <canvas id="cImg_${d.ra}" width="90" height="110"
+        style="border-radius:8px;background:var(--sb);display:block;margin:0 auto 8px;-webkit-user-drag:none"></canvas>
       <div style="font-size:12px;font-weight:700;color:var(--tx);line-height:1.3">${d.nome}</div>
       <div style="font-size:11px;color:var(--mu);margin-top:2px">${d.turma||'—'}</div>
       <div style="font-size:11px;color:var(--mu)">RA: ${d.ra}</div>
@@ -1932,11 +1962,14 @@ window._renderCarometro = async () => {
         title="Remover foto">🗑 Remover</button>` : ''}
     </div>`).join('');
 
-  // Carrega todas as fotos (com auth) em paralelo
+  // Bloqueia clique direito em todo o grid do carômetro
+  grid.oncontextmenu = e => e.preventDefault();
+
+  // Carrega e desenha fotos com marca d'água em paralelo
   await Promise.all(filtrados.map(async d => {
-    const url = await _fetchFotoUrl(d.ra);
-    const img = document.getElementById('cImg_' + d.ra);
-    if (img && url) img.src = url;
+    const blobUrl = await _fetchFotoBlob(d.ra);
+    const canvas  = document.getElementById('cImg_' + d.ra);
+    if (canvas && blobUrl) await _desenharComMarcaDagua(canvas, blobUrl);
   }));
 };
 
