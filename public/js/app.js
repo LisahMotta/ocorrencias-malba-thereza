@@ -421,7 +421,7 @@ function _renderMain() {
   document.getElementById('tabRel').style.display = PODE_REL.includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabAlunos').style.display = PODE_REL.includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabSeg').style.display = (cu.perfil==='coordenador' && COORD_SEGMENTOS[cu.nome]) ? '' : 'none';
-  document.getElementById('tabCarometro').style.display = ['poc','coordenador','vice','diretor'].includes(cu.perfil) ? '' : 'none';
+  document.getElementById('tabCarometro').style.display = ['professor','poc','coordenador','vice','diretor'].includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabGes').style.display = ['diretor','vice'].includes(cu.perfil) ? '' : 'none';
 
   const icons = {professor:'👨‍🏫',agente:'🏫',secretaria:'📝',gerente:'🗂️',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};

@@ -487,7 +487,7 @@ app.post('/api/admin/resetar-ocorrencias', autenticar, exigePerfil('diretor','vi
 });
 
 // ─── CARÔMETRO ────────────────────────────────────────────────────────────────
-const PODE_VER_CAROMETRO    = ['poc', 'coordenador', 'vice', 'diretor'];
+const PODE_VER_CAROMETRO    = ['professor', 'poc', 'coordenador', 'vice', 'diretor'];
 const PODE_EDITAR_CAROMETRO = ['vice', 'diretor'];
 
 // Lista metadados de todos os alunos com foto
