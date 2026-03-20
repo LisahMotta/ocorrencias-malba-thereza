@@ -421,6 +421,7 @@ function _renderMain() {
   document.getElementById('tabRel').style.display = PODE_REL.includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabAlunos').style.display = PODE_REL.includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabSeg').style.display = (cu.perfil==='coordenador' && COORD_SEGMENTOS[cu.nome]) ? '' : 'none';
+  document.getElementById('tabCarometro').style.display = ['poc','coordenador','vice','diretor'].includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabGes').style.display = ['diretor','vice'].includes(cu.perfil) ? '' : 'none';
 
   const icons = {professor:'👨‍🏫',agente:'🏫',secretaria:'📝',gerente:'🗂️',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};
@@ -903,12 +904,13 @@ window.closeModal = (e) => {
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
 window.showTab = (name, btn) => {
-  ['dashboard','registrar','ocorrencias','relatorio','alunos','segmento','gestao'].forEach(t => {
+  ['dashboard','registrar','ocorrencias','relatorio','alunos','segmento','carometro','gestao'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===name ? '' : 'none';
   });
   document.querySelectorAll('.nt button').forEach(b=>b.classList.remove('act'));
   if(btn) btn.classList.add('act');
   if(name==='ocorrencias') renderOcc();
+  if(name==='carometro') window._carregarCarometro();
   if(name==='gestao') { renderGestao(); if(['diretor','vice'].includes(cu?.perfil)) window._carregarAuditoria(); }
   if(name==='dashboard') renderDash();
   if(name==='alunos') {
@@ -1852,6 +1854,143 @@ window._confirmarReset = async () => {
   occ = []; chats = {};
   renderDash(); renderOcc();
   toastOk('Todas as ocorrências foram apagadas.');
+};
+
+
+// ─── CARÔMETRO ────────────────────────────────────────────────────────────────
+let _cDados = [];          // lista de metadados carregados do servidor
+const _cBlobUrls = {};     // cache de object URLs por RA
+
+async function _fetchFotoUrl(ra) {
+  if (_cBlobUrls[ra]) return _cBlobUrls[ra];
+  try {
+    const resp = await fetch(`/api/foto/${encodeURIComponent(ra)}`, {
+      headers: { Authorization: 'Bearer ' + getToken() }
+    });
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    _cBlobUrls[ra] = url;
+    return url;
+  } catch { return null; }
+}
+
+window._carregarCarometro = async () => {
+  const grid = document.getElementById('cGrid');
+  const vazio = document.getElementById('cVazio');
+  grid.innerHTML = '<p style="color:var(--mu);font-size:13px;text-align:center;padding:1rem">Carregando...</p>';
+  vazio.style.display = 'none';
+
+  // Mostrar área de upload apenas para vice/diretor
+  const uploadArea = document.getElementById('cUploadArea');
+  if (uploadArea) uploadArea.style.display = ['vice','diretor'].includes(cu?.perfil) ? '' : 'none';
+
+  const dados = await apiFetch('/api/carometro');
+  if (!dados) { grid.innerHTML = ''; vazio.style.display = ''; return; }
+  _cDados = dados;
+
+  // Montar lista de turmas para o filtro
+  const turmas = [...new Set(dados.map(d => d.turma).filter(Boolean))].sort();
+  const sel = document.getElementById('cFiltroTurma');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todas as turmas</option>' +
+    turmas.map(t => `<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('');
+
+  window._renderCarometro();
+};
+
+window._renderCarometro = async () => {
+  const grid = document.getElementById('cGrid');
+  const vazio = document.getElementById('cVazio');
+  const turmaFiltro = document.getElementById('cFiltroTurma')?.value || '';
+  const nomeFiltro = (document.getElementById('cFiltroNome')?.value || '').toLowerCase();
+
+  const filtrados = _cDados.filter(d =>
+    (!turmaFiltro || d.turma === turmaFiltro) &&
+    (!nomeFiltro || d.nome.toLowerCase().includes(nomeFiltro))
+  );
+
+  if (!filtrados.length) {
+    grid.innerHTML = '';
+    vazio.style.display = '';
+    return;
+  }
+  vazio.style.display = 'none';
+
+  const podeEditar = ['vice','diretor'].includes(cu?.perfil);
+
+  // Renderiza cards com placeholders e carrega fotos em paralelo
+  grid.innerHTML = filtrados.map(d => `
+    <div class="fc" style="padding:10px;text-align:center;position:relative" data-ra="${d.ra}">
+      <img id="cImg_${d.ra}" src="" alt="${d.nome}"
+        style="width:90px;height:110px;object-fit:cover;border-radius:8px;background:var(--sb);display:block;margin:0 auto 8px">
+      <div style="font-size:12px;font-weight:700;color:var(--tx);line-height:1.3">${d.nome}</div>
+      <div style="font-size:11px;color:var(--mu);margin-top:2px">${d.turma||'—'}</div>
+      <div style="font-size:11px;color:var(--mu)">RA: ${d.ra}</div>
+      ${podeEditar ? `<button onclick="window._deletarFoto('${d.ra}')"
+        style="margin-top:6px;font-size:11px;color:var(--re);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px"
+        title="Remover foto">🗑 Remover</button>` : ''}
+    </div>`).join('');
+
+  // Carrega todas as fotos (com auth) em paralelo
+  await Promise.all(filtrados.map(async d => {
+    const url = await _fetchFotoUrl(d.ra);
+    const img = document.getElementById('cImg_' + d.ra);
+    if (img && url) img.src = url;
+  }));
+};
+
+window._enviarFotoAluno = async () => {
+  const ra    = document.getElementById('cRa').value.trim();
+  const nome  = document.getElementById('cNome').value.trim();
+  const turma = document.getElementById('cTurma').value.trim();
+  const file  = document.getElementById('cArquivo').files[0];
+  const erro  = document.getElementById('cUploadErro');
+  erro.style.display = 'none';
+
+  if (!ra || !nome || !file) {
+    erro.textContent = 'Preencha RA, nome e selecione uma foto.';
+    erro.style.display = '';
+    return;
+  }
+
+  const form = new FormData();
+  form.append('foto', file);
+  form.append('nome', nome);
+  form.append('turma', turma);
+
+  const resp = await fetch(`/api/foto/${encodeURIComponent(ra)}`, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + getToken() },
+    body: form,
+  });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    erro.textContent = json.erro || 'Erro ao enviar foto.';
+    erro.style.display = '';
+    return;
+  }
+
+  // Invalida cache e recarrega
+  delete _cBlobUrls[ra];
+  document.getElementById('cRa').value = '';
+  document.getElementById('cNome').value = '';
+  document.getElementById('cTurma').value = '';
+  document.getElementById('cArquivo').value = '';
+  toastOk('Foto enviada com sucesso!');
+  await window._carregarCarometro();
+};
+
+window._deletarFoto = async (ra) => {
+  if (!confirm('Remover a foto deste aluno?')) return;
+  const resp = await fetch(`/api/foto/${encodeURIComponent(ra)}`, {
+    method: 'DELETE',
+    headers: { Authorization: 'Bearer ' + getToken() },
+  });
+  if (!resp.ok) { toastErro('Erro ao remover foto.'); return; }
+  if (_cBlobUrls[ra]) { URL.revokeObjectURL(_cBlobUrls[ra]); delete _cBlobUrls[ra]; }
+  toastOk('Foto removida.');
+  await window._carregarCarometro();
 };
 
 // ─── BOOTSTRAP ────────────────────────────────────────────────────────────────

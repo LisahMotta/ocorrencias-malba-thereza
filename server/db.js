@@ -69,6 +69,14 @@ async function _initSqlite() {
       sinalizado_por TEXT,
       sinalizado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS fotos_alunos (
+      ra TEXT PRIMARY KEY,
+      nome TEXT NOT NULL,
+      turma TEXT,
+      filename TEXT NOT NULL,
+      enviado_por TEXT,
+      enviado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
   `);
   const migracoes = [
     "ALTER TABLE ocorrencias ADD COLUMN conselho_tutelar TEXT",
@@ -157,6 +165,14 @@ async function _initPg() {
       motivo TEXT,
       sinalizado_por TEXT,
       sinalizado_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI')
+    );
+    CREATE TABLE IF NOT EXISTS fotos_alunos (
+      ra TEXT PRIMARY KEY,
+      nome TEXT NOT NULL,
+      turma TEXT,
+      filename TEXT NOT NULL,
+      enviado_por TEXT,
+      enviado_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI')
     );
   `);
   console.log('✅ Banco PostgreSQL pronto');
@@ -372,5 +388,34 @@ module.exports = {
   async removerMonitorado(ra) {
     if (USE_PG) return _pgRun('DELETE FROM alunos_monitorados WHERE ra = $1', [ra]);
     return _sqRun('DELETE FROM alunos_monitorados WHERE ra = ?', [ra]);
+  },
+
+  // ── Fotos alunos (carômetro) ──────────────────────────────────────────────
+  async listarFotos() {
+    if (USE_PG) return _pgAll('SELECT * FROM fotos_alunos ORDER BY turma, nome');
+    return _sqAll('SELECT * FROM fotos_alunos ORDER BY turma, nome');
+  },
+  async getFoto(ra) {
+    if (USE_PG) return _pgOne('SELECT * FROM fotos_alunos WHERE ra = $1', [ra]);
+    return _sqOne('SELECT * FROM fotos_alunos WHERE ra = ?', [ra]);
+  },
+  async salvarFoto(ra, nome, turma, filename, enviadoPor) {
+    if (USE_PG) return _pgRun(
+      'INSERT INTO fotos_alunos (ra,nome,turma,filename,enviado_por) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (ra) DO UPDATE SET nome=EXCLUDED.nome,turma=EXCLUDED.turma,filename=EXCLUDED.filename,enviado_por=EXCLUDED.enviado_por,enviado_em=to_char(NOW() AT TIME ZONE \'America/Sao_Paulo\',\'DD/MM/YYYY HH24:MI\')',
+      [ra, nome, turma||'', filename, enviadoPor||'']
+    );
+    return _sqRun(
+      'INSERT OR REPLACE INTO fotos_alunos (ra,nome,turma,filename,enviado_por) VALUES (?,?,?,?,?)',
+      [ra, nome, turma||'', filename, enviadoPor||'']
+    );
+  },
+  async deletarFoto(ra) {
+    const row = await (USE_PG
+      ? _pgOne('SELECT filename FROM fotos_alunos WHERE ra = $1', [ra])
+      : _sqOne('SELECT filename FROM fotos_alunos WHERE ra = ?', [ra]));
+    if (!row) return null;
+    if (USE_PG) await _pgRun('DELETE FROM fotos_alunos WHERE ra = $1', [ra]);
+    else _sqRun('DELETE FROM fotos_alunos WHERE ra = ?', [ra]);
+    return row.filename;
   },
 };

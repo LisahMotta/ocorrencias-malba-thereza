@@ -5,7 +5,29 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
+const multer = require('multer');
 const db = require('./db');
+
+// ─── MULTER — upload de fotos (salvo fora de /public) ────────────────────────
+const FOTOS_DIR = path.join(__dirname, '../uploads/fotos');
+if (!fs.existsSync(FOTOS_DIR)) fs.mkdirSync(FOTOS_DIR, { recursive: true });
+
+const _uploadFoto = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, FOTOS_DIR),
+    filename: (req, file, cb) => {
+      // Nome do arquivo: ra.<ext> — sem path traversal possível
+      const ra = req.params.ra.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${ra}${ext}`);
+    },
+  }),
+  limits: { fileSize: 3 * 1024 * 1024 }, // 3 MB máx
+  fileFilter: (req, file, cb) => {
+    if (/^image\/(jpeg|png|webp)$/.test(file.mimetype)) cb(null, true);
+    else cb(new Error('Somente imagens JPG, PNG ou WEBP são permitidas'));
+  },
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -462,6 +484,62 @@ app.post('/api/admin/resetar-ocorrencias', autenticar, exigePerfil('diretor','vi
     console.error('[reset] ERRO:', err.message);
     res.status(500).json({ erro: err.message });
   }
+});
+
+// ─── CARÔMETRO ────────────────────────────────────────────────────────────────
+const PODE_VER_CAROMETRO    = ['poc', 'coordenador', 'vice', 'diretor'];
+const PODE_EDITAR_CAROMETRO = ['vice', 'diretor'];
+
+// Lista metadados de todos os alunos com foto
+app.get('/api/carometro', autenticar, exigePerfil(...PODE_VER_CAROMETRO), async (req, res) => {
+  res.json(await db.listarFotos());
+});
+
+// Serve a foto protegida por JWT — nunca exposta como arquivo estático
+app.get('/api/foto/:ra', autenticar, exigePerfil(...PODE_VER_CAROMETRO), async (req, res) => {
+  const ra = req.params.ra.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const registro = await db.getFoto(ra);
+  if (!registro) return res.status(404).json({ erro: 'Foto não encontrada' });
+  const filepath = path.join(FOTOS_DIR, registro.filename);
+  if (!fs.existsSync(filepath)) return res.status(404).json({ erro: 'Arquivo não encontrado' });
+  // Garante que o caminho resolvido está dentro de FOTOS_DIR (sem path traversal)
+  if (!path.resolve(filepath).startsWith(path.resolve(FOTOS_DIR))) {
+    return res.status(403).json({ erro: 'Acesso negado' });
+  }
+  res.setHeader('Cache-Control', 'private, max-age=3600');
+  res.sendFile(filepath);
+});
+
+// Upload ou substituição de foto
+app.post('/api/foto/:ra', autenticar, exigePerfil(...PODE_EDITAR_CAROMETRO),
+  (req, res, next) => _uploadFoto.single('foto')(req, res, (err) => {
+    if (err) return res.status(400).json({ erro: err.message });
+    next();
+  }),
+  async (req, res) => {
+    if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
+    const ra = req.params.ra.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const { nome, turma } = req.body;
+    if (!nome) return res.status(400).json({ erro: 'Nome do aluno obrigatório' });
+    // Remove arquivo antigo se existir e tiver nome diferente
+    const antigo = await db.getFoto(ra);
+    if (antigo && antigo.filename !== req.file.filename) {
+      try { fs.unlinkSync(path.join(FOTOS_DIR, antigo.filename)); } catch {}
+    }
+    await db.salvarFoto(ra, nome.toUpperCase(), turma||'', req.file.filename, req.usuario.nome);
+    await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'upload_foto', { ra, nome });
+    res.json({ ok: true });
+  }
+);
+
+// Remove foto
+app.delete('/api/foto/:ra', autenticar, exigePerfil(...PODE_EDITAR_CAROMETRO), async (req, res) => {
+  const ra = req.params.ra.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = await db.deletarFoto(ra);
+  if (!filename) return res.status(404).json({ erro: 'Foto não encontrada' });
+  try { fs.unlinkSync(path.join(FOTOS_DIR, filename)); } catch {}
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'deletar_foto', { ra });
+  res.json({ ok: true });
 });
 
 // ─── SPA ──────────────────────────────────────────────────────────────────────

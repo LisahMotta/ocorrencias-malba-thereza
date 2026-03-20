@@ -65,6 +65,7 @@
     <button id="tabRel" onclick="showTab('relatorio',this)" style="display:none">Relatórios</button>
     <button id="tabAlunos" onclick="showTab('alunos',this)" style="display:none">👤 Alunos</button>
     <button id="tabSeg" onclick="showTab('segmento',this)" style="display:none">📊 Meu Segmento</button>
+    <button id="tabCarometro" onclick="showTab('carometro',this)" style="display:none">📷 Carômetro</button>
     <button id="tabGes" onclick="showTab('gestao',this)" style="display:none">Gestão</button>
   </div>
   <div class="ct">
@@ -268,6 +269,34 @@
           </div>
           <div id="modalAlunoBody"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- CARÔMETRO -->
+    <div id="tab-carometro" style="display:none">
+      <div class="fc" style="margin-bottom:1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          <span class="st" style="font-size:15px;margin:0">📷 Carômetro</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <select id="cFiltroTurma" onchange="window._renderCarometro()" style="font-size:13px;padding:6px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font-family:inherit">
+              <option value="">Todas as turmas</option>
+            </select>
+            <input id="cFiltroNome" type="text" placeholder="Buscar aluno..." oninput="window._renderCarometro()" style="font-size:13px;padding:6px 12px;border:1px solid var(--bd);border-radius:8px;outline:none;font-family:inherit;background:var(--bg);color:var(--tx)">
+          </div>
+        </div>
+        <div id="cUploadArea" style="display:none;background:var(--sb);border-radius:10px;padding:14px;margin-bottom:12px">
+          <div class="st" style="font-size:13px;margin-bottom:10px">➕ Adicionar / Substituir Foto</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
+            <div class="fg" style="min-width:110px"><label>RA</label><input type="text" id="cRa" placeholder="ex: 12345678" style="font-size:13px"></div>
+            <div class="fg" style="min-width:160px"><label>Nome do Aluno</label><input type="text" id="cNome" placeholder="Nome completo" style="font-size:13px"></div>
+            <div class="fg" style="min-width:100px"><label>Turma</label><input type="text" id="cTurma" placeholder="ex: 1A" style="font-size:13px"></div>
+            <div class="fg"><label>Foto (JPG/PNG, máx 3MB)</label><input type="file" id="cArquivo" accept="image/jpeg,image/png,image/webp" style="font-size:13px"></div>
+            <button class="bp" onclick="window._enviarFotoAluno()" style="margin-bottom:4px">Enviar</button>
+          </div>
+          <div id="cUploadErro" style="color:var(--re);font-size:13px;display:none;margin-top:6px"></div>
+        </div>
+        <div id="cGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;margin-top:4px"></div>
+        <p id="cVazio" style="text-align:center;color:var(--mu);font-size:13px;padding:2rem;display:none">Nenhuma foto cadastrada.</p>
       </div>
     </div>
 
