@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const multer = require('multer');
+const rateLimit = require('express-rate-limit');
 const db = require('./db');
 
 // ─── MULTER — upload de fotos (salvo fora de /public) ────────────────────────
@@ -490,13 +491,46 @@ app.post('/api/admin/resetar-ocorrencias', autenticar, exigePerfil('diretor','vi
 const PODE_VER_CAROMETRO    = ['professor', 'poc', 'coordenador', 'vice', 'diretor'];
 const PODE_EDITAR_CAROMETRO = ['vice', 'diretor'];
 
+// Bytes mágicos dos formatos permitidos
+const MAGIC_BYTES = [
+  { bytes: [0xFF, 0xD8, 0xFF],             tipo: 'image/jpeg' },
+  { bytes: [0x89, 0x50, 0x4E, 0x47],       tipo: 'image/png'  },
+  { bytes: [0x52, 0x49, 0x46, 0x46],       tipo: 'image/webp' }, // RIFF....WEBP
+];
+function _validarMagicBytes(filepath) {
+  const buf = Buffer.alloc(12);
+  const fd  = fs.openSync(filepath, 'r');
+  fs.readSync(fd, buf, 0, 12, 0);
+  fs.closeSync(fd);
+  // WEBP: bytes 0-3 = RIFF, bytes 8-11 = WEBP
+  if (buf.slice(0,4).toString() === 'RIFF' && buf.slice(8,12).toString() === 'WEBP') return true;
+  return MAGIC_BYTES.slice(0, 2).some(m => m.bytes.every((b, i) => buf[i] === b));
+}
+
+// Rate limit: máx 60 fotos/minuto por usuário (impede scraping automatizado)
+const _limiteVisualizacao = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  keyGenerator: (req) => req.usuario?.id || req.ip,
+  handler: (req, res) => res.status(429).json({ erro: 'Muitas requisições. Aguarde um momento.' }),
+  skip: (req) => !req.usuario, // autenticar já rejeita sem token; evita erro antes do middleware
+});
+
+// Rate limit: máx 10 uploads/hora por usuário
+const _limiteUpload = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => req.usuario?.id || req.ip,
+  handler: (req, res) => res.status(429).json({ erro: 'Limite de uploads atingido. Tente novamente mais tarde.' }),
+});
+
 // Lista metadados de todos os alunos com foto
 app.get('/api/carometro', autenticar, exigePerfil(...PODE_VER_CAROMETRO), async (req, res) => {
   res.json(await db.listarFotos());
 });
 
 // Serve a foto protegida por JWT — nunca exposta como arquivo estático
-app.get('/api/foto/:ra', autenticar, exigePerfil(...PODE_VER_CAROMETRO), async (req, res) => {
+app.get('/api/foto/:ra', autenticar, exigePerfil(...PODE_VER_CAROMETRO), _limiteVisualizacao, async (req, res) => {
   const ra = req.params.ra.replace(/[^a-zA-Z0-9_-]/g, '_');
   const registro = await db.getFoto(ra);
   if (!registro) return res.status(404).json({ erro: 'Foto não encontrada' });
@@ -506,18 +540,30 @@ app.get('/api/foto/:ra', autenticar, exigePerfil(...PODE_VER_CAROMETRO), async (
   if (!path.resolve(filepath).startsWith(path.resolve(FOTOS_DIR))) {
     return res.status(403).json({ erro: 'Acesso negado' });
   }
-  res.setHeader('Cache-Control', 'private, max-age=3600');
+  // Registra visualização na auditoria (quem viu, qual aluno, quando)
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'visualizar_foto', { ra, alunoNome: registro.nome });
+  // Cache curto e privado — não fica em cache de proxy/CDN
+  res.setHeader('Cache-Control', 'private, no-store');
+  // Inline impede que o navegador ofereça "Salvar como" automaticamente
+  res.setHeader('Content-Disposition', `inline; filename="${ra}.jpg"`);
+  // Impede que a foto seja embutida em outros sites (clickjacking de imagem)
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   res.sendFile(filepath);
 });
 
 // Upload ou substituição de foto
-app.post('/api/foto/:ra', autenticar, exigePerfil(...PODE_EDITAR_CAROMETRO),
+app.post('/api/foto/:ra', autenticar, exigePerfil(...PODE_EDITAR_CAROMETRO), _limiteUpload,
   (req, res, next) => _uploadFoto.single('foto')(req, res, (err) => {
     if (err) return res.status(400).json({ erro: err.message });
     next();
   }),
   async (req, res) => {
     if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
+    // Valida bytes mágicos — rejeita arquivos que mentem a extensão
+    if (!_validarMagicBytes(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ erro: 'Arquivo inválido: não é uma imagem real.' });
+    }
     const ra = req.params.ra.replace(/[^a-zA-Z0-9_-]/g, '_');
     const { nome, turma } = req.body;
     if (!nome) return res.status(400).json({ erro: 'Nome do aluno obrigatório' });
