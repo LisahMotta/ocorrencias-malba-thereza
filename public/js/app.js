@@ -264,6 +264,7 @@ window._doLogout = () => {
   limparSessao();
   cu = null; occ = []; sTipo = null; selAlunos = []; atuais = [];
   if (_graficoChart) { _graficoChart.destroy(); _graficoChart = null; }
+  if (_graficoChartAnual) { _graficoChartAnual.destroy(); _graficoChartAnual = null; }
   document.getElementById('rodape-app').style.display = 'none';
   // Resetar botão de login
   const btn = document.querySelector('#loginScreen .bp');
@@ -935,6 +936,7 @@ let usuariosDB = []; // usuários carregados do banco
 
 // ─── PAINEL / GRÁFICO DE OCORRÊNCIAS ─────────────────────────────────────────
 let _graficoChart = null;
+let _graficoChartAnual = null;
 
 function _parseDateOcc(o) {
   if (!o.data) return null;
@@ -943,6 +945,9 @@ function _parseDateOcc(o) {
   else { [yyyy, mm, dd] = o.data.split('-'); }
   return `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
 }
+
+const _MESES_NOMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const _MESES_CURTOS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 window._renderGrafico = function() {
   const secao = document.getElementById('gestaoGraficoSection');
@@ -957,15 +962,32 @@ window._renderGrafico = function() {
   document.getElementById('gestaoStatPend').textContent  = occ.filter(o => o.status === 'pendente').length;
   document.getElementById('gestaoStatEnc').textContent   = occ.filter(o => o.status === 'encerrado').length;
 
-  // Montar série do mês atual
-  const hoje = new Date();
-  const anoAtual = hoje.getFullYear();
-  const mesAtual = hoje.getMonth();
-  const diasNoMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
+  // Inicializar seletor de mês (apenas na primeira vez)
+  const sel = document.getElementById('gestaoMesSel');
+  if (sel && !sel.options.length) {
+    const hoje = new Date();
+    for (let m = 0; m < 12; m++) {
+      const opt = document.createElement('option');
+      opt.value = `${hoje.getFullYear()}-${String(m+1).padStart(2,'0')}`;
+      opt.textContent = `${_MESES_NOMES[m]} ${hoje.getFullYear()}`;
+      if (m === hoje.getMonth()) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+
+  window._renderGraficoMensal();
+  window._renderGraficoAnual();
+};
+
+window._renderGraficoMensal = function() {
+  const sel = document.getElementById('gestaoMesSel');
+  if (!sel || !sel.value) return;
+  const [ano, mes] = sel.value.split('-').map(Number);
+  const diasNoMes = new Date(ano, mes, 0).getDate();
   const labels = [], contagens = [], urgencias = [];
   for (let dia = 1; dia <= diasNoMes; dia++) {
-    const iso = `${anoAtual}-${String(mesAtual+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
-    const d = new Date(anoAtual, mesAtual, dia);
+    const iso = `${ano}-${String(mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+    const d = new Date(ano, mes - 1, dia);
     labels.push(d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
     const doDia = occ.filter(o => _parseDateOcc(o) === iso);
     contagens.push(doDia.length);
@@ -979,34 +1001,69 @@ window._renderGrafico = function() {
     _graficoChart.data.labels = labels;
     _graficoChart.data.datasets[0].data = contagens;
     _graficoChart.data.datasets[1].data = urgencias;
-    _graficoChart.update('none'); // sem animação no update em tempo real
+    _graficoChart.update('none');
     return;
   }
 
-  const corPrimaria = getComputedStyle(document.documentElement).getPropertyValue('--mg').trim() || '#4caf50';
   _graficoChart = new Chart(canvas.getContext('2d'), {
     type: 'bar',
     data: {
       labels,
       datasets: [
-        {
-          label: 'Total',
-          data: contagens,
-          backgroundColor: 'rgba(76,175,80,0.65)',
-          borderColor: 'rgba(76,175,80,1)',
-          borderWidth: 1,
-          borderRadius: 4,
-          order: 2,
-        },
-        {
-          label: 'Urgências',
-          data: urgencias,
-          backgroundColor: 'rgba(229,57,53,0.75)',
-          borderColor: 'rgba(229,57,53,1)',
-          borderWidth: 1,
-          borderRadius: 4,
-          order: 1,
-        },
+        { label: 'Total', data: contagens, backgroundColor: 'rgba(76,175,80,0.65)', borderColor: 'rgba(76,175,80,1)', borderWidth: 1, borderRadius: 4, order: 2 },
+        { label: 'Urgências', data: urgencias, backgroundColor: 'rgba(229,57,53,0.75)', borderColor: 'rgba(229,57,53,1)', borderWidth: 1, borderRadius: 4, order: 1 },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.raw} ${ctx.dataset.label.toLowerCase()}` } },
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } },
+        x: { ticks: { font: { size: 10 } } },
+      },
+    },
+  });
+};
+
+window._renderGraficoAnual = function() {
+  const hoje = new Date();
+  const anoAtual = hoje.getFullYear();
+  const lblAno = document.getElementById('gestaoAnoLabel');
+  if (lblAno) lblAno.textContent = anoAtual;
+
+  const btnZerar = document.getElementById('btnZerarAno');
+  if (btnZerar) btnZerar.style.display = ['diretor','vice'].includes(cu?.perfil) ? '' : 'none';
+
+  const totais = [], urgencias = [];
+  for (let m = 0; m < 12; m++) {
+    const anoStr = String(anoAtual);
+    const mesStr = String(m + 1).padStart(2, '0');
+    const doMes = occ.filter(o => { const iso = _parseDateOcc(o); return iso && iso.startsWith(`${anoStr}-${mesStr}`); });
+    totais.push(doMes.length);
+    urgencias.push(doMes.filter(o => o.gravidade === 'urgencia').length);
+  }
+
+  const canvas = document.getElementById('gestaoChartAnual');
+  if (!canvas) return;
+
+  if (_graficoChartAnual) {
+    _graficoChartAnual.data.datasets[0].data = totais;
+    _graficoChartAnual.data.datasets[1].data = urgencias;
+    _graficoChartAnual.update('none');
+    return;
+  }
+
+  _graficoChartAnual = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: _MESES_CURTOS,
+      datasets: [
+        { label: 'Total', data: totais, backgroundColor: 'rgba(168,23,68,0.55)', borderColor: 'rgba(168,23,68,1)', borderWidth: 1, borderRadius: 4, order: 2 },
+        { label: 'Urgências', data: urgencias, backgroundColor: 'rgba(229,57,53,0.75)', borderColor: 'rgba(229,57,53,1)', borderWidth: 1, borderRadius: 4, order: 1 },
       ],
     },
     options: {
@@ -1015,15 +1072,38 @@ window._renderGrafico = function() {
       plugins: {
         legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
         tooltip: {
-          callbacks: { label: ctx => ` ${ctx.raw} ${ctx.dataset.label.toLowerCase()}` }
+          callbacks: {
+            label: ctx => ` ${ctx.raw} ${ctx.dataset.label.toLowerCase()}`,
+            footer: items => {
+              const idx = items[0].dataIndex;
+              const t = totais[idx];
+              return t > 0 ? [`Mês: ${_MESES_NOMES[idx]}`] : [];
+            },
+          },
         },
       },
       scales: {
         y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } },
-        x: { ticks: { font: { size: 10 } } },
+        x: { ticks: { font: { size: 11 } } },
       },
     },
   });
+};
+
+window._zerarAnoLetivo = async () => {
+  const conf = prompt(`Digite CONFIRMAR para encerrar o ano letivo e apagar todas as ocorrências registradas:`);
+  if (conf !== 'CONFIRMAR') { toast('Operação cancelada.', 'info', 3000); return; }
+  const resp = await apiFetch('/api/admin/resetar-ocorrencias', { method: 'POST' });
+  if (!resp || !resp.ok) { toastErro('Erro ao encerrar o ano letivo. Tente novamente.'); return; }
+  occ = []; chats = {};
+  renderDash();
+  renderOcc();
+  if (_graficoChart) { _graficoChart.destroy(); _graficoChart = null; }
+  if (_graficoChartAnual) { _graficoChartAnual.destroy(); _graficoChartAnual = null; }
+  const sel = document.getElementById('gestaoMesSel');
+  if (sel) sel.innerHTML = '';
+  window._renderGrafico();
+  toastOk('Ano letivo encerrado. Dados apagados com sucesso.');
 };
 
 async function renderGestao() {

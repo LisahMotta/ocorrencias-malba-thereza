@@ -313,11 +313,28 @@
           <div class="sc or"><div class="sn" id="gestaoStatPend">0</div><div class="sl">Pendentes</div></div>
           <div class="sc gr"><div class="sn" id="gestaoStatEnc">0</div><div class="sl">Encerradas</div></div>
         </div>
-        <div class="fc" style="padding:16px">
-          <div class="fl" style="margin-bottom:12px;font-size:13px">Ocorrências — mês atual</div>
+
+        <!-- Gráfico mensal com seletor de mês -->
+        <div class="fc" style="padding:16px;margin-bottom:1rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap">
+            <div class="fl" style="font-size:13px">📅 Ocorrências por dia</div>
+            <select id="gestaoMesSel" onchange="window._renderGraficoMensal()" style="font-size:12px;padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer"></select>
+          </div>
           <div style="height:200px;position:relative">
             <canvas id="gestaoChart"></canvas>
           </div>
+        </div>
+
+        <!-- Gráfico anual com comparação por mês -->
+        <div class="fc" style="padding:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap">
+            <div class="fl" style="font-size:13px">📊 Ocorrências por mês — <span id="gestaoAnoLabel"></span></div>
+            <button id="btnZerarAno" class="bn" style="font-size:11px;padding:4px 12px;border-color:var(--re);color:var(--re);display:none" onclick="window._zerarAnoLetivo()">🗂 Encerrar Ano Letivo</button>
+          </div>
+          <div style="height:220px;position:relative">
+            <canvas id="gestaoChartAnual"></canvas>
+          </div>
+          <p style="font-size:11px;color:var(--mu);margin-top:8px;text-align:center">Compare os meses com mais ocorrências para planejar intervenções</p>
         </div>
       </div>
 
