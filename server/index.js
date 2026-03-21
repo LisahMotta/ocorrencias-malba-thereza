@@ -360,6 +360,11 @@ app.patch('/api/usuarios/:id/perfil', autenticar, exigePerfil('diretor', 'vice')
   const { perfil } = req.body;
   if (!perfil) return res.status(400).json({ erro: 'Perfil obrigatório' });
   if (parseInt(req.params.id) === req.usuario.id) return res.status(400).json({ erro: 'Não é possível alterar seu próprio perfil' });
+  // Apenas o Diretor pode remover (ou alterar) a atribuição de P.O.C.
+  const alvoCheck = await db.getUsuario(parseInt(req.params.id));
+  if (alvoCheck?.perfil === 'poc' && req.usuario.perfil !== 'diretor') {
+    return res.status(403).json({ erro: 'Apenas o Diretor pode remover a atribuição de P.O.C.' });
+  }
   try {
     await db.atualizarPerfil(parseInt(req.params.id), perfil);
     // Verifica se salvou corretamente
@@ -710,20 +715,17 @@ async function _autoSeed() {
   const todosUsuarios = await db.listarUsuarios();
   const mapaUsuarios = new Map(todosUsuarios.map(u => [u.nome, u]));
 
-  let criados = 0, atualizados = 0;
+  let criados = 0;
   for (const u of lista) {
     const existente = mapaUsuarios.get(u.nome);
     if (!existente) {
       await db.inserirUsuario(u.nome, u.perfil, hash);
       criados++;
-    } else if (existente.perfil !== u.perfil) {
-      await db.atualizarPerfil(existente.id, u.perfil);
-      atualizados++;
     }
+    // Perfis definidos manualmente (ex: POC) não são sobrescritos na reinicialização
   }
   if (criados > 0) console.log(`✅ ${criados} usuário(s) novo(s) criado(s) com senha padrão Malba@2025\n`);
-  if (atualizados > 0) console.log(`✅ ${atualizados} perfil(is) atualizado(s)\n`);
-  if (criados === 0 && atualizados === 0) console.log('✅ Todos os usuários já cadastrados e atualizados.\n');
+  if (criados === 0) console.log('✅ Todos os usuários já cadastrados.\n');
 }
 
 // ─── START ────────────────────────────────────────────────────────────────────
