@@ -262,7 +262,8 @@ window._doLogin = async () => {
 
 window._doLogout = () => {
   limparSessao();
-  cu = null; sTipo = null; selAlunos = []; atuais = [];
+  cu = null; occ = []; sTipo = null; selAlunos = []; atuais = [];
+  if (_graficoChart) { _graficoChart.destroy(); _graficoChart = null; }
   document.getElementById('rodape-app').style.display = 'none';
   // Resetar botão de login
   const btn = document.querySelector('#loginScreen .bp');
@@ -334,6 +335,7 @@ function _iniciarWS() {
     sincronizarChats(chats);
     renderDash();
     renderOcc();
+    window._renderGrafico();
 
     // Mostrar notificações de ocorrências pendentes recentes (perdidas por reconexão)
     const perfisGestao = ['poc','coordenador','vice','diretor'];
@@ -360,6 +362,7 @@ function _iniciarWS() {
     else occ.unshift(msg.occ);
     renderDash();
     renderOcc();
+    window._renderGrafico();
     mostrarNotifOcorrencia(msg.occ, cu, (occId) => {
       const o = occ.find(x => x.id === occId);
       if (o) abrirChat(o);
@@ -383,6 +386,7 @@ function _iniciarWS() {
     else occ.push(msg.occ);
     renderDash();
     renderOcc();
+    window._renderGrafico();
   });
 
   onEvento('chat_msg', (msg) => {
@@ -911,7 +915,7 @@ window.showTab = (name, btn) => {
   if(btn) btn.classList.add('act');
   if(name==='ocorrencias') renderOcc();
   if(name==='carometro') window._carregarCarometro();
-  if(name==='gestao') { renderGestao(); if(['diretor','vice'].includes(cu?.perfil)) window._carregarAuditoria(); }
+  if(name==='gestao') { renderGestao(); window._renderGrafico(); if(['diretor','vice'].includes(cu?.perfil)) window._carregarAuditoria(); }
   if(name==='dashboard') renderDash();
   if(name==='alunos') {
     _initAbaAlunos();
@@ -928,6 +932,96 @@ window.showTab = (name, btn) => {
 };
 
 let usuariosDB = []; // usuários carregados do banco
+
+// ─── PAINEL / GRÁFICO DE OCORRÊNCIAS ─────────────────────────────────────────
+let _graficoChart = null;
+
+function _parseDateOcc(o) {
+  if (!o.data) return null;
+  let dd, mm, yyyy;
+  if (o.data.includes('/')) { [dd, mm, yyyy] = o.data.split('/'); }
+  else { [yyyy, mm, dd] = o.data.split('-'); }
+  return `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+}
+
+window._renderGrafico = function() {
+  const secao = document.getElementById('gestaoGraficoSection');
+  if (!secao) return;
+  const pode = ['poc','coordenador','vice','diretor'].includes(cu?.perfil);
+  secao.style.display = pode ? '' : 'none';
+  if (!pode) return;
+
+  // Stats globais (gestão vê tudo)
+  document.getElementById('gestaoStatTotal').textContent = occ.length;
+  document.getElementById('gestaoStatUrg').textContent   = occ.filter(o => o.gravidade === 'urgencia').length;
+  document.getElementById('gestaoStatPend').textContent  = occ.filter(o => o.status === 'pendente').length;
+  document.getElementById('gestaoStatEnc').textContent   = occ.filter(o => o.status === 'encerrado').length;
+
+  // Montar série dos últimos 14 dias
+  const hoje = new Date();
+  const labels = [], contagens = [], urgencias = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(hoje); d.setDate(hoje.getDate() - i);
+    const iso = d.toISOString().slice(0, 10);
+    labels.push(d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+    const doDia = occ.filter(o => _parseDateOcc(o) === iso);
+    contagens.push(doDia.length);
+    urgencias.push(doDia.filter(o => o.gravidade === 'urgencia').length);
+  }
+
+  const canvas = document.getElementById('gestaoChart');
+  if (!canvas) return;
+
+  if (_graficoChart) {
+    _graficoChart.data.labels = labels;
+    _graficoChart.data.datasets[0].data = contagens;
+    _graficoChart.data.datasets[1].data = urgencias;
+    _graficoChart.update('none'); // sem animação no update em tempo real
+    return;
+  }
+
+  const corPrimaria = getComputedStyle(document.documentElement).getPropertyValue('--mg').trim() || '#4caf50';
+  _graficoChart = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Total',
+          data: contagens,
+          backgroundColor: 'rgba(76,175,80,0.65)',
+          borderColor: 'rgba(76,175,80,1)',
+          borderWidth: 1,
+          borderRadius: 4,
+          order: 2,
+        },
+        {
+          label: 'Urgências',
+          data: urgencias,
+          backgroundColor: 'rgba(229,57,53,0.75)',
+          borderColor: 'rgba(229,57,53,1)',
+          borderWidth: 1,
+          borderRadius: 4,
+          order: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.raw} ${ctx.dataset.label.toLowerCase()}` }
+        },
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } },
+        x: { ticks: { font: { size: 10 } } },
+      },
+    },
+  });
+};
 
 async function renderGestao() {
   // Carregar usuários do banco

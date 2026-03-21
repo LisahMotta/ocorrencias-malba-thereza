@@ -12,6 +12,7 @@
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
 <link rel="stylesheet" href="/css/app.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 .senha-wrap{position:relative}
 .senha-wrap input{padding-right:40px!important}
@@ -302,6 +303,23 @@
 
     <!-- GESTÃO -->
     <div id="tab-gestao" style="display:none">
+
+      <!-- PAINEL DE OCORRÊNCIAS (visível para poc/coordenador/vice/diretor) -->
+      <div id="gestaoGraficoSection" style="display:none;margin-bottom:1.5rem">
+        <div class="st" style="margin-bottom:10px">📊 Painel de Ocorrências</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem">
+          <div class="sc mg"><div class="sn" id="gestaoStatTotal">0</div><div class="sl">Total</div></div>
+          <div class="sc re"><div class="sn" id="gestaoStatUrg">0</div><div class="sl">Urgência</div></div>
+          <div class="sc or"><div class="sn" id="gestaoStatPend">0</div><div class="sl">Pendentes</div></div>
+          <div class="sc gr"><div class="sn" id="gestaoStatEnc">0</div><div class="sl">Encerradas</div></div>
+        </div>
+        <div class="fc" style="padding:16px">
+          <div class="fl" style="margin-bottom:12px;font-size:13px">Ocorrências — últimos 14 dias</div>
+          <div style="height:200px;position:relative">
+            <canvas id="gestaoChart"></canvas>
+          </div>
+        </div>
+      </div>
 
       <!-- ZONA DE PERIGO -->
       <div class="fc" style="margin-bottom:1rem;border-color:#FFCDD2">
