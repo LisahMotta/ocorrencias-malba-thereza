@@ -208,19 +208,28 @@ async function init() {
     console.error('[init] Erro ao carregar turmas:', e);
   }
 
-  _montarLoginSelect();
+  await _montarLoginSelect();
   _montarTurmasSelect();
   _montarGridTipos();
 }
 
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
-function _montarLoginSelect() {
+async function _montarLoginSelect() {
   const sel = document.getElementById('loginUsuario');
+  try {
+    const resp = await fetch('/api/usuarios/lista-publica');
+    if (resp.ok) {
+      USUARIOS = await resp.json();
+      USUARIOS.sort((a, b) => a.nome.localeCompare(b.nome));
+    }
+  } catch(e) {
+    console.warn('[login] Falha ao buscar usuários do servidor, usando lista local.', e);
+  }
   USUARIOS.forEach(u => {
     const o = document.createElement('option');
     o.value = u.id;
     o.dataset.nome = u.nome;
-    o.textContent = u.nome.split(' ').slice(0,3).join(' ') + ' — ' + PL[u.perfil];
+    o.textContent = u.nome.split(' ').slice(0,3).join(' ') + ' — ' + (PL[u.perfil] || u.perfil);
     sel.appendChild(o);
   });
 }
