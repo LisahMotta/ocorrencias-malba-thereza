@@ -957,12 +957,15 @@ window._renderGrafico = function() {
   document.getElementById('gestaoStatPend').textContent  = occ.filter(o => o.status === 'pendente').length;
   document.getElementById('gestaoStatEnc').textContent   = occ.filter(o => o.status === 'encerrado').length;
 
-  // Montar série dos últimos 14 dias
+  // Montar série do mês atual
   const hoje = new Date();
+  const anoAtual = hoje.getFullYear();
+  const mesAtual = hoje.getMonth();
+  const diasNoMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
   const labels = [], contagens = [], urgencias = [];
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(hoje); d.setDate(hoje.getDate() - i);
-    const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  for (let dia = 1; dia <= diasNoMes; dia++) {
+    const iso = `${anoAtual}-${String(mesAtual+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+    const d = new Date(anoAtual, mesAtual, dia);
     labels.push(d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
     const doDia = occ.filter(o => _parseDateOcc(o) === iso);
     contagens.push(doDia.length);
