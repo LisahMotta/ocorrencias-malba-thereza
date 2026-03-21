@@ -42,7 +42,7 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'malba-thereza-2025-secret-key';
-const JWT_EXPIRA = '24h'; // 1 dia completo
+const JWT_EXPIRA = '30d'; // 30 dias — dados permanecem até exclusão explícita pela gestão
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
@@ -270,6 +270,17 @@ app.post('/api/auth/trocar-senha', autenticar, async (req, res) => {
   await db.atualizarSenha(req.usuario.id, hash);
   await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'trocar_senha', null);
   res.json({ ok: true });
+});
+
+// Renova o token silenciosamente sem precisar de nova senha
+app.post('/api/auth/refresh', autenticar, async (req, res) => {
+  const usuario = await db.getUsuario(req.usuario.id);
+  if (!usuario || !usuario.ativo) return res.status(401).json({ erro: 'Usuário inativo' });
+  const token = jwt.sign(
+    { id: usuario.id, nome: usuario.nome, perfil: usuario.perfil },
+    JWT_SECRET, { expiresIn: JWT_EXPIRA }
+  );
+  res.json({ token });
 });
 
 // ─── OCORRÊNCIAS ──────────────────────────────────────────────────────────────

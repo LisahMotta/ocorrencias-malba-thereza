@@ -2,7 +2,7 @@
 import { conectar, onEvento, enviar } from './ws.js';
 import { mostrarNotifOcorrencia, pedirPermissaoNotif } from './notif.js';
 import { iniciarChat, fecharChat, receberMsgChat, sincronizarChats } from './chat.js';
-import { salvarSessao, limparSessao, getToken, getUsuario, temSessao, apiFetch } from './auth.js';
+import { salvarSessao, limparSessao, getToken, getUsuario, temSessao, apiFetch, tentarRenovarToken, _msParaExpirar } from './auth.js';
 import { toast, toastOk, toastErro, toastAviso } from './toast.js';
 
 // ─── DADOS ────────────────────────────────────────────────────────────────────
@@ -2131,6 +2131,13 @@ function _tokenAindaValido() {
   } catch { return false; }
 }
 
+// Sessão expirada (401 em qualquer fetch) — logout suave sem alert()
+window.addEventListener('sessao-expirada', () => {
+  if (!cu) return; // já deslogado
+  toastAviso('Sessão encerrada. Faça login novamente.');
+  window._doLogout();
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
   await init();
   _montarTurmasSelectReal();
@@ -2145,4 +2152,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       limparSessao(); // Token expirado — limpa silenciosamente e mostra login
     }
   }
+
+  // Renovação automática silenciosa: verifica a cada hora se o token precisa ser renovado
+  // (renova quando faltam < 7 dias para expirar)
+  setInterval(() => {
+    if (!cu) return;
+    tentarRenovarToken((novoToken) => {
+      // Reconecta o WebSocket com o token atualizado para manter a sessão viva
+      if (novoToken) _iniciarWS();
+    });
+  }, 60 * 60 * 1000); // a cada 1 hora
 });
