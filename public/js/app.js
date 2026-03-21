@@ -2,7 +2,7 @@
 import { conectar, onEvento, enviar } from './ws.js';
 import { mostrarNotifOcorrencia, pedirPermissaoNotif } from './notif.js';
 import { iniciarChat, fecharChat, receberMsgChat, sincronizarChats } from './chat.js';
-import { salvarSessao, limparSessao, getToken, getUsuario, temSessao, apiFetch } from './auth.js';
+import { salvarSessao, limparSessao, getToken, getUsuario, temSessao, apiFetch, tentarRenovarToken, _msParaExpirar } from './auth.js';
 import { toast, toastOk, toastErro, toastAviso } from './toast.js';
 
 // ─── DADOS ────────────────────────────────────────────────────────────────────
@@ -262,7 +262,8 @@ window._doLogin = async () => {
 
 window._doLogout = () => {
   limparSessao();
-  cu = null; sTipo = null; selAlunos = []; atuais = [];
+  cu = null; occ = []; sTipo = null; selAlunos = []; atuais = [];
+  if (_graficoChart) { _graficoChart.destroy(); _graficoChart = null; }
   document.getElementById('rodape-app').style.display = 'none';
   // Resetar botão de login
   const btn = document.querySelector('#loginScreen .bp');
@@ -334,6 +335,7 @@ function _iniciarWS() {
     sincronizarChats(chats);
     renderDash();
     renderOcc();
+    window._renderGrafico();
 
     // Mostrar notificações de ocorrências pendentes recentes (perdidas por reconexão)
     const perfisGestao = ['poc','coordenador','vice','diretor'];
@@ -360,6 +362,7 @@ function _iniciarWS() {
     else occ.unshift(msg.occ);
     renderDash();
     renderOcc();
+    window._renderGrafico();
     mostrarNotifOcorrencia(msg.occ, cu, (occId) => {
       const o = occ.find(x => x.id === occId);
       if (o) abrirChat(o);
@@ -383,6 +386,7 @@ function _iniciarWS() {
     else occ.push(msg.occ);
     renderDash();
     renderOcc();
+    window._renderGrafico();
   });
 
   onEvento('chat_msg', (msg) => {
@@ -421,6 +425,7 @@ function _renderMain() {
   document.getElementById('tabRel').style.display = PODE_REL.includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabAlunos').style.display = PODE_REL.includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabSeg').style.display = (cu.perfil==='coordenador' && COORD_SEGMENTOS[cu.nome]) ? '' : 'none';
+  document.getElementById('tabCarometro').style.display = ['professor','poc','coordenador','vice','diretor'].includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabGes').style.display = ['diretor','vice'].includes(cu.perfil) ? '' : 'none';
 
   const icons = {professor:'👨‍🏫',agente:'🏫',secretaria:'📝',gerente:'🗂️',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};
@@ -903,13 +908,14 @@ window.closeModal = (e) => {
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
 window.showTab = (name, btn) => {
-  ['dashboard','registrar','ocorrencias','relatorio','alunos','segmento','gestao'].forEach(t => {
+  ['dashboard','registrar','ocorrencias','relatorio','alunos','segmento','carometro','gestao'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===name ? '' : 'none';
   });
   document.querySelectorAll('.nt button').forEach(b=>b.classList.remove('act'));
   if(btn) btn.classList.add('act');
   if(name==='ocorrencias') renderOcc();
-  if(name==='gestao') { renderGestao(); if(['diretor','vice'].includes(cu?.perfil)) window._carregarAuditoria(); }
+  if(name==='carometro') window._carregarCarometro();
+  if(name==='gestao') { renderGestao(); window._renderGrafico(); if(['diretor','vice'].includes(cu?.perfil)) window._carregarAuditoria(); }
   if(name==='dashboard') renderDash();
   if(name==='alunos') {
     _initAbaAlunos();
@@ -926,6 +932,96 @@ window.showTab = (name, btn) => {
 };
 
 let usuariosDB = []; // usuários carregados do banco
+
+// ─── PAINEL / GRÁFICO DE OCORRÊNCIAS ─────────────────────────────────────────
+let _graficoChart = null;
+
+function _parseDateOcc(o) {
+  if (!o.data) return null;
+  let dd, mm, yyyy;
+  if (o.data.includes('/')) { [dd, mm, yyyy] = o.data.split('/'); }
+  else { [yyyy, mm, dd] = o.data.split('-'); }
+  return `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+}
+
+window._renderGrafico = function() {
+  const secao = document.getElementById('gestaoGraficoSection');
+  if (!secao) return;
+  const pode = ['poc','coordenador','vice','diretor'].includes(cu?.perfil);
+  secao.style.display = pode ? '' : 'none';
+  if (!pode) return;
+
+  // Stats globais (gestão vê tudo)
+  document.getElementById('gestaoStatTotal').textContent = occ.length;
+  document.getElementById('gestaoStatUrg').textContent   = occ.filter(o => o.gravidade === 'urgencia').length;
+  document.getElementById('gestaoStatPend').textContent  = occ.filter(o => o.status === 'pendente').length;
+  document.getElementById('gestaoStatEnc').textContent   = occ.filter(o => o.status === 'encerrado').length;
+
+  // Montar série dos últimos 14 dias
+  const hoje = new Date();
+  const labels = [], contagens = [], urgencias = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(hoje); d.setDate(hoje.getDate() - i);
+    const iso = d.toISOString().slice(0, 10);
+    labels.push(d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+    const doDia = occ.filter(o => _parseDateOcc(o) === iso);
+    contagens.push(doDia.length);
+    urgencias.push(doDia.filter(o => o.gravidade === 'urgencia').length);
+  }
+
+  const canvas = document.getElementById('gestaoChart');
+  if (!canvas) return;
+
+  if (_graficoChart) {
+    _graficoChart.data.labels = labels;
+    _graficoChart.data.datasets[0].data = contagens;
+    _graficoChart.data.datasets[1].data = urgencias;
+    _graficoChart.update('none'); // sem animação no update em tempo real
+    return;
+  }
+
+  const corPrimaria = getComputedStyle(document.documentElement).getPropertyValue('--mg').trim() || '#4caf50';
+  _graficoChart = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Total',
+          data: contagens,
+          backgroundColor: 'rgba(76,175,80,0.65)',
+          borderColor: 'rgba(76,175,80,1)',
+          borderWidth: 1,
+          borderRadius: 4,
+          order: 2,
+        },
+        {
+          label: 'Urgências',
+          data: urgencias,
+          backgroundColor: 'rgba(229,57,53,0.75)',
+          borderColor: 'rgba(229,57,53,1)',
+          borderWidth: 1,
+          borderRadius: 4,
+          order: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.raw} ${ctx.dataset.label.toLowerCase()}` }
+        },
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } },
+        x: { ticks: { font: { size: 10 } } },
+      },
+    },
+  });
+};
 
 async function renderGestao() {
   // Carregar usuários do banco
@@ -1854,6 +1950,176 @@ window._confirmarReset = async () => {
   toastOk('Todas as ocorrências foram apagadas.');
 };
 
+
+// ─── CARÔMETRO ────────────────────────────────────────────────────────────────
+let _cDados = [];          // lista de metadados carregados do servidor
+const _cBlobUrls = {};     // cache de object URLs por RA (apenas em memória, sem URL pública)
+
+async function _fetchFotoBlob(ra) {
+  if (_cBlobUrls[ra]) return _cBlobUrls[ra];
+  try {
+    const resp = await fetch(`/api/foto/${encodeURIComponent(ra)}`, {
+      headers: { Authorization: 'Bearer ' + getToken() }
+    });
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    _cBlobUrls[ra] = url;
+    return url;
+  } catch { return null; }
+}
+
+// Desenha a foto no canvas com marca d'água diagonal (nome do usuário + data)
+function _desenharComMarcaDagua(canvas, blobUrl) {
+  return new Promise(resolve => {
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // Marca d'água: nome do usuário + data, diagonal, semi-transparente
+      const texto = `${cu?.nome || 'Usuário'} · ${new Date().toLocaleDateString('pt-BR')}`;
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(-Math.PI / 4);
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      // Sombra para legibilidade em qualquer fundo
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 2;
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.fillText(texto, 0, -10);
+      ctx.fillText(texto, 0, 10);
+      ctx.restore();
+      resolve();
+    };
+    img.onerror = resolve;
+    img.src = blobUrl;
+  });
+}
+
+window._carregarCarometro = async () => {
+  const grid = document.getElementById('cGrid');
+  const vazio = document.getElementById('cVazio');
+  grid.innerHTML = '<p style="color:var(--mu);font-size:13px;text-align:center;padding:1rem">Carregando...</p>';
+  vazio.style.display = 'none';
+
+  // Mostrar área de upload apenas para vice/diretor
+  const uploadArea = document.getElementById('cUploadArea');
+  if (uploadArea) uploadArea.style.display = ['vice','diretor'].includes(cu?.perfil) ? '' : 'none';
+
+  const dados = await apiFetch('/api/carometro');
+  if (!dados) { grid.innerHTML = ''; vazio.style.display = ''; return; }
+  _cDados = dados;
+
+  // Montar lista de turmas para o filtro
+  const turmas = [...new Set(dados.map(d => d.turma).filter(Boolean))].sort();
+  const sel = document.getElementById('cFiltroTurma');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todas as turmas</option>' +
+    turmas.map(t => `<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('');
+
+  window._renderCarometro();
+};
+
+window._renderCarometro = async () => {
+  const grid = document.getElementById('cGrid');
+  const vazio = document.getElementById('cVazio');
+  const turmaFiltro = document.getElementById('cFiltroTurma')?.value || '';
+  const nomeFiltro = (document.getElementById('cFiltroNome')?.value || '').toLowerCase();
+
+  const filtrados = _cDados.filter(d =>
+    (!turmaFiltro || d.turma === turmaFiltro) &&
+    (!nomeFiltro || d.nome.toLowerCase().includes(nomeFiltro))
+  );
+
+  if (!filtrados.length) {
+    grid.innerHTML = '';
+    vazio.style.display = '';
+    return;
+  }
+  vazio.style.display = 'none';
+
+  const podeEditar = ['vice','diretor'].includes(cu?.perfil);
+
+  // Usa <canvas> em vez de <img>: sem URL exposta, sem clique direito, marca d'água aplicada
+  grid.innerHTML = filtrados.map(d => `
+    <div class="fc" style="padding:10px;text-align:center;position:relative;user-select:none" data-ra="${d.ra}">
+      <canvas id="cImg_${d.ra}" width="90" height="110"
+        style="border-radius:8px;background:var(--sb);display:block;margin:0 auto 8px;-webkit-user-drag:none"></canvas>
+      <div style="font-size:12px;font-weight:700;color:var(--tx);line-height:1.3">${d.nome}</div>
+      <div style="font-size:11px;color:var(--mu);margin-top:2px">${d.turma||'—'}</div>
+      <div style="font-size:11px;color:var(--mu)">RA: ${d.ra}</div>
+      ${podeEditar ? `<button onclick="window._deletarFoto('${d.ra}')"
+        style="margin-top:6px;font-size:11px;color:var(--re);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px"
+        title="Remover foto">🗑 Remover</button>` : ''}
+    </div>`).join('');
+
+  // Bloqueia clique direito em todo o grid do carômetro
+  grid.oncontextmenu = e => e.preventDefault();
+
+  // Carrega e desenha fotos com marca d'água em paralelo
+  await Promise.all(filtrados.map(async d => {
+    const blobUrl = await _fetchFotoBlob(d.ra);
+    const canvas  = document.getElementById('cImg_' + d.ra);
+    if (canvas && blobUrl) await _desenharComMarcaDagua(canvas, blobUrl);
+  }));
+};
+
+window._enviarFotoAluno = async () => {
+  const ra    = document.getElementById('cRa').value.trim();
+  const nome  = document.getElementById('cNome').value.trim();
+  const turma = document.getElementById('cTurma').value.trim();
+  const file  = document.getElementById('cArquivo').files[0];
+  const erro  = document.getElementById('cUploadErro');
+  erro.style.display = 'none';
+
+  if (!ra || !nome || !file) {
+    erro.textContent = 'Preencha RA, nome e selecione uma foto.';
+    erro.style.display = '';
+    return;
+  }
+
+  const form = new FormData();
+  form.append('foto', file);
+  form.append('nome', nome);
+  form.append('turma', turma);
+
+  const resp = await fetch(`/api/foto/${encodeURIComponent(ra)}`, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + getToken() },
+    body: form,
+  });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    erro.textContent = json.erro || 'Erro ao enviar foto.';
+    erro.style.display = '';
+    return;
+  }
+
+  // Invalida cache e recarrega
+  delete _cBlobUrls[ra];
+  document.getElementById('cRa').value = '';
+  document.getElementById('cNome').value = '';
+  document.getElementById('cTurma').value = '';
+  document.getElementById('cArquivo').value = '';
+  toastOk('Foto enviada com sucesso!');
+  await window._carregarCarometro();
+};
+
+window._deletarFoto = async (ra) => {
+  if (!confirm('Remover a foto deste aluno?')) return;
+  const resp = await fetch(`/api/foto/${encodeURIComponent(ra)}`, {
+    method: 'DELETE',
+    headers: { Authorization: 'Bearer ' + getToken() },
+  });
+  if (!resp.ok) { toastErro('Erro ao remover foto.'); return; }
+  if (_cBlobUrls[ra]) { URL.revokeObjectURL(_cBlobUrls[ra]); delete _cBlobUrls[ra]; }
+  toastOk('Foto removida.');
+  await window._carregarCarometro();
+};
+
 // ─── BOOTSTRAP ────────────────────────────────────────────────────────────────
 function _tokenAindaValido() {
   try {
@@ -1864,6 +2130,13 @@ function _tokenAindaValido() {
     return payload.exp * 1000 > Date.now();
   } catch { return false; }
 }
+
+// Sessão expirada (401 em qualquer fetch) — logout suave sem alert()
+window.addEventListener('sessao-expirada', () => {
+  if (!cu) return; // já deslogado
+  toastAviso('Sessão encerrada. Faça login novamente.');
+  window._doLogout();
+});
 
 document.addEventListener('DOMContentLoaded', async () => {
   await init();
@@ -1879,4 +2152,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       limparSessao(); // Token expirado — limpa silenciosamente e mostra login
     }
   }
+
+  // Renovação automática silenciosa: verifica a cada hora se o token precisa ser renovado
+  // (renova quando faltam < 7 dias para expirar)
+  setInterval(() => {
+    if (!cu) return;
+    tentarRenovarToken((novoToken) => {
+      // Reconecta o WebSocket com o token atualizado para manter a sessão viva
+      if (novoToken) _iniciarWS();
+    });
+  }, 60 * 60 * 1000); // a cada 1 hora
 });

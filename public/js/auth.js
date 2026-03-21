@@ -33,7 +33,42 @@ export function authHeaders() {
   };
 }
 
-// Fetch autenticado — redireciona para login se 401
+// Decodifica o payload JWT sem verificar assinatura (só leitura local)
+function _payloadJWT(token) {
+  try {
+    return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+  } catch { return null; }
+}
+
+// Retorna quantos ms faltam para o token expirar (negativo se já expirou)
+export function _msParaExpirar() {
+  const token = getToken();
+  if (!token) return -1;
+  const p = _payloadJWT(token);
+  if (!p || !p.exp) return -1;
+  return p.exp * 1000 - Date.now();
+}
+
+// Renova o token silenciosamente se ele expira em menos de 7 dias.
+// Chama um callback opcional com o novo token para atualizar o WebSocket.
+export async function tentarRenovarToken(onRenovado) {
+  const ms = _msParaExpirar();
+  // Só renova se o token ainda for válido mas estiver perto do vencimento (< 7 dias)
+  if (ms < 0 || ms > 7 * 24 * 60 * 60 * 1000) return;
+  try {
+    const resp = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      headers: authHeaders(),
+    });
+    if (!resp.ok) return;
+    const { token } = await resp.json();
+    const usuario = getUsuario();
+    salvarSessao(token, usuario);
+    if (onRenovado) onRenovado(token);
+  } catch { /* falha silenciosa — token antigo ainda serve */ }
+}
+
+// Fetch autenticado — mostra toast e redireciona suavemente em caso de 401
 export async function apiFetch(url, options = {}) {
   try {
     const resp = await fetch(url, {
@@ -42,8 +77,8 @@ export async function apiFetch(url, options = {}) {
     });
     if (resp.status === 401) {
       limparSessao();
-      alert('Sessão expirada. Faça login novamente.');
-      location.reload();
+      // Evita alert() brusco — deixa o app tratar via evento
+      window.dispatchEvent(new CustomEvent('sessao-expirada'));
       return null;
     }
     return resp;
