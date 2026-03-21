@@ -962,7 +962,7 @@ window._renderGrafico = function() {
   const labels = [], contagens = [], urgencias = [];
   for (let i = 13; i >= 0; i--) {
     const d = new Date(hoje); d.setDate(hoje.getDate() - i);
-    const iso = d.toISOString().slice(0, 10);
+    const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     labels.push(d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
     const doDia = occ.filter(o => _parseDateOcc(o) === iso);
     contagens.push(doDia.length);
