@@ -1113,7 +1113,7 @@ async function renderGestao() {
   usuariosDB = await resp.json();
 
   const podeMgmt = ['diretor','vice'].includes(cu.perfil);
-  const perfisOrdem = ['diretor','vice','coordenador','poc','professor'];
+  const perfisOrdem = ['diretor','vice','coordenador','poc','professor','agente','secretaria','gerente'];
 
   // Agrupar por perfil
   const grupos = {};
@@ -1164,7 +1164,7 @@ async function renderGestao() {
             <div class="om">${PL[u.perfil]}</div>
           </div>
           ${podeMgmt ? `<div class="bs" style="flex-wrap:wrap;gap:4px;justify-content:flex-end">
-            <button class="bn" style="font-size:11px;padding:3px 8px" onclick="window._editarPerfil(${u.id},'${u.nome}','${u.perfil}')">✏ Cargo</button>
+            ${(u.perfil !== 'poc' || cu.perfil === 'diretor') ? `<button class="bn" style="font-size:11px;padding:3px 8px" onclick="window._editarPerfil(${u.id},'${u.nome}','${u.perfil}')">✏ Cargo</button>` : `<span style="font-size:10px;color:var(--mu);padding:3px 8px;border:1px solid #ddd;border-radius:4px">🔒 P.O.C.</span>`}
             <button class="bn" style="font-size:11px;padding:3px 8px" onclick="window._resetSenha(${u.id},'${u.nome}')">🔑 Senha</button>
             <button class="bn" style="font-size:11px;padding:3px 8px;color:${inativo?'var(--gr)':'var(--re)'}"
               onclick="window._toggleUsuario(${u.id},'${u.nome}',${u.ativo})">
@@ -1259,6 +1259,10 @@ window._adicionarUsuario = async () => {
 };
 
 window._editarPerfil = (id, nome, perfilAtual) => {
+  if (perfilAtual === 'poc' && cu?.perfil !== 'diretor') {
+    toastErro('Apenas o Diretor pode remover a atribuição de P.O.C.');
+    return;
+  }
   document.getElementById('modalTit').textContent = '✏ Alterar Cargo — ' + nome.split(' ')[0];
   document.getElementById('modalBody').innerHTML = `
     <div class="ab bl" style="margin-bottom:1rem">Cargo atual: <strong>${PL[perfilAtual]}</strong></div>
