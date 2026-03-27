@@ -749,3 +749,200 @@ body::before{
   background:var(--gr);border-radius:50%;
   margin-right:4px;animation:pulse 2s ease-in-out infinite;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   SisRoe v2.1 — Melhorias Visuais Profissionais
+   ═══════════════════════════════════════════════════════════ */
+
+/* Variável faltante */
+:root{--radius-md:10px}
+
+/* ═══ TELA DE LOGIN APRIMORADA ═══ */
+.ls{
+  background:linear-gradient(160deg,var(--mgl) 0%,var(--bg-page) 55%);
+  justify-content:center;
+}
+.ls::after{
+  content:'';position:fixed;bottom:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--mgd),var(--mg),#e91e8c,var(--mg),var(--mgd));
+  background-size:300% 100%;
+  animation:loginLine 4s linear infinite;
+  z-index:10;
+}
+@keyframes loginLine{
+  0%{background-position:0% 0}
+  100%{background-position:300% 0}
+}
+.lh p.lf{
+  font-size:.65rem;color:var(--text-muted);
+  margin-top:6px;border-top:1px solid var(--bd);padding-top:8px;
+}
+
+/* ═══ TOPBAR APRIMORADA ═══ */
+.tb{
+  padding:13px 1.25rem;
+  box-shadow:0 2px 16px rgba(168,23,68,.18);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.tb .at{font-size:1.05rem}
+.tb .as{font-size:.6rem;letter-spacing:.04em}
+
+/* Botão instalar na topbar */
+#btnInstalar{
+  background:rgba(255,255,255,.12)!important;
+  border:1px solid rgba(255,255,255,.35)!important;
+  color:#fff!important;border-radius:var(--radius-sm)!important;
+  padding:6px 12px!important;font-size:.7rem!important;
+  font-family:var(--font-body)!important;cursor:pointer;
+  transition:background .2s var(--ease)!important;
+  display:inline-flex!important;align-items:center!important;gap:4px!important;
+}
+#btnInstalar:hover{background:rgba(255,255,255,.22)!important}
+
+/* ═══ ABAS — INDICATOR APRIMORADO ═══ */
+.nt{
+  gap:0;
+  box-shadow:0 2px 6px rgba(0,0,0,.04);
+}
+.nt button{
+  padding:13px 16px;font-size:.8rem;
+  position:relative;
+}
+.nt button.act{
+  color:var(--mg);font-weight:700;
+  background:linear-gradient(180deg,transparent,rgba(168,23,68,.04));
+}
+
+/* ═══ FILTROS — CLASSE PROFISSIONAL ═══ */
+.filtro-sel,
+select.filtro-sel,
+input.filtro-sel{
+  font-size:.78rem;font-family:var(--font-body);
+  padding:7px 10px;
+  border:1.5px solid var(--bd);border-radius:var(--radius-sm);
+  background:var(--bg-card);color:var(--text-secondary);
+  cursor:pointer;outline:none;
+  transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
+}
+.filtro-sel:focus{
+  border-color:var(--mg);
+  box-shadow:0 0 0 3px rgba(168,23,68,.08);
+}
+
+/* Override inline styles on filter selects (IDs conhecidos) */
+#fNivel,#fTurma,#fGrav,#fStatus,#fData,
+#aMes,#aTurma,#cFiltroTurma,#cFiltroNome,
+#gestaoMesSel,#relTurma,#relGrav,#aPesquisaTurma{
+  font-size:.78rem!important;font-family:var(--font-body)!important;
+  padding:7px 10px!important;
+  border:1.5px solid var(--bd)!important;border-radius:var(--radius-sm)!important;
+  background:var(--bg-card)!important;color:var(--text-secondary)!important;
+  cursor:pointer;outline:none;
+  transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
+}
+#fNivel:focus,#fTurma:focus,#fGrav:focus,#fStatus:focus,#fData:focus,
+#aMes:focus,#aTurma:focus,#cFiltroTurma:focus,#cFiltroNome:focus,
+#gestaoMesSel:focus,#relTurma:focus,#relGrav:focus,#aPesquisaTurma:focus{
+  border-color:var(--mg)!important;
+  box-shadow:0 0 0 3px rgba(168,23,68,.08)!important;
+}
+
+/* ═══ CARDS DE OCORRÊNCIA — ANIMAÇÃO ESCALONADA ═══ */
+.oc:nth-child(1){animation-delay:.03s}
+.oc:nth-child(2){animation-delay:.06s}
+.oc:nth-child(3){animation-delay:.09s}
+.oc:nth-child(4){animation-delay:.12s}
+.oc:nth-child(5){animation-delay:.15s}
+.oc:nth-child(6){animation-delay:.18s}
+
+/* Borda esquerda mais espessa nos cards */
+.oc{border-left-width:5px}
+
+/* ═══ URGÊNCIA — PULSE ═══ */
+.oc.urgencia{
+  animation:fadeUp .3s var(--ease) both;
+  box-shadow:0 2px 12px rgba(220,38,38,.1);
+}
+.oc.urgencia .bg-urgencia{
+  animation:urgencePulse 2.2s ease-in-out infinite;
+}
+@keyframes urgencePulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}
+  50%{box-shadow:0 0 0 5px rgba(220,38,38,.15)}
+}
+
+/* ═══ STAT CARDS — PROFUNDIDADE ═══ */
+.sc{
+  position:relative;overflow:hidden;
+}
+.sc::after{
+  content:'';position:absolute;
+  bottom:-16px;right:-10px;
+  width:64px;height:64px;border-radius:50%;
+  background:currentColor;opacity:.04;
+  pointer-events:none;
+}
+.sc.re::after{color:var(--re)}
+.sc.or::after{color:var(--or)}
+.sc.mg::after{color:var(--mg)}
+.sc.gr::after{color:var(--gr)}
+
+/* ═══ EMPTY STATE ═══ */
+.es{
+  display:flex;flex-direction:column;align-items:center;
+  gap:10px;padding:3.5rem 1rem;
+}
+
+/* ═══ FOCUS RING GLOBAL ═══ */
+:focus-visible{
+  outline:2px solid var(--mg);
+  outline-offset:2px;
+  border-radius:var(--radius-sm);
+}
+button:focus-visible{border-radius:var(--radius-sm)}
+
+/* ═══ BOTÕES — DISABLED ═══ */
+.bp:disabled,.bn:disabled{
+  opacity:.45;cursor:not-allowed;
+  transform:none!important;box-shadow:none!important;
+}
+
+/* ═══ MODAL — OVERLAY SUTIL ═══ */
+.mo{background:rgba(10,6,4,.5)}
+
+/* ═══ BUSCA DE ALUNOS — APRIMORADA ═══ */
+#aPesquisaInput{
+  border:1.5px solid var(--bd)!important;
+  border-radius:var(--radius-sm)!important;
+  padding:9px 14px!important;
+  font-size:.85rem!important;
+  transition:border-color .2s var(--ease),box-shadow .2s var(--ease)!important;
+}
+#aPesquisaInput:focus{
+  border-color:var(--mg)!important;
+  box-shadow:0 0 0 3px rgba(168,23,68,.08)!important;
+  outline:none!important;
+}
+
+/* ═══ SCROLLBAR ABAS ═══ */
+.nt::-webkit-scrollbar{height:0}
+
+/* ═══ RESPONSIVO ═══ */
+@media(max-width:480px){
+  .tb{padding:11px 14px}
+  .tb .at{font-size:.95rem}
+  .ct{padding:1rem}
+  .sg{grid-template-columns:repeat(2,1fr)}
+  .md{padding:1.25rem;border-radius:var(--radius-lg)}
+  .nt button{padding:11px 10px;font-size:.72rem}
+}
+
+/* ═══ IMPRESSÃO ═══ */
+@media print{
+  .tb,.nt,.app-footer,.notif-popup,.toast-wrap,
+  .mo-chat,.mo,[id^="btnChat"]{display:none!important}
+  body,body::before{background:white!important}
+  .ct{padding:0;max-width:100%}
+  .oc{break-inside:avoid;box-shadow:none!important;border:1px solid #ddd!important}
+  .fc{box-shadow:none!important;border:1px solid #eee!important}
+}

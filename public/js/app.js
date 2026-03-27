@@ -1,5 +1,5 @@
 // app.js — lógica principal do sistema de ocorrências
-import { conectar, onEvento, enviar } from './ws.js';
+import { conectar, onEvento, enviar, desconectar } from './ws.js';
 import { mostrarNotifOcorrencia, pedirPermissaoNotif } from './notif.js';
 import { iniciarChat, fecharChat, receberMsgChat, sincronizarChats } from './chat.js';
 import { salvarSessao, limparSessao, getToken, getUsuario, temSessao, apiFetch, tentarRenovarToken, _msParaExpirar } from './auth.js';
@@ -270,15 +270,49 @@ window._doLogin = async () => {
 };
 
 window._doLogout = () => {
+  // 1. Invalida token no servidor (fogo-e-esquece — não bloqueia o logout)
+  const token = getToken();
+  if (token) {
+    fetch('/api/auth/logout', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    }).catch(() => {});
+  }
+
+  // 2. Encerra WebSocket imediatamente (evita receber dados do usuário anterior)
+  desconectar();
+
+  // 3. Limpa DOM sensível antes de exibir login (evita vazamento visual)
+  ['statsGrid','dashAlerts','dashList','occList'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  });
+
+  // 4. Fecha todos os modais abertos
+  ['modalOv','modalSenha','modalDoc','modalAluno'].forEach(id => {
+    document.getElementById(id)?.classList.remove('show');
+  });
+  document.querySelectorAll('.mo-chat').forEach(m => m.classList.remove('show'));
+
+  // 5. Reseta aba visualmente para Início
+  document.querySelectorAll('.nt button').forEach((b, i) => b.classList.toggle('act', i === 0));
+  ['dashboard','registrar','ocorrencias','relatorio','alunos','segmento','carometro','gestao']
+    .forEach(t => {
+      const el = document.getElementById('tab-' + t);
+      if (el) el.style.display = t === 'dashboard' ? '' : 'none';
+    });
+
+  // 6. Limpa todo o estado JS
   limparSessao();
-  cu = null; occ = []; sTipo = null; selAlunos = []; atuais = [];
+  cu = null; occ = []; chats = {}; sTipo = null; selAlunos = [];
+  atuais = []; chatNaoLidos = {}; TD = {};
   if (_graficoChart) { _graficoChart.destroy(); _graficoChart = null; }
   if (_graficoChartAnual) { _graficoChartAnual.destroy(); _graficoChartAnual = null; }
+
+  // 7. UI de login
   document.getElementById('rodape-app').style.display = 'none';
-  // Resetar botão de login
   const btn = document.querySelector('#loginScreen .bp');
   if (btn) { btn.textContent = 'Entrar'; btn.disabled = false; }
-  // Limpar campos
   const pass = document.getElementById('loginPass');
   if (pass) pass.value = '';
   const erroEl = document.getElementById('loginErro');

@@ -91,3 +91,15 @@ export function getStatus() {
   if (s === WebSocket.CONNECTING) return 'conectando';
   return 'desconectado';
 }
+
+// Encerra conexão sem reconectar (chamado no logout)
+export function desconectar() {
+  reconectando = true; // bloqueia _agendar temporariamente
+  if (socket) {
+    socket.onclose = null; // remove o handler que dispara reconexão
+    socket.close();
+    socket = null;
+  }
+  reconectando = false;
+  tentativas = 0;
+}
