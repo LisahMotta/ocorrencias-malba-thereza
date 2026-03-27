@@ -689,20 +689,52 @@ function cardHTML(o) {
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────
 function renderDash() {
   const ehProf = cu && ['professor','agente','secretaria','gerente'].includes(cu.perfil);
-  // Professor só vê suas próprias ocorrências no dashboard
   const lista = occ.filter(o=>o&&o.gravidade&&(ehProf?(o.registradoPorId==cu.id||o.registradoPorNome===cu.nome):true));
   const total=lista.length, urg=lista.filter(o=>o.gravidade==='urgencia').length;
   const pend=lista.filter(o=>o.status==='pendente').length, enc=lista.filter(o=>o.status==='encerrado').length;
+
+  // Saudação personalizada
+  const grEl = document.getElementById('dashGreeting');
+  if (grEl && cu) {
+    const h = new Date().getHours();
+    const saud = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+    const nome1 = cu.nome.split(' ')[0];
+    const dtHoje = new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+    const dg_icons = {professor:'👨‍🏫',agente:'🏫',secretaria:'📝',gerente:'🗂️',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};
+    grEl.innerHTML = `
+      <div class="dg-left">
+        <span class="dg-ico">${dg_icons[cu.perfil]||'👤'}</span>
+        <div>
+          <div class="dg-saud">${saud}, <strong>${nome1}</strong>!</div>
+          <div class="dg-info">${PL[cu.perfil]} · ${dtHoje}</div>
+        </div>
+      </div>
+      <div class="dg-right">
+        <div class="dg-num">${total}</div>
+        <div class="dg-label">ocorrência${total!==1?'s':''} ${ehProf?'suas':'no sistema'}</div>
+      </div>`;
+  }
+
+  // Cards de stat com ícone
   document.getElementById('statsGrid').innerHTML=`
-    <div class="sc re"><div class="sn">${urg}</div><div class="sl">Urgência</div></div>
-    <div class="sc or"><div class="sn">${pend}</div><div class="sl">Aguard. complemento</div></div>
-    <div class="sc mg"><div class="sn">${total}</div><div class="sl">Total</div></div>
-    <div class="sc gr"><div class="sn">${enc}</div><div class="sl">Encerradas</div></div>`;
+    <div class="sc re"><div class="sc-ico">🚨</div><div class="sn">${urg}</div><div class="sl">Urgência</div></div>
+    <div class="sc or"><div class="sc-ico">📋</div><div class="sn">${pend}</div><div class="sl">Aguard. complemento</div></div>
+    <div class="sc mg"><div class="sc-ico">📊</div><div class="sn">${total}</div><div class="sl">Total</div></div>
+    <div class="sc gr"><div class="sc-ico">✅</div><div class="sn">${enc}</div><div class="sl">Encerradas</div></div>`;
+
+  // Alertas
   const al=[];
   if(urg>0) al.push(`<div class="ab re" style="margin-bottom:8px">⚠ ${urg} ocorrência(s) de urgência/emergência.</div>`);
   if(pend>0&&isEdit()) al.push(`<div class="ab or" style="margin-bottom:8px">📋 ${pend} ocorrência(s) aguardando complemento.</div>`);
   document.getElementById('dashAlerts').innerHTML=al.join('');
+
+  // Recentes com badge
   const rec = [...lista].sort((a,b)=>b.id-a.id).slice(0,5);
+  const badgeEl = document.getElementById('dashRecBadge');
+  if (badgeEl) {
+    if (lista.length > 0) { badgeEl.textContent = `${rec.length} de ${lista.length}`; badgeEl.style.display=''; }
+    else { badgeEl.style.display='none'; }
+  }
   document.getElementById('dashList').innerHTML = rec.length
     ? rec.map(cardHTML).join('')
     : '<div class="es">Nenhuma ocorrência registrada ainda.</div>';
@@ -959,7 +991,7 @@ window.showTab = (name, btn) => {
   if(btn) btn.classList.add('act');
   if(name==='ocorrencias') renderOcc();
   if(name==='carometro') window._carregarCarometro();
-  if(name==='gestao') { renderGestao(); window._renderGrafico(); if(['diretor','vice'].includes(cu?.perfil)) window._carregarAuditoria(); }
+  if(name==='gestao') { renderGestao(); window._renderGrafico(); }
   if(name==='dashboard') renderDash();
   if(name==='alunos') {
     _initAbaAlunos();
@@ -1242,6 +1274,23 @@ const _ACAO_LABEL = {
   resetar_ocorrencias:    { icon: '🗑', label: 'Apagou todas as ocorrências' },
 };
 
+// Abre/fecha o accordion de auditoria (carrega na primeira abertura)
+window._toggleAuditoria = () => {
+  const body = document.getElementById('auditBody');
+  const btn  = document.getElementById('auditToggleBtn');
+  const chev = document.getElementById('auditChevron');
+  if (!body) return;
+  const abrindo = body.style.display === 'none';
+  body.style.display = abrindo ? '' : 'none';
+  btn?.classList.toggle('open', abrindo);
+  if (chev) chev.style.transform = abrindo ? 'rotate(180deg)' : '';
+  // Carrega logs ao abrir pela primeira vez (ou se estiver vazio)
+  if (abrindo) {
+    const lista = document.getElementById('auditoriaList');
+    if (!lista || !lista.querySelector('.audit-entry')) window._carregarAuditoria();
+  }
+};
+
 window._carregarAuditoria = async () => {
   const el = document.getElementById('auditoriaList');
   el.innerHTML = '<p style="font-size:13px;color:var(--mu);text-align:center;padding:1rem">Carregando...</p>';
@@ -1255,6 +1304,10 @@ window._carregarAuditoria = async () => {
     el.innerHTML = '<p style="font-size:13px;color:var(--mu);text-align:center;padding:1rem">Nenhum registro encontrado.</p>';
     return;
   }
+  // Atualiza contador no toolbar
+  const countEl = document.getElementById('auditCount');
+  if (countEl) countEl.textContent = `${logs.length} registro${logs.length!==1?'s':''}`;
+
   el.innerHTML = logs.map(l => {
     const { icon, label } = _ACAO_LABEL[l.acao] || { icon: '•', label: l.acao };
     let detalhe = '';
@@ -1270,11 +1323,11 @@ window._carregarAuditoria = async () => {
       if (d.totalApagadas !== undefined) detalhe += ` · ${d.totalApagadas} registros`;
       if (d.ip)            detalhe += ` · IP: ${d.ip}`;
     }
-    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)">
-      <span style="font-size:16px;line-height:1.4">${icon}</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600;color:var(--tx)">${label}<span style="font-weight:400;color:var(--mu)">${detalhe}</span></div>
-        <div style="font-size:12px;color:var(--mu);margin-top:2px">${l.usuario_nome || '—'} · ${l.criado_em}</div>
+    return `<div class="audit-entry">
+      <span class="audit-entry-ico">${icon}</span>
+      <div class="audit-entry-body">
+        <div class="audit-entry-label">${label}<span class="audit-entry-detail">${detalhe}</span></div>
+        <div class="audit-entry-meta">${l.usuario_nome || '—'} · ${l.criado_em}</div>
       </div>
     </div>`;
   }).join('');
