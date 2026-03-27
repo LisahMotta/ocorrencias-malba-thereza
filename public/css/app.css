@@ -1035,6 +1035,26 @@ button:focus-visible{border-radius:var(--radius-sm)}
 .audit-entry-detail{font-weight:400;color:var(--text-muted)}
 .audit-entry-meta{font-size:.7rem;color:var(--text-muted);margin-top:2px}
 
+/* ═══ ACCORDION — VARIANTE USUÁRIOS ═══ */
+.users-toggle{border-color:rgba(37,99,235,.25);color:var(--bl)}
+.users-toggle:hover{border-color:var(--bl);background:var(--bll);color:var(--bl)}
+.users-toggle.open{border-color:var(--bl);background:var(--bll);color:var(--bl);border-bottom-left-radius:0;border-bottom-right-radius:0}
+.users-body{border-color:var(--bl)}
+
+/* ═══ ACCORDION — VARIANTE ZONA DE PERIGO ═══ */
+.danger-toggle{border-color:rgba(220,38,38,.25);color:var(--re)}
+.danger-toggle:hover{border-color:var(--re);background:var(--rel);color:var(--re)}
+.danger-toggle.open{border-color:var(--re);background:var(--rel);color:var(--re);border-bottom-left-radius:0;border-bottom-right-radius:0}
+.danger-body{border-color:var(--re)}
+
+/* Botão de exclusão: desabilitado até confirmação */
+.danger-btn{border-color:var(--re)!important;color:var(--re)!important;width:100%;margin-top:4px}
+.danger-btn:not(:disabled):hover{background:var(--re)!important;color:#fff!important}
+.danger-btn:disabled{
+  opacity:.35;cursor:not-allowed;
+  border-color:#ccc!important;color:#aaa!important;
+}
+
 @media(max-width:480px){
   .dash-greeting{padding:14px 16px}
   .dg-ico{font-size:1.6rem}

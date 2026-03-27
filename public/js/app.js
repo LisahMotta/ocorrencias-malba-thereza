@@ -1275,6 +1275,44 @@ const _ACAO_LABEL = {
 };
 
 // Abre/fecha o accordion de auditoria (carrega na primeira abertura)
+// Accordion — Gestão de Usuários
+window._toggleUsuarios = () => {
+  const body = document.getElementById('usersBody');
+  const btn  = document.getElementById('usersToggleBtn');
+  const chev = document.getElementById('usersChevron');
+  if (!body) return;
+  const abrindo = body.style.display === 'none';
+  body.style.display = abrindo ? '' : 'none';
+  btn?.classList.toggle('open', abrindo);
+  if (chev) chev.style.transform = abrindo ? 'rotate(180deg)' : '';
+};
+
+// Accordion — Zona de Perigo
+window._toggleZonaPerigo = () => {
+  const body = document.getElementById('dangerBody');
+  const btn  = document.getElementById('dangerToggleBtn');
+  const chev = document.getElementById('dangerChevron');
+  if (!body) return;
+  const abrindo = body.style.display === 'none';
+  body.style.display = abrindo ? '' : 'none';
+  btn?.classList.toggle('open', abrindo);
+  if (chev) chev.style.transform = abrindo ? 'rotate(180deg)' : '';
+  // Fecha: limpa confirmação e desabilita botão
+  if (!abrindo) {
+    const inp = document.getElementById('dangerConfirmInput');
+    if (inp) inp.value = '';
+    const bReset = document.getElementById('btnDangerReset');
+    if (bReset) bReset.disabled = true;
+  }
+};
+
+// Habilita botão de exclusão apenas quando input === 'CONFIRMAR'
+window._checkDangerConfirm = () => {
+  const inp = document.getElementById('dangerConfirmInput');
+  const bReset = document.getElementById('btnDangerReset');
+  if (bReset) bReset.disabled = inp?.value !== 'CONFIRMAR';
+};
+
 window._toggleAuditoria = () => {
   const body = document.getElementById('auditBody');
   const btn  = document.getElementById('auditToggleBtn');
@@ -2124,12 +2162,16 @@ window.renderSegmento = function() {
 // ─── RESET ───────────────────────────────────────────────────────────────────
 
 window._confirmarReset = async () => {
-  const conf = prompt('Digite CONFIRMAR para apagar todas as ocorrências:');
-  if (conf !== 'CONFIRMAR') { toast('Operação cancelada.', 'info', 3000); return; }
+  // Verificação extra no JS (além do disabled no botão)
+  const inp = document.getElementById('dangerConfirmInput');
+  if (inp?.value !== 'CONFIRMAR') return;
+
   const resp = await apiFetch('/api/admin/resetar-ocorrencias', { method: 'POST' });
   if (!resp || !resp.ok) { toastErro('Erro ao apagar. Tente novamente.'); return; }
   occ = []; chats = {};
   renderDash(); renderOcc();
+  // Fecha e limpa a Zona de Perigo após execução
+  window._toggleZonaPerigo();
   toastOk('Todas as ocorrências foram apagadas.');
 };
 
