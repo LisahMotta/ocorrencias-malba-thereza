@@ -336,16 +336,43 @@
         </div>
       </div>
 
-      <!-- ZONA DE PERIGO -->
-      <div class="fc" style="margin-bottom:1rem;border-color:#FFCDD2">
-        <div class="st" style="font-size:13px;margin-bottom:8px;color:var(--re)">⚠ Zona de Perigo</div>
-        <p style="font-size:13px;color:var(--mu);margin-bottom:12px">Apaga <strong>todas</strong> as ocorrências e chats do sistema. Esta ação não pode ser desfeita. Faça um backup antes.</p>
-        <button class="bn" style="border-color:var(--re);color:var(--re)" onclick="window._confirmarReset()">🗑 Apagar todas as ocorrências</button>
+      <!-- GESTÃO DE USUÁRIOS — accordion -->
+      <div style="margin-bottom:1rem">
+        <button class="audit-toggle users-toggle" id="usersToggleBtn" onclick="window._toggleUsuarios()">
+          <span>👥 Gestão de Usuários</span>
+          <span class="audit-chevron" id="usersChevron">▼</span>
+        </button>
+        <div class="audit-body users-body" id="usersBody" style="display:none">
+          <div style="padding:14px 14px 6px">
+            <div class="ol" id="gestaoList"></div>
+          </div>
+        </div>
       </div>
 
-      <!-- USUÁRIOS -->
-      <div class="st">Gestão de Usuários</div>
-      <div class="ol" id="gestaoList"></div>
+      <!-- ZONA DE PERIGO — accordion protegido -->
+      <div id="dangerSection" style="margin-bottom:1rem">
+        <button class="audit-toggle danger-toggle" id="dangerToggleBtn" onclick="window._toggleZonaPerigo()">
+          <span>⚠ Zona de Perigo</span>
+          <span class="audit-chevron" id="dangerChevron">▼</span>
+        </button>
+        <div class="audit-body danger-body" id="dangerBody" style="display:none">
+          <div style="padding:16px">
+            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
+              Esta ação apaga <strong>todas</strong> as ocorrências e chats do sistema.<br>
+              <strong style="color:var(--re)">Esta operação é irreversível.</strong> Faça um backup antes de continuar.
+            </p>
+            <div class="fg" style="margin-bottom:14px">
+              <label>Digite <strong>CONFIRMAR</strong> para habilitar o botão de exclusão</label>
+              <input type="text" id="dangerConfirmInput" placeholder="CONFIRMAR"
+                autocomplete="off" oninput="window._checkDangerConfirm()">
+            </div>
+            <button class="bn danger-btn" id="btnDangerReset" disabled
+              onclick="window._confirmarReset()">
+              🗑 Apagar todas as ocorrências
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- AUDITORIA (só diretor/vice) — accordion -->
       <div id="auditoriaSection" style="display:none;margin-top:1.5rem">
