@@ -44,6 +44,14 @@ server.on('upgrade', (req, socket, head) => {
 const JWT_SECRET = process.env.JWT_SECRET || 'malba-thereza-2025-secret-key';
 const JWT_EXPIRA = '30d'; // 30 dias — dados permanecem até exclusão explícita pela gestão
 
+if (!process.env.JWT_SECRET) {
+  console.warn('\x1b[33m[⚠ SEGURANÇA] JWT_SECRET não definido! Configure a variável de ambiente JWT_SECRET em produção.\x1b[0m');
+}
+
+// ─── BLOCKLIST DE TOKENS (logout seguro) ─────────────────────────────────────
+// Armazena userId:iat de tokens explicitamente invalidados via logout
+const tokenBlocklist = new Set();
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -54,7 +62,12 @@ function autenticar(req, res, next) {
     return res.status(401).json({ erro: 'Não autenticado' });
   }
   try {
-    req.usuario = jwt.verify(auth.slice(7), JWT_SECRET);
+    const payload = jwt.verify(auth.slice(7), JWT_SECRET);
+    // Verifica se o token foi explicitamente invalidado (logout)
+    if (tokenBlocklist.has(`${payload.id}:${payload.iat}`)) {
+      return res.status(401).json({ erro: 'Sessão encerrada. Faça login novamente.' });
+    }
+    req.usuario = payload;
     next();
   } catch(err) {
     console.log('[auth] Token rejeitado:', err.message);
@@ -242,9 +255,9 @@ app.post('/api/auth/login', async (req, res) => {
   const ok = await bcrypt.compare(senha, usuario.senha);
   if (!ok) {
     t.count++;
-    if (t.count >= 5) {
-      t.bloqueadoAte = agora + 5 * 60 * 1000;
-      console.log(`[auth] IP ${ip} bloqueado por 5min após ${t.count} tentativas`);
+    if (t.count >= 3) {
+      t.bloqueadoAte = agora + 10 * 60 * 1000;
+      console.log(`[auth] IP ${ip} bloqueado por 10min após ${t.count} tentativas`);
     }
     tentativasLogin.set(ip, t);
     return res.status(401).json({ erro: 'Senha incorreta' });
@@ -281,6 +294,12 @@ app.post('/api/auth/refresh', autenticar, async (req, res) => {
     JWT_SECRET, { expiresIn: JWT_EXPIRA }
   );
   res.json({ token });
+});
+
+// Logout — invalida o token atual adicionando à blocklist
+app.post('/api/auth/logout', autenticar, (req, res) => {
+  tokenBlocklist.add(`${req.usuario.id}:${req.usuario.iat}`);
+  res.json({ ok: true });
 });
 
 // ─── OCORRÊNCIAS ──────────────────────────────────────────────────────────────
