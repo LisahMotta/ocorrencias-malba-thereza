@@ -44,12 +44,15 @@
 <!-- MAIN -->
 <div class="ms" id="mainScreen">
   <div class="tb">
-    <div><span class="at">SisRoe — Malba Thereza</span><br><span class="as">Protocolo 179 · CONVIVA SP · SEDUC SP · <strong>Uso exclusivamente interno</strong> · v2.0</span></div>
-    <div style="display:flex;align-items:center;gap:8px">
+    <div class="tb-brand">
+      <span class="at">SisRoe</span>
+      <span class="tb-ver">v2.0</span>
+    </div>
+    <div class="tb-actions">
       <span id="wsStatus" class="ws-status err">● offline</span>
       <div class="ub"><span class="un" id="topName">-</span><span class="ur" id="topRole">-</span></div>
-      <button class="lo" onclick="abrirModalSenha()" style="margin-right:4px">🔑 Senha</button>
-      <button id="btnInstalar" onclick="window._instalarApp()" style="display:none">📲 Instalar</button>
+      <button class="lo-ico" onclick="abrirModalSenha()" title="Alterar senha">🔑</button>
+      <button id="btnInstalar" onclick="window._instalarApp()" class="lo-ico" title="Instalar app" style="display:none">📲</button>
       <button class="lo" onclick="window._doLogout()">Sair</button>
     </div>
   </div>

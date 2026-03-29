@@ -1061,3 +1061,80 @@ button:focus-visible{border-radius:var(--radius-sm)}
   .dg-num{font-size:1.6rem}
   .dg-saud{font-size:.9rem}
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PROFESSIONAL UX/UI UPGRADE v2.2
+   Design system refinement — enterprise-grade polish
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── TOPBAR — hide verbose subtitle, enforce fixed height ─── */
+.tb .as{display:none}
+.tb{height:52px;padding:0 1.25rem}
+.tb-brand{display:flex;align-items:center;gap:8px}
+.tb-ver{
+  font-size:.56rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  background:rgba(255,255,255,.15);padding:2px 8px;
+  border-radius:10px;opacity:.9;
+}
+.tb-actions{display:flex;align-items:center;gap:6px}
+
+/* Botões icon-only na topbar */
+.lo-ico{
+  background:rgba(255,255,255,.1);border:none;color:#fff;
+  border-radius:var(--radius-sm);padding:7px 9px;font-size:13px;
+  cursor:pointer;transition:background .2s var(--ease);line-height:1;
+}
+.lo-ico:hover{background:rgba(255,255,255,.22)}
+
+/* ─── ABAS — natural width, não estica ─── */
+.nt{justify-content:flex-start}
+.nt button{flex:none;min-width:fit-content}
+
+/* ─── STAT CARDS — tint suave por cor ─── */
+.sc.re{background:linear-gradient(135deg,#fff 55%,rgba(220,38,38,.05))}
+.sc.or{background:linear-gradient(135deg,#fff 55%,rgba(234,88,12,.05))}
+.sc.mg{background:linear-gradient(135deg,#fff 55%,rgba(168,23,68,.05))}
+.sc.gr{background:linear-gradient(135deg,#fff 55%,rgba(22,163,74,.05))}
+.sc .sn{font-size:2rem}
+
+/* ─── SECTION TITLES — micro caps enterprise ─── */
+.st{
+  font-size:.7rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.09em;color:var(--text-muted);
+  border-bottom:none;padding-bottom:0;margin-bottom:14px;
+}
+.st::before{height:11px}
+
+/* ─── BADGES — legibilidade melhorada ─── */
+.bg{font-size:.67rem;padding:3px 10px}
+
+/* ─── CARDS DE OCORRÊNCIA — tint por urgência ─── */
+.oc.urgencia{background:linear-gradient(to right,rgba(220,38,38,.035),var(--bg-card))}
+.oc.grave{background:linear-gradient(to right,rgba(234,88,12,.035),var(--bg-card))}
+
+/* ─── FORMULÁRIOS — fundo branco (não rosado) ─── */
+.fg input,.fg select,.fg textarea{background:var(--bg-card)}
+
+/* ─── LABELS — micro caps para hierarquia visual ─── */
+.fg label{
+  font-size:.67rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.07em;
+  color:var(--text-muted);
+}
+
+/* ─── LOGIN CARD — sombra premium ─── */
+.lc{box-shadow:0 24px 64px rgba(168,23,68,.13),0 4px 16px rgba(31,24,21,.08)}
+
+/* ─── SCROLLBAR — tint da marca ─── */
+::-webkit-scrollbar-thumb{background:rgba(168,23,68,.2)}
+::-webkit-scrollbar-thumb:hover{background:rgba(168,23,68,.35)}
+
+/* ─── FOOTER ─── */
+.app-footer{border-top:1px solid var(--bd)}
+
+/* ─── RESPONSIVE overrides v2.2 ─── */
+@media(max-width:480px){
+  .tb{height:auto;padding:10px 1rem}
+  .tb-ver{display:none}
+  .nt button{padding:11px 12px;font-size:.73rem}
+}
