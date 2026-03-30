@@ -1138,3 +1138,219 @@ button:focus-visible{border-radius:var(--radius-sm)}
   .tb-ver{display:none}
   .nt button{padding:11px 12px;font-size:.73rem}
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PREMIUM SaaS REDESIGN v2.3
+   White topbar · Clean hierarchy · Stripe / Linear aesthetic
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── TOPBAR — white, clean, brand-accented ─── */
+.tb{
+  background:var(--bg-card)!important;
+  color:var(--text-primary)!important;
+  border-bottom:1px solid var(--bd)!important;
+  box-shadow:0 1px 0 var(--bd)!important;
+  height:56px!important;
+  padding:0 1.5rem!important;
+}
+.tb .at{
+  color:var(--mg)!important;
+  font-size:.97rem!important;
+  letter-spacing:-.025em!important;
+}
+.tb-ver{
+  background:var(--mgl)!important;
+  color:var(--mg)!important;
+  border:1px solid rgba(168,23,68,.18)!important;
+  font-size:.54rem!important;
+}
+
+/* User badge on white bg */
+.ub{
+  background:transparent!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  border:1px solid var(--bd)!important;
+  border-radius:var(--radius-sm)!important;
+  padding:5px 10px!important;
+  color:var(--text-primary)!important;
+}
+.ub .un{
+  color:var(--text-secondary)!important;
+  font-size:.78rem!important;
+  letter-spacing:0!important;
+}
+.ub .ur{color:var(--text-muted)!important;opacity:1!important;font-size:.64rem!important}
+
+/* Sair / action buttons on white bg */
+.lo{
+  background:transparent!important;
+  color:var(--text-secondary)!important;
+  border:1px solid var(--bd)!important;
+  font-size:.75rem!important;
+  padding:6px 12px!important;
+}
+.lo:hover{
+  background:var(--mgl)!important;
+  color:var(--mg)!important;
+  border-color:rgba(168,23,68,.28)!important;
+}
+.lo-ico{
+  background:transparent!important;
+  color:var(--text-muted)!important;
+  padding:6px 8px!important;
+}
+.lo-ico:hover{background:var(--mgl)!important;color:var(--mg)!important}
+
+/* WS status pill on white */
+.ws-status{margin-left:0!important}
+.ws-status.ok{background:var(--grl);color:var(--gr)}
+.ws-status.err{background:var(--rel);color:var(--re)}
+
+/* ─── NAVIGATION TABS — seamless with topbar ─── */
+.nt{padding:0 1.5rem!important;background:var(--bg-card)!important}
+.nt button{
+  flex:none!important;
+  font-size:.79rem!important;
+  padding:12px 14px!important;
+  font-weight:500!important;
+  color:var(--text-muted)!important;
+  border-bottom-width:2px!important;
+  letter-spacing:0!important;
+}
+.nt button.act{
+  color:var(--mg)!important;
+  font-weight:600!important;
+  background:none!important;
+  border-bottom-color:var(--mg)!important;
+}
+.nt button:hover:not(.act){
+  color:var(--text-secondary)!important;
+  background:transparent!important;
+}
+
+/* ─── DASHBOARD GREETING — plain text, Notion style ─── */
+.dash-greeting{
+  background:transparent!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  padding:8px 0 22px!important;
+  margin-bottom:1.5rem!important;
+  color:var(--text-primary)!important;
+  border-bottom:1px solid var(--bd)!important;
+  align-items:flex-start!important;
+}
+.dg-ico{display:none!important}
+.dg-left{
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  gap:3px!important;
+}
+.dg-saud{
+  font-family:var(--font-display)!important;
+  font-size:1.55rem!important;
+  font-weight:700!important;
+  color:var(--text-primary)!important;
+  letter-spacing:-.04em!important;
+  line-height:1.2!important;
+}
+.dg-info{
+  font-size:.81rem!important;
+  color:var(--text-muted)!important;
+  opacity:1!important;
+  margin-top:2px!important;
+  letter-spacing:0!important;
+}
+/* Counter — small accent badge */
+.dg-right{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  background:var(--mgl)!important;
+  border:1px solid rgba(168,23,68,.18)!important;
+  border-radius:var(--radius)!important;
+  padding:9px 16px!important;
+}
+.dg-num{
+  font-family:var(--font-display)!important;
+  font-size:1.5rem!important;
+  color:var(--mg)!important;
+  letter-spacing:-.03em!important;
+  line-height:1!important;
+}
+.dg-label{
+  color:var(--text-secondary)!important;
+  opacity:1!important;
+  font-size:.7rem!important;
+  font-weight:500!important;
+  text-align:left!important;
+  margin-top:0!important;
+  max-width:72px!important;
+  line-height:1.3!important;
+}
+
+/* ─── STAT CARDS — left-aligned, icon + number + label ─── */
+.sc{
+  text-align:left!important;
+  padding:16px 18px!important;
+  border:1px solid var(--bd)!important;
+  border-left-width:3px!important;
+  border-radius:var(--radius)!important;
+}
+.sc::after{display:none!important} /* remove v2.1 pseudo circle */
+.sc-ico{
+  font-size:1.35rem!important;
+  margin-bottom:10px!important;
+  display:block!important;
+  line-height:1!important;
+  font-family:inherit!important;
+  font-weight:400!important;
+}
+.sc .sn{
+  font-size:2.1rem!important;
+  display:block!important;
+  line-height:1!important;
+  margin-bottom:4px!important;
+}
+.sc .sl{
+  text-align:left!important;
+  font-size:.71rem!important;
+  letter-spacing:.03em!important;
+}
+
+/* ─── SECTION HEADER — Notion-style label ─── */
+.dash-section-hd .st{
+  font-size:.9rem!important;
+  font-weight:600!important;
+  text-transform:none!important;
+  letter-spacing:0!important;
+  color:var(--text-primary)!important;
+  margin:0!important;
+  padding:0!important;
+  border:none!important;
+}
+.dash-section-hd .st::before{height:13px!important;width:3px!important}
+
+/* ─── OCCURRENCE CARDS — slightly more distinct borders ─── */
+.oc{border-left-width:3px!important}
+
+/* ─── BADGES — filled solid (urgência/grave) ─── */
+.bg-urgencia{background:var(--re)!important;color:#fff!important}
+.bg-grave{background:var(--or)!important;color:#fff!important}
+
+/* ─── RODAPÉ — clean ─── */
+#rodape-app{
+  background:var(--bg-card)!important;
+  border-top:1px solid var(--bd)!important;
+  color:var(--text-muted)!important;
+  font-size:.7rem!important;
+  padding:10px 1.5rem!important;
+}
+
+/* ─── RESPONSIVE v2.3 ─── */
+@media(max-width:600px){
+  .tb{height:auto!important;padding:10px 1rem!important}
+  .nt{padding:0 0.25rem!important}
+  .dg-saud{font-size:1.25rem!important}
+  .dg-right{align-self:flex-start!important;margin-top:10px!important}
+}
