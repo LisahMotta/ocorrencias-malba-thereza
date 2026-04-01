@@ -526,12 +526,12 @@ function _ordTurmas(arr) {
 
 window.onTurmaChange = () => {
   const t = document.getElementById('occTurma').value;
-  selAlunos = []; document.getElementById('filtroAluno').value = '';
+  document.getElementById('filtroAluno').value = '';
   if (!t||!TD[t]) { document.getElementById('painelWrap').style.display='none'; return; }
   atuais = [...TD[t].alunos];
   document.getElementById('painelWrap').style.display='block';
   document.getElementById('lblTurma').textContent = t;
-  document.getElementById('lblTotal').textContent = t+' · '+atuais.length+' alunos';
+  document.getElementById('lblTotal').textContent = t+' · '+atuais.length+' alunos · '+selAlunos.length+' selecionado(s) no total';
   renderAlunos(atuais); renderTags();
 };
 window.filtrarAlunos = () => {
