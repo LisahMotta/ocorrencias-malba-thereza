@@ -526,13 +526,9 @@ function _ordTurmas(arr) {
 
 window.onTurmaChange = () => {
   const t = document.getElementById('occTurma').value;
-  // Preserva alunos já selecionados (manuais ou de turmas anteriores)
-  const manuais = selAlunos.filter(a => a.manual);
-  document.getElementById('filtroAluno').value = '';
+  selAlunos = []; document.getElementById('filtroAluno').value = '';
   if (!t||!TD[t]) { document.getElementById('painelWrap').style.display='none'; return; }
   atuais = [...TD[t].alunos];
-  // Remove selecionados que não existem mais na nova turma (exceto manuais)
-  selAlunos = selAlunos.filter(a => a.manual || atuais.some(x => x.ra === a.ra));
   document.getElementById('painelWrap').style.display='block';
   document.getElementById('lblTurma').textContent = t;
   document.getElementById('lblTotal').textContent = t+' · '+atuais.length+' alunos';
