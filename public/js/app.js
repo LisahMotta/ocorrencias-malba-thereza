@@ -517,7 +517,7 @@ function _montarTurmasSelectReal() {
 }
 function _ordTurmas(arr) {
   const ef=[], em=[];
-  arr.forEach(t => { (TD[t].nivel==='Ensino Fundamental'?ef:em).push(t); });
+  arr.forEach(t => { (TD[t]?.nivel==='Ensino Fundamental'?ef:em).push(t); });
   const n = t => { const m=t.match(/\d+/); return m?parseInt(m[0]):0; };
   ef.sort((a,b)=>n(a)-n(b)||a.localeCompare(b,'pt'));
   em.sort((a,b)=>n(a)-n(b)||a.localeCompare(b,'pt'));
@@ -526,9 +526,13 @@ function _ordTurmas(arr) {
 
 window.onTurmaChange = () => {
   const t = document.getElementById('occTurma').value;
-  selAlunos = []; document.getElementById('filtroAluno').value = '';
+  // Preserva alunos já selecionados (manuais ou de turmas anteriores)
+  const manuais = selAlunos.filter(a => a.manual);
+  document.getElementById('filtroAluno').value = '';
   if (!t||!TD[t]) { document.getElementById('painelWrap').style.display='none'; return; }
   atuais = [...TD[t].alunos];
+  // Remove selecionados que não existem mais na nova turma (exceto manuais)
+  selAlunos = selAlunos.filter(a => a.manual || atuais.some(x => x.ra === a.ra));
   document.getElementById('painelWrap').style.display='block';
   document.getElementById('lblTurma').textContent = t;
   document.getElementById('lblTotal').textContent = t+' · '+atuais.length+' alunos';
