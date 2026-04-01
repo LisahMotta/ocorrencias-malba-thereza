@@ -123,10 +123,10 @@
             </select></div>
         </div>
         <div class="fl">Turma e alunos</div>
-        <div class="fg"><label>Turma</label>
+        <div class="fg"><label>Turma da ocorrência</label>
           <select id="occTurma" onchange="onTurmaChange()"><option value="">Selecione...</option></select></div>
         <div class="fg" id="painelWrap" style="display:none">
-          <label>Aluno(s) — <strong id="lblTurma" style="color:var(--mg)"></strong></label>
+          <label>Alunos envolvidos — exibindo <strong id="lblTurma" style="color:var(--mg)"></strong> <span style="font-weight:400;color:var(--text-muted)">(troque a turma acima para adicionar de outra)</span></label>
           <div class="ap">
             <div class="aph"><span id="lblTotal"></span><small id="lblCount">0 selecionado(s)</small><button class="bn-link" onclick="window._adicionarAlunoManual()" title="Adicionar aluno não listado">➕ Não está na lista?</button></div>
             <div class="afw"><input type="text" id="filtroAluno" placeholder="Filtrar por nome..." oninput="filtrarAlunos()"></div>
