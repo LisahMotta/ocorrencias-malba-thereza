@@ -326,16 +326,19 @@
           </div>
         </div>
 
-        <!-- Gráfico anual com comparação por mês -->
+        <!-- Gráfico anual com comparação histórica -->
         <div class="fc" style="padding:16px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap">
-            <div class="fl" style="font-size:13px">📊 Ocorrências por mês — <span id="gestaoAnoLabel"></span></div>
-            <button id="btnZerarAno" class="bn" style="font-size:11px;padding:4px 12px;border-color:var(--re);color:var(--re);display:none" onclick="window._zerarAnoLetivo()">🗂 Encerrar Ano Letivo</button>
+            <div class="fl" style="font-size:13px">📊 Comparação anual — <span id="gestaoAnoLabel"></span></div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <label style="font-size:11px;color:var(--mu)">Ano:</label>
+              <select id="gestaoAnoSel" onchange="window._renderGraficoAnual()" style="font-size:12px;padding:3px 8px;border:1px solid var(--bd);border-radius:4px;background:var(--bg-card)"></select>
+            </div>
           </div>
           <div style="height:220px;position:relative">
             <canvas id="gestaoChartAnual"></canvas>
           </div>
-          <p style="font-size:11px;color:var(--mu);margin-top:8px;text-align:center">Compare os meses com mais ocorrências para planejar intervenções</p>
+          <p style="font-size:11px;color:var(--mu);margin-top:8px;text-align:center">Compare o ano selecionado com o anterior e a média histórica para planejar intervenções</p>
         </div>
       </div>
 
