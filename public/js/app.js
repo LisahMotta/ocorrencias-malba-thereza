@@ -1037,17 +1037,39 @@ window._renderGrafico = function() {
   document.getElementById('gestaoStatPend').textContent  = occ.filter(o => o.status === 'pendente').length;
   document.getElementById('gestaoStatEnc').textContent   = occ.filter(o => o.status === 'encerrado').length;
 
-  // Inicializar seletor de mês (apenas na primeira vez)
+  // Seletor de mês: últimos 24 meses + meses com dados históricos reais
   const sel = document.getElementById('gestaoMesSel');
   if (sel && !sel.options.length) {
     const hoje = new Date();
-    for (let m = 0; m < 12; m++) {
-      const opt = document.createElement('option');
-      opt.value = `${hoje.getFullYear()}-${String(m+1).padStart(2,'0')}`;
-      opt.textContent = `${_MESES_NOMES[m]} ${hoje.getFullYear()}`;
-      if (m === hoje.getMonth()) opt.selected = true;
-      sel.appendChild(opt);
+    const mesesSet = new Set();
+    for (let i = 0; i < 24; i++) {
+      const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      mesesSet.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
     }
+    occ.forEach(o => { const iso = _parseDateOcc(o); if (iso) mesesSet.add(iso.slice(0,7)); });
+    const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
+    [...mesesSet].sort().reverse().forEach(m => {
+      const [y, mo] = m.split('-').map(Number);
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = `${_MESES_NOMES[mo-1]} ${y}`;
+      if (m === hojeStr) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  // Seletor de ano para gráfico histórico — reconstrói sempre (dados podem mudar)
+  const anoSel = document.getElementById('gestaoAnoSel');
+  if (anoSel) {
+    const anoAntes = anoSel.value ? parseInt(anoSel.value) : new Date().getFullYear();
+    anoSel.innerHTML = '';
+    const anosSet = new Set([new Date().getFullYear()]);
+    occ.forEach(o => { const iso = _parseDateOcc(o); if (iso) anosSet.add(parseInt(iso.slice(0,4))); });
+    [...anosSet].sort().reverse().forEach(ano => {
+      const opt = document.createElement('option');
+      opt.value = ano; opt.textContent = String(ano);
+      if (ano === anoAntes) opt.selected = true;
+      anoSel.appendChild(opt);
+    });
   }
 
   window._renderGraficoMensal();
@@ -1105,42 +1127,54 @@ window._renderGraficoMensal = function() {
 };
 
 window._renderGraficoAnual = function() {
-  const hoje = new Date();
-  const anoAtual = hoje.getFullYear();
+  const anoSel = document.getElementById('gestaoAnoSel');
+  const anoAtual = anoSel?.value ? parseInt(anoSel.value) : new Date().getFullYear();
+  const anoPrev  = anoAtual - 1;
+
   const lblAno = document.getElementById('gestaoAnoLabel');
-  if (lblAno) lblAno.textContent = anoAtual;
+  if (lblAno) lblAno.textContent = `${anoPrev} vs ${anoAtual}`;
 
-  const btnZerar = document.getElementById('btnZerarAno');
-  if (btnZerar) btnZerar.style.display = ['diretor','vice'].includes(cu?.perfil) ? '' : 'none';
+  // Anos com dados anteriores ao selecionado (para média histórica)
+  const anosHist = [...new Set(
+    occ.map(o => _parseDateOcc(o)?.slice(0,4)).filter(Boolean).map(Number)
+  )].filter(a => a < anoAtual);
 
-  const totais = [], urgencias = [];
+  const totaisAtual = [], totaisPrev = [], mediaHist = [];
   for (let m = 0; m < 12; m++) {
-    const anoStr = String(anoAtual);
     const mesStr = String(m + 1).padStart(2, '0');
-    const doMes = occ.filter(o => { const iso = _parseDateOcc(o); return iso && iso.startsWith(`${anoStr}-${mesStr}`); });
-    totais.push(doMes.length);
-    urgencias.push(doMes.filter(o => o.gravidade === 'urgencia').length);
+    const filtra = (ano) => occ.filter(o => { const iso = _parseDateOcc(o); return iso?.startsWith(`${ano}-${mesStr}`); });
+    totaisAtual.push(filtra(anoAtual).length);
+    totaisPrev.push(filtra(anoPrev).length);
+    if (anosHist.length > 0) {
+      const soma = anosHist.reduce((acc, a) => acc + filtra(a).length, 0);
+      mediaHist.push(+(soma / anosHist.length).toFixed(1));
+    } else {
+      mediaHist.push(null);
+    }
+  }
+
+  const datasets = [
+    { label: String(anoAtual), data: totaisAtual, type:'bar', backgroundColor:'rgba(168,23,68,0.7)',  borderColor:'rgba(168,23,68,1)',    borderWidth:1, borderRadius:4, order:2 },
+    { label: String(anoPrev),  data: totaisPrev,  type:'bar', backgroundColor:'rgba(168,23,68,0.2)',  borderColor:'rgba(168,23,68,0.45)', borderWidth:1, borderRadius:4, order:3 },
+  ];
+  if (anosHist.length >= 1) {
+    datasets.push({
+      label:'Média histórica', data:mediaHist, type:'line',
+      borderColor:'rgba(234,88,12,0.9)', backgroundColor:'transparent',
+      borderWidth:2, borderDash:[5,4], pointRadius:3,
+      pointBackgroundColor:'rgba(234,88,12,0.9)',
+      fill:false, order:1, tension:0.3,
+    });
   }
 
   const canvas = document.getElementById('gestaoChartAnual');
   if (!canvas) return;
 
-  if (_graficoChartAnual) {
-    _graficoChartAnual.data.datasets[0].data = totais;
-    _graficoChartAnual.data.datasets[1].data = urgencias;
-    _graficoChartAnual.update('none');
-    return;
-  }
+  if (_graficoChartAnual) { _graficoChartAnual.destroy(); _graficoChartAnual = null; }
 
   _graficoChartAnual = new Chart(canvas.getContext('2d'), {
     type: 'bar',
-    data: {
-      labels: _MESES_CURTOS,
-      datasets: [
-        { label: 'Total', data: totais, backgroundColor: 'rgba(168,23,68,0.55)', borderColor: 'rgba(168,23,68,1)', borderWidth: 1, borderRadius: 4, order: 2 },
-        { label: 'Urgências', data: urgencias, backgroundColor: 'rgba(229,57,53,0.75)', borderColor: 'rgba(229,57,53,1)', borderWidth: 1, borderRadius: 4, order: 1 },
-      ],
-    },
+    data: { labels: _MESES_CURTOS, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -1148,10 +1182,10 @@ window._renderGraficoAnual = function() {
         legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
         tooltip: {
           callbacks: {
-            label: ctx => ` ${ctx.raw} ${ctx.dataset.label.toLowerCase()}`,
+            label: ctx => ctx.raw != null ? ` ${ctx.raw} ocorr. — ${ctx.dataset.label}` : ' sem dados',
             footer: items => {
               const idx = items[0].dataIndex;
-              const t = totais[idx];
+              const t = totaisAtual[idx];
               return t > 0 ? [`Mês: ${_MESES_NOMES[idx]}`] : [];
             },
           },
