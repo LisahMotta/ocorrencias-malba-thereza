@@ -355,6 +355,41 @@
         </div>
       </div>
 
+      <!-- IMPORTAR ALUNOS VIA CSV — accordion (só diretor/vice) -->
+      <div id="importCsvSection" style="display:none;margin-bottom:1rem">
+        <button class="audit-toggle" id="importCsvToggleBtn" onclick="window._toggleImportCsv()">
+          <span>📋 Importar Alunos (CSV)</span>
+          <span class="audit-chevron" id="importCsvChevron">▼</span>
+        </button>
+        <div class="audit-body" id="importCsvBody" style="display:none">
+          <div style="padding:16px">
+            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
+              Importe a lista de alunos por turma via arquivo <strong>.csv</strong>.<br>
+              O arquivo deve ter as colunas: <code>turma;nivel;nome;ra</code> (separadas por <code>;</code> ou <code>,</code>).
+            </p>
+            <button class="bn" style="font-size:12px;margin-bottom:14px" onclick="window._downloadTemplateCsv()">⬇ Baixar modelo CSV</button>
+            <div class="fr" style="gap:12px;flex-wrap:wrap;align-items:flex-end">
+              <div class="fg" style="flex:1;min-width:200px">
+                <label>Arquivo CSV</label>
+                <input type="file" id="csvFileInput" accept=".csv,text/csv" onchange="window._previewCsv(this)">
+              </div>
+              <div class="fg" style="min-width:160px">
+                <label>Modo de importação</label>
+                <select id="csvModo" style="font-size:13px">
+                  <option value="substituir">Substituir tudo</option>
+                  <option value="mesclar">Mesclar (mantém existentes)</option>
+                </select>
+              </div>
+            </div>
+            <div id="csvPreview" style="display:none;margin-top:10px;padding:10px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;font-size:13px"></div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button class="bp" id="btnImportarCsv" disabled onclick="window._importarCsv()">📥 Importar</button>
+              <span id="csvResultado" style="font-size:13px;align-self:center"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ZONA DE PERIGO — accordion protegido -->
       <div id="dangerSection" style="margin-bottom:1rem">
         <button class="audit-toggle danger-toggle" id="dangerToggleBtn" onclick="window._toggleZonaPerigo()">

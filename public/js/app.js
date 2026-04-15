@@ -1287,9 +1287,12 @@ async function renderGestao() {
 
   document.getElementById('gestaoList').innerHTML = html;
 
-  // Exibe seção de auditoria só para diretor/vice
+  // Exibe seções restritas a diretor/vice
+  const ehGestor = ['diretor','vice'].includes(cu.perfil);
   const audSec = document.getElementById('auditoriaSection');
-  if (audSec) audSec.style.display = ['diretor','vice'].includes(cu.perfil) ? '' : 'none';
+  if (audSec) audSec.style.display = ehGestor ? '' : 'none';
+  const csvSec = document.getElementById('importCsvSection');
+  if (csvSec) csvSec.style.display = ehGestor ? '' : 'none';
 }
 
 // ─── AUDITORIA ────────────────────────────────────────────────────────────────
@@ -1306,6 +1309,7 @@ const _ACAO_LABEL = {
   desativar_usuario:      { icon: '🚫', label: 'Desativou usuário' },
   exportar_backup:        { icon: '💾', label: 'Exportou backup' },
   resetar_ocorrencias:    { icon: '🗑', label: 'Apagou todas as ocorrências' },
+  importar_turmas:        { icon: '📋', label: 'Importou lista de alunos (CSV)' },
 };
 
 // Abre/fecha o accordion de auditoria (carrega na primeira abertura)
@@ -1319,6 +1323,104 @@ window._toggleUsuarios = () => {
   body.style.display = abrindo ? '' : 'none';
   btn?.classList.toggle('open', abrindo);
   if (chev) chev.style.transform = abrindo ? 'rotate(180deg)' : '';
+};
+
+// Accordion — Importar CSV
+window._toggleImportCsv = () => {
+  const body = document.getElementById('importCsvBody');
+  const btn  = document.getElementById('importCsvToggleBtn');
+  const chev = document.getElementById('importCsvChevron');
+  if (!body) return;
+  const abrindo = body.style.display === 'none';
+  body.style.display = abrindo ? '' : 'none';
+  btn?.classList.toggle('open', abrindo);
+  if (chev) chev.style.transform = abrindo ? 'rotate(180deg)' : '';
+};
+
+// Download template CSV com as turmas atuais
+window._downloadTemplateCsv = () => {
+  const linhas = ['turma;nivel;nome;ra'];
+  Object.entries(TD).forEach(([turma, dados]) => {
+    (dados.alunos || []).forEach(a => {
+      linhas.push([turma, dados.nivel || '', a.nome || '', a.ra || ''].join(';'));
+    });
+  });
+  const blob = new Blob(['\uFEFF' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'turmas_modelo.csv';
+  a.click();
+};
+
+// Preview client-side antes de enviar
+window._previewCsv = (input) => {
+  const preview = document.getElementById('csvPreview');
+  const btn     = document.getElementById('btnImportarCsv');
+  const res     = document.getElementById('csvResultado');
+  if (res) res.textContent = '';
+  if (!input.files?.length) { preview.style.display = 'none'; btn.disabled = true; return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    let text = e.target.result;
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    const linhas = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
+    if (linhas.length < 2) {
+      preview.style.display = 'block';
+      preview.innerHTML = '<span style="color:var(--re)">Arquivo vazio ou sem dados.</span>';
+      btn.disabled = true; return;
+    }
+    const sep  = linhas[0].includes(';') ? ';' : ',';
+    const cols = linhas[0].split(sep).map(c => c.trim().toLowerCase());
+    if (!cols.includes('turma') || !cols.includes('nome')) {
+      preview.style.display = 'block';
+      preview.innerHTML = '<span style="color:var(--re)">Cabeçalho inválido — precisa ter "turma" e "nome".</span>';
+      btn.disabled = true; return;
+    }
+    const iT = cols.indexOf('turma'), iN = cols.indexOf('nome');
+    const turmasVistas = new Set(); let totalAlunos = 0;
+    for (let i = 1; i < linhas.length; i++) {
+      const c = linhas[i].split(sep).map(s => s.trim());
+      if (c[iT] && c[iN]) { turmasVistas.add(c[iT]); totalAlunos++; }
+    }
+    preview.style.display = 'block';
+    preview.innerHTML = `✅ <strong>${turmasVistas.size}</strong> turma(s) · <strong>${totalAlunos}</strong> aluno(s) encontrados.<br>
+      <span style="color:var(--mu);font-size:12px">Turmas: ${[...turmasVistas].join(', ')}</span>`;
+    btn.disabled = false;
+  };
+  reader.readAsText(input.files[0], 'utf-8');
+};
+
+// Envia CSV ao servidor
+window._importarCsv = async () => {
+  const file = document.getElementById('csvFileInput')?.files?.[0];
+  const modo = document.getElementById('csvModo')?.value || 'substituir';
+  const btn  = document.getElementById('btnImportarCsv');
+  const res  = document.getElementById('csvResultado');
+  if (!file) return;
+  btn.disabled = true;
+  res.textContent = 'Importando…';
+  const form = new FormData();
+  form.append('csv', file);
+  form.append('modo', modo);
+  // Usa fetch direto para não sobrescrever o Content-Type multipart que o browser gera
+  const resp = await fetch('/api/admin/importar-turmas', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + getToken() },
+    body: form,
+  });
+  if (!resp || !resp.ok) {
+    const err = await resp?.json().catch(() => ({}));
+    res.innerHTML = `<span style="color:var(--re)">Erro: ${err.erro || 'falha no servidor'}</span>`;
+    btn.disabled = false; return;
+  }
+  const data = await resp.json();
+  res.innerHTML = `<span style="color:var(--gr)">✅ ${data.turmas} turma(s), ${data.alunos} aluno(s) importados (${data.modo})</span>`;
+  // Recarrega turmas.json em memória
+  try {
+    const tj = await fetch('/assets/turmas.json?t=' + Date.now());
+    TD = await tj.json();
+  } catch {}
+  toastOk(`Importação concluída: ${data.alunos} alunos em ${data.turmas} turmas.`);
 };
 
 // Accordion — Zona de Perigo
