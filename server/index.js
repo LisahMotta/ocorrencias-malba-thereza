@@ -478,6 +478,77 @@ app.get('/api/backup/csv', autenticar, exigePerfil('diretor','coordenador','vice
   res.send(csv);
 });
 
+// ─── IMPORTAR ALUNOS VIA CSV ─────────────────────────────────────────────────
+const _uploadCsv = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 500 * 1024 }, // 500 KB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'text/csv' || file.mimetype === 'application/vnd.ms-excel' || file.originalname.toLowerCase().endsWith('.csv'))
+      cb(null, true);
+    else cb(new Error('Somente arquivos .csv são aceitos'));
+  },
+});
+
+const TURMAS_PATH = path.join(__dirname, '../public/assets/turmas.json');
+
+app.post('/api/admin/importar-turmas',
+  autenticar, exigePerfil('diretor', 'vice'),
+  (req, res, next) => _uploadCsv.single('csv')(req, res, err => {
+    if (err) return res.status(400).json({ erro: err.message });
+    next();
+  }),
+  async (req, res) => {
+    if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
+    const modo = req.body.modo === 'mesclar' ? 'mesclar' : 'substituir';
+
+    // Decode & clean BOM
+    let text = req.file.buffer.toString('utf-8');
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    const linhas = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
+    if (linhas.length < 2) return res.status(400).json({ erro: 'CSV sem dados (mínimo: cabeçalho + 1 linha)' });
+
+    // Detect separator
+    const header = linhas[0];
+    const sep = header.includes(';') ? ';' : ',';
+    const cols = header.split(sep).map(c => c.trim().toLowerCase().replace(/^\uFEFF/, ''));
+    const iT = cols.indexOf('turma'), iN = cols.indexOf('nome');
+    const iR = cols.indexOf('ra'),    iL = cols.indexOf('nivel');
+    if (iT === -1 || iN === -1) return res.status(400).json({ erro: 'CSV deve ter colunas "turma" e "nome"' });
+
+    const novo = {};
+    for (let i = 1; i < linhas.length; i++) {
+      const c = linhas[i].split(sep).map(s => s.trim());
+      const turma = c[iT] || '', nome = (c[iN] || '').toUpperCase();
+      if (!turma || !nome) continue;
+      const ra    = iR >= 0 ? (c[iR] || '') : '';
+      const nivel = iL >= 0 ? (c[iL] || '') : '';
+      if (!novo[turma]) novo[turma] = { nivel: nivel || 'Ensino Médio', alunos: [] };
+      if (nivel && !novo[turma].nivel) novo[turma].nivel = nivel;
+      novo[turma].alunos.push({ nome, ra });
+    }
+    if (!Object.keys(novo).length) return res.status(400).json({ erro: 'Nenhum dado válido encontrado' });
+
+    let final;
+    if (modo === 'mesclar') {
+      final = JSON.parse(fs.readFileSync(TURMAS_PATH, 'utf-8'));
+      for (const [turma, dados] of Object.entries(novo)) {
+        if (!final[turma]) { final[turma] = dados; continue; }
+        const map = new Map(final[turma].alunos.map(a => [a.ra || a.nome, a]));
+        dados.alunos.forEach(a => map.set(a.ra || a.nome, a));
+        final[turma].alunos = [...map.values()];
+      }
+    } else {
+      final = novo;
+    }
+
+    fs.writeFileSync(TURMAS_PATH, JSON.stringify(final, null, 2), 'utf-8');
+    const totalAlunos = Object.values(novo).reduce((s, t) => s + t.alunos.length, 0);
+    await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'importar_turmas',
+      { modo, turmas: Object.keys(novo).length, alunos: totalAlunos });
+    res.json({ ok: true, turmas: Object.keys(novo).length, alunos: totalAlunos, modo });
+  }
+);
+
 // ─── ALUNOS MONITORADOS ───────────────────────────────────────────────────────
 const PODE_MONITORAR = ['poc', 'coordenador', 'vice', 'diretor'];
 
