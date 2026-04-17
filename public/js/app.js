@@ -1478,43 +1478,50 @@ window._previewCsv = (input) => {
   const res     = document.getElementById('csvResultado');
   if (res) res.textContent = '';
   if (!input.files?.length) { preview.style.display = 'none'; btn.disabled = true; return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    let text = e.target.result;
+
+  const _parseCsv = (text) => {
     if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
     const linhas = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
-    if (linhas.length < 2) {
-      preview.style.display = 'block';
-      preview.innerHTML = '<span style="color:var(--re)">Arquivo vazio ou sem dados.</span>';
-      btn.disabled = true; return;
-    }
-    const sep    = linhas[0].includes(';') ? ';' : ',';
+    if (linhas.length < 2) return null;
+    const sep    = linhas[0].includes(';') ? ';' : linhas[0].includes('\t') ? '\t' : ',';
     const cols   = linhas[0].split(sep).map(c => c.trim().replace(/^\uFEFF/, ''));
     const normed = cols.map(c => _normColCsv(c));
-
-    // Detecta formato escola (relação de alunos por classe)
-    const iSerie = _findColCsv(normed, 'série', 'serie', 'serie/turma', 'turma', 'class', 'classe');
     const iNome  = _findColCsv(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno');
+    if (iNome === -1) return null;
+    const iSerie = _findColCsv(normed, 'série', 'serie', 'serie/turma', 'turma', 'class', 'classe');
     const iSit   = _findColCsv(normed, 'situação', 'situacao', 'situação do aluno', 'status', 'sit');
-
-    if (iNome === -1) {
-      preview.style.display = 'block';
-      preview.innerHTML = '<span style="color:var(--re)">Cabeçalho inválido — coluna "nome" ou "nome do aluno" não encontrada.</span>';
-      btn.disabled = true; return;
-    }
-
     const turmasVistas = new Set();
     let totalAtivos = 0, totalIgnorados = 0;
     for (let i = 1; i < linhas.length; i++) {
       const c = linhas[i].split(sep).map(s => s.trim());
       if (!c[iNome]) continue;
-      // Filtra inativos no preview
       if (iSit >= 0) {
         const sit = _normColCsv(c[iSit] || '');
         if (sit && sit !== 'ativo') { totalIgnorados++; continue; }
       }
       if (iSerie >= 0 && c[iSerie]) turmasVistas.add(c[iSerie]);
       totalAtivos++;
+    }
+    return { turmasVistas, totalAtivos, totalIgnorados };
+  };
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const buf = e.target.result;
+    // Tenta UTF-8 primeiro, depois Windows-1252 (latin1) — padrão de exportações escolares BR
+    let resultado = _parseCsv(new TextDecoder('utf-8').decode(buf));
+    if (!resultado) resultado = _parseCsv(new TextDecoder('windows-1252').decode(buf));
+
+    if (!resultado) {
+      preview.style.display = 'block';
+      preview.innerHTML = '<span style="color:var(--re)">Cabeçalho inválido — coluna "nome do aluno" não encontrada.</span>';
+      btn.disabled = true; return;
+    }
+    const { turmasVistas, totalAtivos, totalIgnorados } = resultado;
+    if (totalAtivos === 0) {
+      preview.style.display = 'block';
+      preview.innerHTML = '<span style="color:var(--re)">Nenhum aluno ativo encontrado no arquivo.</span>';
+      btn.disabled = true; return;
     }
     const ignoradosInfo = totalIgnorados > 0
       ? `<br><span style="color:var(--mu);font-size:12px">⚠ ${totalIgnorados} aluno(s) ignorado(s) (inativos)</span>`
@@ -1526,7 +1533,7 @@ window._previewCsv = (input) => {
     preview.innerHTML = `✅ <strong>${turmasVistas.size || '?'}</strong> turma(s) · <strong>${totalAtivos}</strong> aluno(s) ativo(s).${ignoradosInfo}${turmasInfo}`;
     btn.disabled = false;
   };
-  reader.readAsText(input.files[0], 'utf-8');
+  reader.readAsArrayBuffer(input.files[0]);
 };
 
 // Envia CSV ao servidor
