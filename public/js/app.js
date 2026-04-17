@@ -1464,6 +1464,13 @@ window._downloadTemplateCsv = () => {
   a.click();
 };
 
+// Normaliza nome de coluna para comparação
+const _normColCsv = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+const _findColCsv = (normed, ...aliases) => {
+  for (const a of aliases) { const i = normed.indexOf(_normColCsv(a)); if (i >= 0) return i; }
+  return -1;
+};
+
 // Preview client-side antes de enviar
 window._previewCsv = (input) => {
   const preview = document.getElementById('csvPreview');
@@ -1481,22 +1488,42 @@ window._previewCsv = (input) => {
       preview.innerHTML = '<span style="color:var(--re)">Arquivo vazio ou sem dados.</span>';
       btn.disabled = true; return;
     }
-    const sep  = linhas[0].includes(';') ? ';' : ',';
-    const cols = linhas[0].split(sep).map(c => c.trim().toLowerCase());
-    if (!cols.includes('turma') || !cols.includes('nome')) {
+    const sep    = linhas[0].includes(';') ? ';' : ',';
+    const cols   = linhas[0].split(sep).map(c => c.trim().replace(/^\uFEFF/, ''));
+    const normed = cols.map(c => _normColCsv(c));
+
+    // Detecta formato escola (relação de alunos por classe)
+    const iSerie = _findColCsv(normed, 'série', 'serie', 'serie/turma', 'turma', 'class', 'classe');
+    const iNome  = _findColCsv(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno');
+    const iSit   = _findColCsv(normed, 'situação', 'situacao', 'situação do aluno', 'status', 'sit');
+
+    if (iNome === -1) {
       preview.style.display = 'block';
-      preview.innerHTML = '<span style="color:var(--re)">Cabeçalho inválido — precisa ter "turma" e "nome".</span>';
+      preview.innerHTML = '<span style="color:var(--re)">Cabeçalho inválido — coluna "nome" ou "nome do aluno" não encontrada.</span>';
       btn.disabled = true; return;
     }
-    const iT = cols.indexOf('turma'), iN = cols.indexOf('nome');
-    const turmasVistas = new Set(); let totalAlunos = 0;
+
+    const turmasVistas = new Set();
+    let totalAtivos = 0, totalIgnorados = 0;
     for (let i = 1; i < linhas.length; i++) {
       const c = linhas[i].split(sep).map(s => s.trim());
-      if (c[iT] && c[iN]) { turmasVistas.add(c[iT]); totalAlunos++; }
+      if (!c[iNome]) continue;
+      // Filtra inativos no preview
+      if (iSit >= 0) {
+        const sit = _normColCsv(c[iSit] || '');
+        if (sit && sit !== 'ativo') { totalIgnorados++; continue; }
+      }
+      if (iSerie >= 0 && c[iSerie]) turmasVistas.add(c[iSerie]);
+      totalAtivos++;
     }
+    const ignoradosInfo = totalIgnorados > 0
+      ? `<br><span style="color:var(--mu);font-size:12px">⚠ ${totalIgnorados} aluno(s) ignorado(s) (inativos)</span>`
+      : '';
+    const turmasInfo = turmasVistas.size > 0
+      ? `<br><span style="color:var(--mu);font-size:12px">Turmas: ${[...turmasVistas].join(', ')}</span>`
+      : '';
     preview.style.display = 'block';
-    preview.innerHTML = `✅ <strong>${turmasVistas.size}</strong> turma(s) · <strong>${totalAlunos}</strong> aluno(s) encontrados.<br>
-      <span style="color:var(--mu);font-size:12px">Turmas: ${[...turmasVistas].join(', ')}</span>`;
+    preview.innerHTML = `✅ <strong>${turmasVistas.size || '?'}</strong> turma(s) · <strong>${totalAtivos}</strong> aluno(s) ativo(s).${ignoradosInfo}${turmasInfo}`;
     btn.disabled = false;
   };
   reader.readAsText(input.files[0], 'utf-8');
@@ -1526,7 +1553,8 @@ window._importarCsv = async () => {
     btn.disabled = false; return;
   }
   const data = await resp.json();
-  res.innerHTML = `<span style="color:var(--gr)">✅ ${data.turmas} turma(s), ${data.alunos} aluno(s) importados (${data.modo})</span>`;
+  const ignInfo = data.ignorados ? ` · ${data.ignorados} ignorado(s)` : '';
+  res.innerHTML = `<span style="color:var(--gr)">✅ ${data.turmas} turma(s), ${data.alunos} aluno(s) importados (${data.modo})${ignInfo}</span>`;
   // Recarrega turmas.json em memória
   try {
     const tj = await fetch('/assets/turmas.json?t=' + Date.now());

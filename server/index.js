@@ -493,7 +493,7 @@ app.get('/api/backup/csv', autenticar, exigePerfil('diretor','coordenador','vice
 // ─── IMPORTAR ALUNOS VIA CSV ─────────────────────────────────────────────────
 const _uploadCsv = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 500 * 1024 }, // 500 KB
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'text/csv' || file.mimetype === 'application/vnd.ms-excel' || file.originalname.toLowerCase().endsWith('.csv'))
       cb(null, true);
@@ -502,6 +502,26 @@ const _uploadCsv = multer({
 });
 
 const TURMAS_PATH = path.join(__dirname, '../public/assets/turmas.json');
+
+// Normaliza nome de coluna: minúsculo, sem acento, sem espaço extra
+function _normCol(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+// Acha índice da coluna pelo nome normalizado (aceita múltiplos aliases)
+function _findCol(normed, ...aliases) {
+  for (const a of aliases) {
+    const idx = normed.indexOf(_normCol(a));
+    if (idx >= 0) return idx;
+  }
+  return -1;
+}
+// Mapeia "tipo de ensino" para o padrão do sistema
+function _mapNivel(s) {
+  const n = _normCol(s || '');
+  if (n.includes('fundamental')) return 'Ensino Fundamental';
+  if (n.includes('medio') || n.includes('médio') || n.includes('medio')) return 'Ensino Médio';
+  return 'Ensino Médio';
+}
 
 app.post('/api/admin/importar-turmas',
   autenticar, exigePerfil('diretor', 'vice'),
@@ -513,32 +533,57 @@ app.post('/api/admin/importar-turmas',
     if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
     const modo = req.body.modo === 'mesclar' ? 'mesclar' : 'substituir';
 
-    // Decode & clean BOM
+    // Decode & limpa BOM
     let text = req.file.buffer.toString('utf-8');
     if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
     const linhas = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
     if (linhas.length < 2) return res.status(400).json({ erro: 'CSV sem dados (mínimo: cabeçalho + 1 linha)' });
 
-    // Detect separator
+    // Detecta separador
     const header = linhas[0];
     const sep = header.includes(';') ? ';' : ',';
-    const cols = header.split(sep).map(c => c.trim().toLowerCase().replace(/^\uFEFF/, ''));
-    const iT = cols.indexOf('turma'), iN = cols.indexOf('nome');
-    const iR = cols.indexOf('ra'),    iL = cols.indexOf('nivel');
-    if (iT === -1 || iN === -1) return res.status(400).json({ erro: 'CSV deve ter colunas "turma" e "nome"' });
+    const cols   = header.split(sep).map(c => c.trim().replace(/^\uFEFF/, ''));
+    const normed = cols.map(c => _normCol(c));
+
+    // ── Formato relatório da escola ──────────────────────────────────────────
+    // Colunas: tipo de ensino | série | nome do aluno | ra | dígito do ra | situação
+    const iSerie  = _findCol(normed, 'série', 'serie', 'serie/turma', 'turma', 'class', 'classe');
+    const iNivel  = _findCol(normed, 'tipo de ensino', 'tipo_de_ensino', 'tipo ensino', 'nivel', 'nível', 'tipo');
+    const iNome   = _findCol(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno');
+    const iRa     = _findCol(normed, 'ra', 'codigo ra', 'cod ra');
+    const iDigito = _findCol(normed, 'digito do ra', 'dígito do ra', 'digito ra', 'dígito ra', 'digito', 'dígito', 'dig');
+    const iSit    = _findCol(normed, 'situação', 'situacao', 'situação do aluno', 'status', 'sit');
+
+    if (iNome === -1) return res.status(400).json({ erro: 'Coluna "nome" ou "nome do aluno" não encontrada no CSV' });
+    if (iSerie === -1) return res.status(400).json({ erro: 'Coluna "série" ou "turma" não encontrada no CSV' });
 
     const novo = {};
+    let ignorados = 0;
+
     for (let i = 1; i < linhas.length; i++) {
       const c = linhas[i].split(sep).map(s => s.trim());
-      const turma = c[iT] || '', nome = (c[iN] || '').toUpperCase();
-      if (!turma || !nome) continue;
-      const ra    = iR >= 0 ? (c[iR] || '') : '';
-      const nivel = iL >= 0 ? (c[iL] || '') : '';
-      if (!novo[turma]) novo[turma] = { nivel: nivel || 'Ensino Médio', alunos: [] };
-      if (nivel && !novo[turma].nivel) novo[turma].nivel = nivel;
-      novo[turma].alunos.push({ nome, ra });
+      const nome = (c[iNome] || '').toUpperCase().trim();
+      const serie = (c[iSerie] || '').trim();
+      if (!nome || !serie) continue;
+
+      // Filtra apenas alunos ativos
+      if (iSit >= 0) {
+        const sit = _normCol(c[iSit] || '');
+        if (sit && sit !== 'ativo') { ignorados++; continue; }
+      }
+
+      const nivel = iNivel >= 0 ? _mapNivel(c[iNivel]) : 'Ensino Médio';
+
+      // RA = base + dígito concatenados
+      const raBase   = iRa     >= 0 ? (c[iRa]     || '').replace(/\D/g, '') : '';
+      const raDigito = iDigito >= 0 ? (c[iDigito]  || '').replace(/\D/g, '') : '';
+      const ra = raBase + raDigito;
+
+      if (!novo[serie]) novo[serie] = { nivel, alunos: [] };
+      novo[serie].alunos.push({ nome, ra });
     }
-    if (!Object.keys(novo).length) return res.status(400).json({ erro: 'Nenhum dado válido encontrado' });
+
+    if (!Object.keys(novo).length) return res.status(400).json({ erro: 'Nenhum aluno ativo encontrado no CSV' });
 
     let final;
     if (modo === 'mesclar') {
@@ -556,8 +601,8 @@ app.post('/api/admin/importar-turmas',
     fs.writeFileSync(TURMAS_PATH, JSON.stringify(final, null, 2), 'utf-8');
     const totalAlunos = Object.values(novo).reduce((s, t) => s + t.alunos.length, 0);
     await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'importar_turmas',
-      { modo, turmas: Object.keys(novo).length, alunos: totalAlunos });
-    res.json({ ok: true, turmas: Object.keys(novo).length, alunos: totalAlunos, modo });
+      { modo, turmas: Object.keys(novo).length, alunos: totalAlunos, ignorados });
+    res.json({ ok: true, turmas: Object.keys(novo).length, alunos: totalAlunos, ignorados, modo });
   }
 );
 
