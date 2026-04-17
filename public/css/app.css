@@ -1354,3 +1354,35 @@ button:focus-visible{border-radius:var(--radius-sm)}
   .dg-saud{font-size:1.25rem!important}
   .dg-right{align-self:flex-start!important;margin-top:10px!important}
 }
+
+/* ── Botão de foto na lista de alunos ───────────────────────────────────────── */
+.ai{display:flex;align-items:center;gap:6px}
+.ai-foto-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:1px 3px;opacity:.45;margin-left:auto;line-height:1;border-radius:4px;flex-shrink:0}
+.ai-foto-btn:hover{opacity:1;background:var(--bg)}
+.at2-foto{background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px;opacity:.55;line-height:1}
+.at2-foto:hover{opacity:1}
+
+/* ── Popup de foto do aluno ─────────────────────────────────────────────────── */
+.foto-popup{position:fixed;z-index:9999;background:var(--bg-card);border:1px solid var(--bd);border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:14px;width:180px;text-align:center;animation:fadeIn .15s ease}
+.fp-nome{font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:10px;word-break:break-word;line-height:1.3}
+.fp-img{width:110px;height:110px;border-radius:50%;overflow:hidden;margin:0 auto 10px;background:var(--bg);display:flex;align-items:center;justify-content:center;border:2px solid var(--bd)}
+.fp-foto{width:100%;height:100%;object-fit:cover}
+.fp-load,.fp-semfoto{font-size:11px;color:var(--mu);line-height:1.5}
+.fp-close{font-size:11px;padding:3px 14px;border:1px solid var(--bd);border-radius:5px;background:none;cursor:pointer;color:var(--text-secondary)}
+.fp-close:hover{background:var(--bg)}
+
+/* ── Bloqueio de impressão LGPD ─────────────────────────────────────────────── */
+@media print {
+  body * { visibility: hidden !important; }
+  body::before {
+    visibility: visible !important;
+    display: block !important;
+    content: "🔒  IMPRESSÃO BLOQUEADA — LGPD  |  Este sistema contém dados pessoais de alunos menores de idade. A impressão não é permitida pela Lei Geral de Proteção de Dados (Lei nº 13.709/2018) e pelo ECA (Lei nº 8.069/1990).";
+    text-align: center;
+    font-size: 14pt;
+    font-family: sans-serif;
+    color: #b91c1c;
+    padding: 3cm 2cm;
+    line-height: 2;
+  }
+}
