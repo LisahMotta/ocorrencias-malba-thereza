@@ -433,6 +433,13 @@ function _iniciarWS() {
     window._renderGrafico();
   });
 
+  onEvento('ocorrencia_deletada', (msg) => {
+    occ = occ.filter(o => o.id !== msg.id);
+    renderDash();
+    renderOcc();
+    window._renderGrafico();
+  });
+
   onEvento('chat_msg', (msg) => {
     receberMsgChat(msg.msg);
     // Incrementa badge se não for o remetente
@@ -688,8 +695,9 @@ window._selTipo = (num, btn, nivel) => {
 };
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
-const isGest = () => ['coordenador','vice','diretor'].includes(cu.perfil);
-const isEdit = () => PODE_EDIT.includes(cu.perfil);
+const isGest    = () => ['coordenador','vice','diretor'].includes(cu.perfil);
+const isGestor  = () => ['diretor','vice'].includes(cu.perfil);
+const isEdit    = () => PODE_EDIT.includes(cu.perfil);
 const isImprimir = () => PODE_EDIT.includes(cu.perfil);
 
 function _setDatas() {
@@ -700,6 +708,59 @@ function _setDatas() {
 }
 
 // ─── CARDS ───────────────────────────────────────────────────────────────────
+window._confirmarDeletar = (id) => {
+  const o = occ.find(x => x.id === id);
+  if (!o) return;
+  const nomes = o.alunos?.length ? o.alunos.map(a=>a.nome).join(', ') : '—';
+
+  let m = document.getElementById('modalDeletar');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'modalDeletar';
+    m.className = 'modal';
+    m.innerHTML = `<div class="mc" style="max-width:420px">
+      <div class="mh"><span class="mt" style="color:var(--re)">🗑 Apagar ocorrência</span></div>
+      <div class="mb" id="modalDeletarBody"></div>
+      <div class="mf">
+        <button class="bn" onclick="document.getElementById('modalDeletar').classList.remove('show')">Cancelar</button>
+        <button class="bp" id="btnConfirmarDeletar" style="background:var(--re);border-color:var(--re)">Apagar definitivamente</button>
+      </div>
+    </div>`;
+    document.body.appendChild(m);
+  }
+
+  document.getElementById('modalDeletarBody').innerHTML = `
+    <p style="font-size:.9rem;color:var(--text-secondary);margin-bottom:12px">
+      Esta ação é <strong>irreversível</strong>. A ocorrência será removida permanentemente.
+    </p>
+    <div style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:12px;font-size:.85rem;line-height:1.7">
+      <div><strong>Tipo:</strong> Art. ${o.numero} — ${o.tipo}</div>
+      <div><strong>Data:</strong> ${o.data} às ${o.hora}</div>
+      <div><strong>Turma:</strong> ${o.turma}</div>
+      <div><strong>Aluno(s):</strong> ${nomes}</div>
+      <div><strong>Registrada por:</strong> ${o.registradoPorNome || '—'}</div>
+    </div>`;
+
+  document.getElementById('btnConfirmarDeletar').onclick = () => window._deletarOcc(id);
+  m.classList.add('show');
+};
+
+window._deletarOcc = async (id) => {
+  const btn = document.getElementById('btnConfirmarDeletar');
+  if (btn) { btn.disabled = true; btn.textContent = 'Apagando...'; }
+  const resp = await apiFetch(`/api/ocorrencias/${id}`, { method: 'DELETE' });
+  if (!resp || !resp.ok) {
+    const err = await resp?.json().catch(()=>({}));
+    toastErro(err.erro || 'Erro ao apagar ocorrência.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Apagar definitivamente'; }
+    return;
+  }
+  document.getElementById('modalDeletar')?.classList.remove('show');
+  occ = occ.filter(o => o.id !== id);
+  renderDash(); renderOcc(); window._renderGrafico();
+  toastOk('Ocorrência apagada.');
+};
+
 function cardHTML(o) {
   const regNome = o.registradoPorNome || '—';
   const regPerfil = o.registradoPorPerfil || '';
@@ -732,6 +793,7 @@ function cardHTML(o) {
       ${isEdit()?`<button class="bn or" onclick="window._abrirEdit(${o.id})">⬆ Editar</button>`:''}
       <button class="bn vd" onclick="window._abrirChat(${o.id})">💬 Chat${badgeChat}</button>
       ${isImprimir()?`<button class="bn bl" onclick="window._gerarDoc(${o.id})">📄 Gerar Documento</button>`:''}
+      ${isGestor()?`<button class="bn re" onclick="window._confirmarDeletar(${o.id})" title="Apagar ocorrência">🗑 Apagar</button>`:''}
     </div></div>`;
 }
 
@@ -1359,6 +1421,7 @@ const _ACAO_LABEL = {
   exportar_backup:        { icon: '💾', label: 'Exportou backup' },
   resetar_ocorrencias:    { icon: '🗑', label: 'Apagou todas as ocorrências' },
   importar_turmas:        { icon: '📋', label: 'Importou lista de alunos (CSV)' },
+  deletar_ocorrencia:     { icon: '🗑',  label: 'Apagou ocorrência' },
 };
 
 // Abre/fecha o accordion de auditoria (carrega na primeira abertura)
@@ -1401,6 +1464,13 @@ window._downloadTemplateCsv = () => {
   a.click();
 };
 
+// Normaliza nome de coluna para comparação
+const _normColCsv = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+const _findColCsv = (normed, ...aliases) => {
+  for (const a of aliases) { const i = normed.indexOf(_normColCsv(a)); if (i >= 0) return i; }
+  return -1;
+};
+
 // Preview client-side antes de enviar
 window._previewCsv = (input) => {
   const preview = document.getElementById('csvPreview');
@@ -1418,22 +1488,42 @@ window._previewCsv = (input) => {
       preview.innerHTML = '<span style="color:var(--re)">Arquivo vazio ou sem dados.</span>';
       btn.disabled = true; return;
     }
-    const sep  = linhas[0].includes(';') ? ';' : ',';
-    const cols = linhas[0].split(sep).map(c => c.trim().toLowerCase());
-    if (!cols.includes('turma') || !cols.includes('nome')) {
+    const sep    = linhas[0].includes(';') ? ';' : ',';
+    const cols   = linhas[0].split(sep).map(c => c.trim().replace(/^\uFEFF/, ''));
+    const normed = cols.map(c => _normColCsv(c));
+
+    // Detecta formato escola (relação de alunos por classe)
+    const iSerie = _findColCsv(normed, 'série', 'serie', 'serie/turma', 'turma', 'class', 'classe');
+    const iNome  = _findColCsv(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno');
+    const iSit   = _findColCsv(normed, 'situação', 'situacao', 'situação do aluno', 'status', 'sit');
+
+    if (iNome === -1) {
       preview.style.display = 'block';
-      preview.innerHTML = '<span style="color:var(--re)">Cabeçalho inválido — precisa ter "turma" e "nome".</span>';
+      preview.innerHTML = '<span style="color:var(--re)">Cabeçalho inválido — coluna "nome" ou "nome do aluno" não encontrada.</span>';
       btn.disabled = true; return;
     }
-    const iT = cols.indexOf('turma'), iN = cols.indexOf('nome');
-    const turmasVistas = new Set(); let totalAlunos = 0;
+
+    const turmasVistas = new Set();
+    let totalAtivos = 0, totalIgnorados = 0;
     for (let i = 1; i < linhas.length; i++) {
       const c = linhas[i].split(sep).map(s => s.trim());
-      if (c[iT] && c[iN]) { turmasVistas.add(c[iT]); totalAlunos++; }
+      if (!c[iNome]) continue;
+      // Filtra inativos no preview
+      if (iSit >= 0) {
+        const sit = _normColCsv(c[iSit] || '');
+        if (sit && sit !== 'ativo') { totalIgnorados++; continue; }
+      }
+      if (iSerie >= 0 && c[iSerie]) turmasVistas.add(c[iSerie]);
+      totalAtivos++;
     }
+    const ignoradosInfo = totalIgnorados > 0
+      ? `<br><span style="color:var(--mu);font-size:12px">⚠ ${totalIgnorados} aluno(s) ignorado(s) (inativos)</span>`
+      : '';
+    const turmasInfo = turmasVistas.size > 0
+      ? `<br><span style="color:var(--mu);font-size:12px">Turmas: ${[...turmasVistas].join(', ')}</span>`
+      : '';
     preview.style.display = 'block';
-    preview.innerHTML = `✅ <strong>${turmasVistas.size}</strong> turma(s) · <strong>${totalAlunos}</strong> aluno(s) encontrados.<br>
-      <span style="color:var(--mu);font-size:12px">Turmas: ${[...turmasVistas].join(', ')}</span>`;
+    preview.innerHTML = `✅ <strong>${turmasVistas.size || '?'}</strong> turma(s) · <strong>${totalAtivos}</strong> aluno(s) ativo(s).${ignoradosInfo}${turmasInfo}`;
     btn.disabled = false;
   };
   reader.readAsText(input.files[0], 'utf-8');
@@ -1463,7 +1553,8 @@ window._importarCsv = async () => {
     btn.disabled = false; return;
   }
   const data = await resp.json();
-  res.innerHTML = `<span style="color:var(--gr)">✅ ${data.turmas} turma(s), ${data.alunos} aluno(s) importados (${data.modo})</span>`;
+  const ignInfo = data.ignorados ? ` · ${data.ignorados} ignorado(s)` : '';
+  res.innerHTML = `<span style="color:var(--gr)">✅ ${data.turmas} turma(s), ${data.alunos} aluno(s) importados (${data.modo})${ignInfo}</span>`;
   // Recarrega turmas.json em memória
   try {
     const tj = await fetch('/assets/turmas.json?t=' + Date.now());

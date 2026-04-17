@@ -263,6 +263,10 @@ module.exports = {
     if (USE_PG) return parseOcc(await _pgOne('SELECT * FROM ocorrencias WHERE id = $1', [id]));
     return parseOcc(_sqOne('SELECT * FROM ocorrencias WHERE id = ?', [id]));
   },
+  async deletarOcc(id) {
+    if (USE_PG) return _pgRun('DELETE FROM ocorrencias WHERE id = $1', [id]);
+    return _sqRun('DELETE FROM ocorrencias WHERE id = ?', [id]);
+  },
   async inserirOcc(d) {
     let id;
     if (USE_PG) {
