@@ -533,17 +533,37 @@ app.post('/api/admin/importar-turmas',
     if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
     const modo = req.body.modo === 'mesclar' ? 'mesclar' : 'substituir';
 
-    // Decode & limpa BOM
-    let text = req.file.buffer.toString('utf-8');
-    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    // Decode — tenta UTF-8, faz fallback para latin1 (Windows-1252) se não detectar colunas esperadas
+    function _decodeCsv(buf) {
+      // Tenta UTF-8 primeiro (com e sem BOM)
+      let t = buf.toString('utf-8');
+      if (t.charCodeAt(0) === 0xFEFF) t = t.slice(1);
+      return t;
+    }
+    let text = _decodeCsv(req.file.buffer);
     const linhas = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
     if (linhas.length < 2) return res.status(400).json({ erro: 'CSV sem dados (mínimo: cabeçalho + 1 linha)' });
 
-    // Detecta separador
-    const header = linhas[0];
-    const sep = header.includes(';') ? ';' : ',';
-    const cols   = header.split(sep).map(c => c.trim().replace(/^\uFEFF/, ''));
-    const normed = cols.map(c => _normCol(c));
+    // Detecta separador (ponto-e-vírgula, vírgula ou tab)
+    function _detectSep(h) { return h.includes(';') ? ';' : h.includes('\t') ? '\t' : ','; }
+    let sep    = _detectSep(linhas[0]);
+    let cols   = linhas[0].split(sep).map(c => c.trim().replace(/^\uFEFF/, ''));
+    let normed = cols.map(c => _normCol(c));
+    let linhasAtivas = linhas;
+
+    // Se não detectou coluna "nome", tenta decodificar como latin1 (Windows-1252)
+    if (_findCol(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno') === -1) {
+      const linhasL = req.file.buffer.toString('latin1')
+        .replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
+      if (linhasL.length >= 2) {
+        const sepL   = _detectSep(linhasL[0]);
+        const colsL  = linhasL[0].split(sepL).map(c => c.trim().replace(/^\uFEFF/, ''));
+        const normedL = colsL.map(c => _normCol(c));
+        if (_findCol(normedL, 'nome do aluno', 'nome aluno', 'nome', 'aluno') >= 0) {
+          sep = sepL; cols = colsL; normed = normedL; linhasAtivas = linhasL;
+        }
+      }
+    }
 
     // ── Formato relatório da escola ──────────────────────────────────────────
     // Colunas: tipo de ensino | série | nome do aluno | ra | dígito do ra | situação
@@ -554,14 +574,18 @@ app.post('/api/admin/importar-turmas',
     const iDigito = _findCol(normed, 'digito do ra', 'dígito do ra', 'digito ra', 'dígito ra', 'digito', 'dígito', 'dig');
     const iSit    = _findCol(normed, 'situação', 'situacao', 'situação do aluno', 'status', 'sit');
 
-    if (iNome === -1) return res.status(400).json({ erro: 'Coluna "nome" ou "nome do aluno" não encontrada no CSV' });
-    if (iSerie === -1) return res.status(400).json({ erro: 'Coluna "série" ou "turma" não encontrada no CSV' });
+    if (iNome === -1) return res.status(400).json({
+      erro: `Coluna "nome do aluno" não encontrada. Colunas detectadas: ${cols.join(', ')}`
+    });
+    if (iSerie === -1) return res.status(400).json({
+      erro: `Coluna "série" não encontrada. Colunas detectadas: ${cols.join(', ')}`
+    });
 
     const novo = {};
     let ignorados = 0;
 
-    for (let i = 1; i < linhas.length; i++) {
-      const c = linhas[i].split(sep).map(s => s.trim());
+    for (let i = 1; i < linhasAtivas.length; i++) {
+      const c = linhasAtivas[i].split(sep).map(s => s.trim());
       const nome = (c[iNome] || '').toUpperCase().trim();
       const serie = (c[iSerie] || '').trim();
       if (!nome || !serie) continue;
