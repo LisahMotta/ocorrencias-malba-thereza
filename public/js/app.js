@@ -549,8 +549,11 @@ function renderAlunos(lista) {
     return;
   }
   c.innerHTML = lista.map((a,i) => {
-    const s = selAlunos.some(x=>x.ra===a.ra);
-    return `<div class="ai${s?' sel':''}" onclick="window._togAluno('${a.ra}',this)"><input type="checkbox"${s?' checked':''} onclick="event.stopPropagation();window._togAluno('${a.ra}',this.closest('.ai'))"/><span class="anum">${i+1}.</span><span class="an">${a.nome}</span></div>`;
+    const key = a.ra || a.nome;
+    const keyEsc = key.replace(/'/g,"\\'");
+    const s = selAlunos.some(x=>(x.ra||x.nome)===(a.ra||a.nome));
+    const fotoBtn = a.ra ? `<button class="ai-foto-btn" onclick="event.stopPropagation();window._verFotoAluno('${a.ra}','${a.nome.replace(/'/g,"\\'").replace(/"/g,"&quot;")}',this)" title="Ver foto">📷</button>` : '';
+    return `<div class="ai${s?' sel':''}" onclick="window._togAluno('${keyEsc}',this)"><input type="checkbox"${s?' checked':''} onclick="event.stopPropagation();window._togAluno('${keyEsc}',this.closest('.ai'))"/><span class="anum">${i+1}.</span><span class="an">${a.nome}</span>${fotoBtn}</div>`;
   }).join('');
   document.getElementById('lblCount').textContent = selAlunos.length+' selecionado(s)';
 }
@@ -572,24 +575,70 @@ window._adicionarAlunoManual = (nomePreenchido) => {
   document.getElementById('filtroAluno').value = '';
   renderAlunos(atuais);
 };
-window._togAluno = (ra, el) => {
-  const a = atuais.find(x=>x.ra===ra); if(!a) return;
-  const i = selAlunos.findIndex(x=>x.ra===ra);
+window._togAluno = (key, el) => {
+  const a = atuais.find(x=>(x.ra||x.nome)===key); if(!a) return;
+  const i = selAlunos.findIndex(x=>(x.ra||x.nome)===key);
   if(i>=0){selAlunos.splice(i,1);el.classList.remove('sel');el.querySelector('input').checked=false;}
   else{selAlunos.push(a);el.classList.add('sel');el.querySelector('input').checked=true;}
   document.getElementById('lblCount').textContent = selAlunos.length+' selecionado(s)';
   renderTags();
 };
-window._remAluno = (ra) => {
-  selAlunos = selAlunos.filter(a=>a.ra!==ra);
+window._remAluno = (key) => {
+  selAlunos = selAlunos.filter(a=>(a.ra||a.nome)!==key);
   document.getElementById('lblCount').textContent = selAlunos.length+' selecionado(s)';
   renderTags(); window.filtrarAlunos();
 };
 function renderTags() {
-  document.getElementById('tagsAlunos').innerHTML = selAlunos.map(a =>
-    `<span class="at2${a.manual?' at2-manual':''}" title="${a.manual?'Adicionado manualmente':'RA: '+a.ra}">${a.manual?'✎ ':''}${a.nome}<button onclick="window._remAluno('${a.ra}')">×</button></span>`
-  ).join('');
+  document.getElementById('tagsAlunos').innerHTML = selAlunos.map(a => {
+    const key = (a.ra || a.nome).replace(/'/g,"\\'");
+    const fotoBtn = (!a.manual && a.ra) ? `<button class="at2-foto" onclick="event.stopPropagation();window._verFotoAluno('${a.ra}','${a.nome.replace(/'/g,"\\'").replace(/"/g,"&quot;")}',this)" title="Ver foto">📷</button>` : '';
+    return `<span class="at2${a.manual?' at2-manual':''}" title="${a.manual?'Adicionado manualmente':'RA: '+(a.ra||'—')}">${a.manual?'✎ ':''}${a.nome}${fotoBtn}<button onclick="window._remAluno('${key}')">×</button></span>`;
+  }).join('');
 }
+
+// Popup de foto do aluno — visível a todos os perfis
+window._verFotoAluno = async (ra, nome, triggerEl) => {
+  document.getElementById('fotoAlunoPopup')?.remove();
+  const popup = document.createElement('div');
+  popup.id = 'fotoAlunoPopup';
+  popup.className = 'foto-popup';
+  popup.innerHTML = `
+    <div class="fp-nome">${nome}</div>
+    <div class="fp-img" id="fpImg"><span class="fp-load">Carregando...</span></div>
+    <button class="fp-close" onclick="document.getElementById('fotoAlunoPopup')?.remove()">Fechar</button>`;
+  document.body.appendChild(popup);
+
+  // Posicionamento próximo ao botão clicado
+  const r = triggerEl.getBoundingClientRect();
+  let top = r.bottom + 8, left = r.left;
+  if (left + 190 > window.innerWidth) left = window.innerWidth - 198;
+  if (top + 210 > window.innerHeight) top = r.top - 218;
+  popup.style.top  = Math.max(8, top)  + 'px';
+  popup.style.left = Math.max(8, left) + 'px';
+
+  // Fecha ao clicar fora
+  setTimeout(() => {
+    document.addEventListener('click', function _closePopup(e) {
+      if (!document.getElementById('fotoAlunoPopup')?.contains(e.target)) {
+        document.getElementById('fotoAlunoPopup')?.remove();
+        document.removeEventListener('click', _closePopup);
+      }
+    });
+  }, 100);
+
+  // Carrega foto
+  const resp = await fetch(`/api/foto-aluno/${encodeURIComponent(ra)}`, {
+    headers: { 'Authorization': 'Bearer ' + getToken() }
+  });
+  const imgEl = document.getElementById('fpImg');
+  if (!imgEl) return;
+  if (resp.ok) {
+    const url = URL.createObjectURL(await resp.blob());
+    imgEl.innerHTML = `<img src="${url}" class="fp-foto" onload="URL.revokeObjectURL('${url}')">`;
+  } else {
+    imgEl.innerHTML = `<span class="fp-semfoto">📷<br>Sem foto<br>cadastrada</span>`;
+  }
+};
 
 // ─── TIPOS ────────────────────────────────────────────────────────────────────
 function _montarGridTipos() {
@@ -2524,3 +2573,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }, 60 * 60 * 1000); // a cada 1 hora
 });
+
+// ─── PROTEÇÃO LGPD — bloqueia impressão e captura de tela ────────────────────
+(function() {
+  function _avisoLGPD() {
+    let m = document.getElementById('lgpdPrintModal');
+    if (m) { m.style.display = 'flex'; return; }
+    m = document.createElement('div');
+    m.id = 'lgpdPrintModal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:1rem';
+    m.innerHTML = `
+      <div style="background:#fff;border-radius:14px;padding:2rem;max-width:460px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.35)">
+        <div style="font-size:2.8rem;margin-bottom:.5rem">🔒</div>
+        <h2 style="color:#b91c1c;font-size:1.15rem;margin:0 0 .75rem">Ação bloqueada — LGPD</h2>
+        <p style="font-size:.88rem;line-height:1.65;color:#374151;margin-bottom:.9rem">
+          Este sistema contém <strong>dados pessoais e imagens de alunos menores de idade</strong>.
+          A impressão, captura de tela ou reprodução não autorizada é <strong>vedada</strong> pela
+          <strong>Lei Geral de Proteção de Dados — LGPD (Lei nº 13.709/2018)</strong>,
+          que exige medidas especiais de proteção para dados de crianças e adolescentes
+          (Art. 14 da LGPD).
+        </p>
+        <p style="font-size:.78rem;color:#6b7280;margin-bottom:1.4rem">
+          O uso indevido de imagens de menores também está sujeito às sanções previstas no
+          <strong>ECA (Lei nº 8.069/1990)</strong>. Em caso de dúvidas, consulte a equipe gestora.
+        </p>
+        <button onclick="document.getElementById('lgpdPrintModal').style.display='none'"
+          style="background:#b91c1c;color:#fff;border:none;border-radius:7px;padding:.55rem 2rem;font-size:.9rem;cursor:pointer;font-weight:600">
+          Entendi
+        </button>
+      </div>`;
+    document.body.appendChild(m);
+  }
+
+  // Ctrl+P e PrintScreen
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+      e.preventDefault(); e.stopPropagation(); _avisoLGPD(); return false;
+    }
+    if (e.key === 'PrintScreen') { e.preventDefault(); _avisoLGPD(); }
+  }, true);
+
+  // window.print() sobrescrito
+  window.print = function() { _avisoLGPD(); };
+
+  // beforeprint — último recurso para bloquear via diálogo do browser
+  window.addEventListener('beforeprint', () => { _avisoLGPD(); });
+})();

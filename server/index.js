@@ -635,6 +635,21 @@ app.get('/api/carometro', autenticar, exigePerfil(...PODE_VER_CAROMETRO), async 
   res.json(await db.listarFotos());
 });
 
+// Foto de aluno — acessível a qualquer usuário autenticado (preview no registro de ocorrência)
+app.get('/api/foto-aluno/:ra', autenticar, _limiteVisualizacao, async (req, res) => {
+  const ra = req.params.ra.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const registro = await db.getFoto(ra);
+  if (!registro) return res.status(404).json({ erro: 'Sem foto' });
+  const filepath = path.join(FOTOS_DIR, registro.filename);
+  if (!fs.existsSync(filepath)) return res.status(404).json({ erro: 'Arquivo não encontrado' });
+  if (!path.resolve(filepath).startsWith(path.resolve(FOTOS_DIR)))
+    return res.status(403).json({ erro: 'Acesso negado' });
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.setHeader('Content-Disposition', `inline; filename="${ra}.jpg"`);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.sendFile(filepath);
+});
+
 // Serve a foto protegida por JWT — nunca exposta como arquivo estático
 app.get('/api/foto/:ra', autenticar, exigePerfil(...PODE_VER_CAROMETRO), _limiteVisualizacao, async (req, res) => {
   const ra = req.params.ra.replace(/[^a-zA-Z0-9_-]/g, '_');
