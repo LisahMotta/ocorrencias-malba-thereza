@@ -348,6 +348,18 @@ app.patch('/api/ocorrencias/:id/editar', autenticar, exigePerfil(...PODE_EDIT), 
   res.json(occ);
 });
 
+app.delete('/api/ocorrencias/:id', autenticar, exigePerfil('diretor', 'vice'), async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ erro: 'ID inválido' });
+  const occ = await db.getOcc(id);
+  if (!occ) return res.status(404).json({ erro: 'Ocorrência não encontrada' });
+  await db.deletarOcc(id);
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'deletar_ocorrencia',
+    { occId: id, tipo: occ.tipo, turma: occ.turma, data: occ.data, alunos: (occ.alunos||[]).map(a=>a.nome).join(', ') });
+  broadcast({ tipo: 'ocorrencia_deletada', id });
+  res.json({ ok: true });
+});
+
 // ─── GESTÃO ───────────────────────────────────────────────────────────────────
 
 // Lista pública — usada na tela de login (sem autenticação)
