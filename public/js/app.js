@@ -503,18 +503,26 @@ function _montarTurmasSelect() {
 }
 function _montarTurmasSelectReal() {
   const ord = _ordTurmas(Object.keys(TD));
-  const ts = document.getElementById('occTurma');
-  const gef = document.createElement('optgroup'); gef.label='Ensino Fundamental';
-  const gem = document.createElement('optgroup'); gem.label='Ensino Médio';
-  ord.forEach(t => {
-    const o = document.createElement('option'); o.value=t; o.textContent=t;
-    (TD[t].nivel==='Ensino Fundamental'?gef:gem).appendChild(o);
-  });
-  ts.appendChild(gef); ts.appendChild(gem);
 
+  // occTurma — limpa e repopula (evita duplicatas se chamada novamente)
+  const ts = document.getElementById('occTurma');
+  if (ts) {
+    // Remove optgroups anteriores, mantém só a primeira opção padrão
+    [...ts.querySelectorAll('optgroup')].forEach(g => g.remove());
+    const gef = document.createElement('optgroup'); gef.label='Ensino Fundamental';
+    const gem = document.createElement('optgroup'); gem.label='Ensino Médio';
+    ord.forEach(t => {
+      const o = document.createElement('option'); o.value=t; o.textContent=t;
+      (TD[t].nivel==='Ensino Fundamental'?gef:gem).appendChild(o);
+    });
+    ts.appendChild(gef); ts.appendChild(gem);
+  }
+
+  // fTurma e relTurma — limpa e repopula
   ['fTurma','relTurma'].forEach(id => {
     const e = document.getElementById(id); if(!e) return;
-    const a = document.createElement('option'); a.value=''; a.textContent='Todas as turmas'; e.appendChild(a);
+    // Mantém só a opção padrão "Todas as turmas"
+    while (e.options.length > 1) e.remove(1);
     ord.forEach(t => {
       const o = document.createElement('option'); o.value=t;
       o.textContent = t+' ('+(TD[t].nivel==='Ensino Médio'?'EM':'EF')+')';
@@ -1562,10 +1570,11 @@ window._importarCsv = async () => {
   const data = await resp.json();
   const ignInfo = data.ignorados ? ` · ${data.ignorados} ignorado(s)` : '';
   res.innerHTML = `<span style="color:var(--gr)">✅ ${data.turmas} turma(s), ${data.alunos} aluno(s) importados (${data.modo})${ignInfo}</span>`;
-  // Recarrega turmas.json em memória
+  // Recarrega turmas.json e atualiza selects
   try {
     const tj = await fetch('/assets/turmas.json?t=' + Date.now());
     TD = await tj.json();
+    _montarTurmasSelectReal();
   } catch {}
   toastOk(`Importação concluída: ${data.alunos} alunos em ${data.turmas} turmas.`);
 };
