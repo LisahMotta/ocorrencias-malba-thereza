@@ -547,7 +547,7 @@ app.post('/api/admin/importar-turmas',
     // Detecta separador (ponto-e-vírgula, vírgula ou tab)
     function _detectSep(h) { return h.includes(';') ? ';' : h.includes('\t') ? '\t' : ','; }
     let sep    = _detectSep(linhas[0]);
-    let cols   = linhas[0].split(sep).map(c => c.trim().replace(/^\uFEFF/, ''));
+    let cols   = linhas[0].split(sep).map(c => c.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
     let normed = cols.map(c => _normCol(c));
     let linhasAtivas = linhas;
 
@@ -557,7 +557,7 @@ app.post('/api/admin/importar-turmas',
         .replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
       if (linhasL.length >= 2) {
         const sepL   = _detectSep(linhasL[0]);
-        const colsL  = linhasL[0].split(sepL).map(c => c.trim().replace(/^\uFEFF/, ''));
+        const colsL  = linhasL[0].split(sepL).map(c => c.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
         const normedL = colsL.map(c => _normCol(c));
         if (_findCol(normedL, 'nome do aluno', 'nome aluno', 'nome', 'aluno') >= 0) {
           sep = sepL; cols = colsL; normed = normedL; linhasAtivas = linhasL;
@@ -585,7 +585,7 @@ app.post('/api/admin/importar-turmas',
     let ignorados = 0;
 
     for (let i = 1; i < linhasAtivas.length; i++) {
-      const c = linhasAtivas[i].split(sep).map(s => s.trim());
+      const c = linhasAtivas[i].split(sep).map(s => s.trim().replace(/^"|"$/g, ''));
       const nome = (c[iNome] || '').toUpperCase().trim();
       const serie = (c[iSerie] || '').trim();
       if (!nome || !serie) continue;

@@ -1492,7 +1492,7 @@ window._previewCsv = (input) => {
     const linhas = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
     if (linhas.length < 2) return null;
     const sep    = linhas[0].includes(';') ? ';' : linhas[0].includes('\t') ? '\t' : ',';
-    const cols   = linhas[0].split(sep).map(c => c.trim().replace(/^\uFEFF/, ''));
+    const cols   = linhas[0].split(sep).map(c => c.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
     const normed = cols.map(c => _normColCsv(c));
     const iNome  = _findColCsv(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno');
     if (iNome === -1) return null;
@@ -1501,7 +1501,7 @@ window._previewCsv = (input) => {
     const turmasVistas = new Set();
     let totalAtivos = 0, totalIgnorados = 0;
     for (let i = 1; i < linhas.length; i++) {
-      const c = linhas[i].split(sep).map(s => s.trim());
+      const c = linhas[i].split(sep).map(s => s.trim().replace(/^"|"$/g, ''));
       if (!c[iNome]) continue;
       if (iSit >= 0) {
         const sit = _normColCsv(c[iSit] || '');
