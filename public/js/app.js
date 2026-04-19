@@ -521,8 +521,10 @@ function _montarTurmasSelectReal() {
   // fTurma e relTurma — limpa e repopula
   ['fTurma','relTurma'].forEach(id => {
     const e = document.getElementById(id); if(!e) return;
-    // Mantém só a opção padrão "Todas as turmas"
-    while (e.options.length > 1) e.remove(1);
+    // Limpa tudo e repopula com "Todas as turmas" como primeira opção
+    while (e.options.length > 0) e.remove(0);
+    const all = document.createElement('option'); all.value=''; all.textContent='Todas as turmas';
+    e.appendChild(all);
     ord.forEach(t => {
       const o = document.createElement('option'); o.value=t;
       o.textContent = t+' ('+(TD[t].nivel==='Ensino Médio'?'EM':'EF')+')';
