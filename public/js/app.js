@@ -503,18 +503,26 @@ function _montarTurmasSelect() {
 }
 function _montarTurmasSelectReal() {
   const ord = _ordTurmas(Object.keys(TD));
-  const ts = document.getElementById('occTurma');
-  const gef = document.createElement('optgroup'); gef.label='Ensino Fundamental';
-  const gem = document.createElement('optgroup'); gem.label='Ensino Médio';
-  ord.forEach(t => {
-    const o = document.createElement('option'); o.value=t; o.textContent=t;
-    (TD[t].nivel==='Ensino Fundamental'?gef:gem).appendChild(o);
-  });
-  ts.appendChild(gef); ts.appendChild(gem);
 
+  // occTurma — limpa e repopula (evita duplicatas se chamada novamente)
+  const ts = document.getElementById('occTurma');
+  if (ts) {
+    // Remove optgroups anteriores, mantém só a primeira opção padrão
+    [...ts.querySelectorAll('optgroup')].forEach(g => g.remove());
+    const gef = document.createElement('optgroup'); gef.label='Ensino Fundamental';
+    const gem = document.createElement('optgroup'); gem.label='Ensino Médio';
+    ord.forEach(t => {
+      const o = document.createElement('option'); o.value=t; o.textContent=t;
+      (TD[t].nivel==='Ensino Fundamental'?gef:gem).appendChild(o);
+    });
+    ts.appendChild(gef); ts.appendChild(gem);
+  }
+
+  // fTurma e relTurma — limpa e repopula
   ['fTurma','relTurma'].forEach(id => {
     const e = document.getElementById(id); if(!e) return;
-    const a = document.createElement('option'); a.value=''; a.textContent='Todas as turmas'; e.appendChild(a);
+    // Mantém só a opção padrão "Todas as turmas"
+    while (e.options.length > 1) e.remove(1);
     ord.forEach(t => {
       const o = document.createElement('option'); o.value=t;
       o.textContent = t+' ('+(TD[t].nivel==='Ensino Médio'?'EM':'EF')+')';
@@ -712,37 +720,18 @@ window._confirmarDeletar = (id) => {
   const o = occ.find(x => x.id === id);
   if (!o) return;
   const nomes = o.alunos?.length ? o.alunos.map(a=>a.nome).join(', ') : '—';
-
-  let m = document.getElementById('modalDeletar');
-  if (!m) {
-    m = document.createElement('div');
-    m.id = 'modalDeletar';
-    m.className = 'modal';
-    m.innerHTML = `<div class="mc" style="max-width:420px">
-      <div class="mh"><span class="mt" style="color:var(--re)">🗑 Apagar ocorrência</span></div>
-      <div class="mb" id="modalDeletarBody"></div>
-      <div class="mf">
-        <button class="bn" onclick="document.getElementById('modalDeletar').classList.remove('show')">Cancelar</button>
-        <button class="bp" id="btnConfirmarDeletar" style="background:var(--re);border-color:var(--re)">Apagar definitivamente</button>
-      </div>
-    </div>`;
-    document.body.appendChild(m);
-  }
-
-  document.getElementById('modalDeletarBody').innerHTML = `
-    <p style="font-size:.9rem;color:var(--text-secondary);margin-bottom:12px">
-      Esta ação é <strong>irreversível</strong>. A ocorrência será removida permanentemente.
-    </p>
-    <div style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:12px;font-size:.85rem;line-height:1.7">
+  const info = document.getElementById('modalDeletarInfo');
+  if (info) info.innerHTML = `
+    <div style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:12px;line-height:1.8">
       <div><strong>Tipo:</strong> Art. ${o.numero} — ${o.tipo}</div>
       <div><strong>Data:</strong> ${o.data} às ${o.hora}</div>
       <div><strong>Turma:</strong> ${o.turma}</div>
       <div><strong>Aluno(s):</strong> ${nomes}</div>
       <div><strong>Registrada por:</strong> ${o.registradoPorNome || '—'}</div>
     </div>`;
-
-  document.getElementById('btnConfirmarDeletar').onclick = () => window._deletarOcc(id);
-  m.classList.add('show');
+  const btn = document.getElementById('btnConfirmarDeletar');
+  if (btn) btn.onclick = () => window._deletarOcc(id);
+  document.getElementById('modalDeletar')?.classList.add('show');
 };
 
 window._deletarOcc = async (id) => {
@@ -1484,7 +1473,7 @@ window._previewCsv = (input) => {
     const linhas = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
     if (linhas.length < 2) return null;
     const sep    = linhas[0].includes(';') ? ';' : linhas[0].includes('\t') ? '\t' : ',';
-    const cols   = linhas[0].split(sep).map(c => c.trim().replace(/^\uFEFF/, ''));
+    const cols   = linhas[0].split(sep).map(c => c.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
     const normed = cols.map(c => _normColCsv(c));
     const iNome  = _findColCsv(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno');
     if (iNome === -1) return null;
@@ -1493,7 +1482,7 @@ window._previewCsv = (input) => {
     const turmasVistas = new Set();
     let totalAtivos = 0, totalIgnorados = 0;
     for (let i = 1; i < linhas.length; i++) {
-      const c = linhas[i].split(sep).map(s => s.trim());
+      const c = linhas[i].split(sep).map(s => s.trim().replace(/^"|"$/g, ''));
       if (!c[iNome]) continue;
       if (iSit >= 0) {
         const sit = _normColCsv(c[iSit] || '');
@@ -1562,10 +1551,11 @@ window._importarCsv = async () => {
   const data = await resp.json();
   const ignInfo = data.ignorados ? ` · ${data.ignorados} ignorado(s)` : '';
   res.innerHTML = `<span style="color:var(--gr)">✅ ${data.turmas} turma(s), ${data.alunos} aluno(s) importados (${data.modo})${ignInfo}</span>`;
-  // Recarrega turmas.json em memória
+  // Recarrega turmas.json e atualiza selects
   try {
     const tj = await fetch('/assets/turmas.json?t=' + Date.now());
     TD = await tj.json();
+    _montarTurmasSelectReal();
   } catch {}
   toastOk(`Importação concluída: ${data.alunos} alunos em ${data.turmas} turmas.`);
 };
