@@ -1473,14 +1473,16 @@ window._previewCsv = (input) => {
   const _parseCsv = (text) => {
     if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
     const linhas = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
-    if (linhas.length < 2) return null;
+    if (linhas.length < 2) return { erro: 'Arquivo vazio ou sem dados.' };
     const sep    = linhas[0].includes(';') ? ';' : linhas[0].includes('\t') ? '\t' : ',';
     const cols   = linhas[0].split(sep).map(c => c.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
     const normed = cols.map(c => _normColCsv(c));
-    const iNome  = _findColCsv(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno');
-    if (iNome === -1) return null;
-    const iSerie = _findColCsv(normed, 'série', 'serie', 'serie/turma', 'turma', 'class', 'classe');
+    const iNome  = _findColCsv(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno', 'estudante', 'discente');
+    if (iNome === -1) return { erro: null, cols };  // retorna cols para diagnóstico
+    const iSerie = _findColCsv(normed, 'série', 'serie', 'serie/turma', 'turma', 'class', 'classe', 'ano');
     const iSit   = _findColCsv(normed, 'situação', 'situacao', 'situação do aluno', 'status', 'sit');
+    // Se não tem coluna de série, usa o nome do arquivo como turma
+    const turmaPeloArquivo = input.files[0].name.replace(/\.csv$/i,'').replace(/[_]/g,' ').trim();
     const turmasVistas = new Set();
     let totalAtivos = 0, totalIgnorados = 0;
     for (let i = 1; i < linhas.length; i++) {
@@ -1490,7 +1492,8 @@ window._previewCsv = (input) => {
         const sit = _normColCsv(c[iSit] || '');
         if (sit && sit !== 'ativo') { totalIgnorados++; continue; }
       }
-      if (iSerie >= 0 && c[iSerie]) turmasVistas.add(c[iSerie]);
+      const turma = iSerie >= 0 && c[iSerie] ? c[iSerie] : turmaPeloArquivo;
+      turmasVistas.add(turma);
       totalAtivos++;
     }
     return { turmasVistas, totalAtivos, totalIgnorados };
@@ -1499,13 +1502,18 @@ window._previewCsv = (input) => {
   const reader = new FileReader();
   reader.onload = e => {
     const buf = e.target.result;
-    // Tenta UTF-8 primeiro, depois Windows-1252 (latin1) — padrão de exportações escolares BR
-    let resultado = _parseCsv(new TextDecoder('utf-8').decode(buf));
-    if (!resultado) resultado = _parseCsv(new TextDecoder('windows-1252').decode(buf));
+    // Tenta UTF-8 e depois Windows-1252 — padrão de exportações escolares BR
+    const r1 = _parseCsv(new TextDecoder('utf-8').decode(buf));
+    // Usa latin1 se utf-8 não achou a coluna nome (r1.cols existe = iNome=-1)
+    const resultado = r1.turmasVistas ? r1 : _parseCsv(new TextDecoder('windows-1252').decode(buf));
 
-    if (!resultado) {
+    if (!resultado.turmasVistas) {
       preview.style.display = 'block';
-      preview.innerHTML = '<span style="color:var(--re)">Cabeçalho inválido — coluna "nome do aluno" não encontrada.</span>';
+      const colsInfo = resultado.cols?.length
+        ? `<br><span style="color:var(--mu);font-size:11px">Colunas detectadas: ${resultado.cols.join(' | ')}</span>`
+        : '';
+      const msg = resultado.erro || 'Coluna "nome" não encontrada.';
+      preview.innerHTML = `<span style="color:var(--re)">${msg}${colsInfo}</span>`;
       btn.disabled = true; return;
     }
     const { turmasVistas, totalAtivos, totalIgnorados } = resultado;
