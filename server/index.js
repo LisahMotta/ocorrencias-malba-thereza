@@ -544,26 +544,38 @@ app.post('/api/admin/importar-turmas',
     const linhas = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
     if (linhas.length < 2) return res.status(400).json({ erro: 'CSV sem dados (mínimo: cabeçalho + 1 linha)' });
 
-    // Detecta separador (ponto-e-vírgula, vírgula ou tab)
-    function _detectSep(h) { return h.includes(';') ? ';' : h.includes('\t') ? '\t' : ','; }
-    let sep    = _detectSep(linhas[0]);
-    let cols   = linhas[0].split(sep).map(c => c.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
-    let normed = cols.map(c => _normCol(c));
+    // Detecta separador (pipe, ponto-e-vírgula, tab, vírgula)
+    function _detectSep(h) { return h.includes('|') ? '|' : h.includes(';') ? ';' : h.includes('\t') ? '\t' : ','; }
+    function _splitRow(l, s) { return l.split(s).map(c => c.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, '')); }
+    // Encontra a linha de cabeçalho (o arquivo pode ter título na linha 1)
+    function _findHeader(lns) {
+      for (let i = 0; i < Math.min(5, lns.length); i++) {
+        const s = _detectSep(lns[i]);
+        const c = _splitRow(lns[i], s);
+        const n = c.map(x => _normCol(x));
+        if (_findCol(n, 'nome do aluno', 'nome aluno', 'nome', 'aluno', 'estudante', 'discente') >= 0)
+          return { headerIdx: i, sep: s, cols: c, normed: n };
+      }
+      return null;
+    }
+
+    let found = _findHeader(linhas);
     let linhasAtivas = linhas;
 
-    // Se não detectou coluna "nome", tenta decodificar como latin1 (Windows-1252)
-    if (_findCol(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno') === -1) {
+    // Se não achou, tenta latin1 (Windows-1252)
+    if (!found) {
       const linhasL = req.file.buffer.toString('latin1')
         .replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
-      if (linhasL.length >= 2) {
-        const sepL   = _detectSep(linhasL[0]);
-        const colsL  = linhasL[0].split(sepL).map(c => c.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
-        const normedL = colsL.map(c => _normCol(c));
-        if (_findCol(normedL, 'nome do aluno', 'nome aluno', 'nome', 'aluno') >= 0) {
-          sep = sepL; cols = colsL; normed = normedL; linhasAtivas = linhasL;
-        }
-      }
+      found = _findHeader(linhasL);
+      if (found) linhasAtivas = linhasL;
     }
+
+    if (!found) return res.status(400).json({
+      erro: `Coluna de nome não encontrada. Primeira linha: ${linhas[0]?.slice(0, 200)}`
+    });
+
+    let { headerIdx, sep, cols, normed } = found;
+    linhasAtivas = linhasAtivas.slice(headerIdx + 1).filter(Boolean);
 
     // ── Formato relatório da escola ──────────────────────────────────────────
     // Colunas: tipo de ensino | série | nome do aluno | ra | dígito do ra | situação
@@ -584,8 +596,8 @@ app.post('/api/admin/importar-turmas',
     const novo = {};
     let ignorados = 0;
 
-    for (let i = 1; i < linhasAtivas.length; i++) {
-      const c = linhasAtivas[i].split(sep).map(s => s.trim().replace(/^"|"$/g, ''));
+    for (let i = 0; i < linhasAtivas.length; i++) {
+      const c = _splitRow(linhasAtivas[i], sep);
       const nome = (c[iNome] || '').toUpperCase().trim();
       const serie = iSerie >= 0 ? (c[iSerie] || '').trim() : turmaPeloArquivo;
       if (!nome || !serie) continue;

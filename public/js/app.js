@@ -1474,19 +1474,29 @@ window._previewCsv = (input) => {
     if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
     const linhas = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
     if (linhas.length < 2) return { erro: 'Arquivo vazio ou sem dados.' };
-    const sep    = linhas[0].includes(';') ? ';' : linhas[0].includes('\t') ? '\t' : ',';
-    const cols   = linhas[0].split(sep).map(c => c.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
-    const normed = cols.map(c => _normColCsv(c));
+    // Detecta separador (pipe, ponto-e-vírgula, tab, vírgula)
+    const _sep = l => l.includes('|') ? '|' : l.includes(';') ? ';' : l.includes('\t') ? '\t' : ',';
+    const _splitRow = (l, s) => l.split(s).map(c => c.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
+    // Procura a linha de cabeçalho (pode não ser a primeira — arquivo pode ter título)
+    let headerIdx = -1, sep = '|', cols = [], normed = [];
+    for (let i = 0; i < Math.min(5, linhas.length); i++) {
+      const s = _sep(linhas[i]);
+      const c = _splitRow(linhas[i], s);
+      const n = c.map(x => _normColCsv(x));
+      if (_findColCsv(n, 'nome do aluno', 'nome aluno', 'nome', 'aluno', 'estudante', 'discente') >= 0) {
+        headerIdx = i; sep = s; cols = c; normed = n; break;
+      }
+    }
+    if (headerIdx === -1) return { erro: null, cols: _splitRow(linhas[0], _sep(linhas[0])) };
     const iNome  = _findColCsv(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno', 'estudante', 'discente');
-    if (iNome === -1) return { erro: null, cols };  // retorna cols para diagnóstico
     const iSerie = _findColCsv(normed, 'série', 'serie', 'serie/turma', 'turma', 'class', 'classe', 'ano');
     const iSit   = _findColCsv(normed, 'situação', 'situacao', 'situação do aluno', 'status', 'sit');
     // Se não tem coluna de série, usa o nome do arquivo como turma
     const turmaPeloArquivo = input.files[0].name.replace(/\.csv$/i,'').replace(/[_]/g,' ').trim();
     const turmasVistas = new Set();
     let totalAtivos = 0, totalIgnorados = 0;
-    for (let i = 1; i < linhas.length; i++) {
-      const c = linhas[i].split(sep).map(s => s.trim().replace(/^"|"$/g, ''));
+    for (let i = headerIdx + 1; i < linhas.length; i++) {
+      const c = _splitRow(linhas[i], sep);
       if (!c[iNome]) continue;
       if (iSit >= 0) {
         const sit = _normColCsv(c[iSit] || '');
