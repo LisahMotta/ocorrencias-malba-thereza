@@ -720,37 +720,18 @@ window._confirmarDeletar = (id) => {
   const o = occ.find(x => x.id === id);
   if (!o) return;
   const nomes = o.alunos?.length ? o.alunos.map(a=>a.nome).join(', ') : '—';
-
-  let m = document.getElementById('modalDeletar');
-  if (!m) {
-    m = document.createElement('div');
-    m.id = 'modalDeletar';
-    m.className = 'modal';
-    m.innerHTML = `<div class="mc" style="max-width:420px">
-      <div class="mh"><span class="mt" style="color:var(--re)">🗑 Apagar ocorrência</span></div>
-      <div class="mb" id="modalDeletarBody"></div>
-      <div class="mf">
-        <button class="bn" onclick="document.getElementById('modalDeletar').classList.remove('show')">Cancelar</button>
-        <button class="bp" id="btnConfirmarDeletar" style="background:var(--re);border-color:var(--re)">Apagar definitivamente</button>
-      </div>
-    </div>`;
-    document.body.appendChild(m);
-  }
-
-  document.getElementById('modalDeletarBody').innerHTML = `
-    <p style="font-size:.9rem;color:var(--text-secondary);margin-bottom:12px">
-      Esta ação é <strong>irreversível</strong>. A ocorrência será removida permanentemente.
-    </p>
-    <div style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:12px;font-size:.85rem;line-height:1.7">
+  const info = document.getElementById('modalDeletarInfo');
+  if (info) info.innerHTML = `
+    <div style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:12px;line-height:1.8">
       <div><strong>Tipo:</strong> Art. ${o.numero} — ${o.tipo}</div>
       <div><strong>Data:</strong> ${o.data} às ${o.hora}</div>
       <div><strong>Turma:</strong> ${o.turma}</div>
       <div><strong>Aluno(s):</strong> ${nomes}</div>
       <div><strong>Registrada por:</strong> ${o.registradoPorNome || '—'}</div>
     </div>`;
-
-  document.getElementById('btnConfirmarDeletar').onclick = () => window._deletarOcc(id);
-  m.classList.add('show');
+  const btn = document.getElementById('btnConfirmarDeletar');
+  if (btn) btn.onclick = () => window._deletarOcc(id);
+  document.getElementById('modalDeletar')?.classList.add('show');
 };
 
 window._deletarOcc = async (id) => {

@@ -456,6 +456,24 @@
   <iframe class="mo-doc-frame" id="frameDoc"></iframe>
 </div>
 
+<!-- MODAL CONFIRMAR APAGAR OCORRÊNCIA -->
+<div class="mo" id="modalDeletar" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="md" onclick="event.stopPropagation()" style="max-width:440px">
+    <div class="mh">
+      <span class="mt2">🗑 Apagar Ocorrência</span>
+      <button class="mc" onclick="document.getElementById('modalDeletar').classList.remove('show')">✕</button>
+    </div>
+    <div style="padding:16px">
+      <div class="ab re" style="margin-bottom:14px">⚠ Esta ação é <strong>permanente</strong> e não pode ser desfeita.</div>
+      <div id="modalDeletarInfo" style="font-size:13px;line-height:1.8;margin-bottom:18px"></div>
+      <div class="fr" style="gap:10px;justify-content:flex-end">
+        <button class="bn" onclick="document.getElementById('modalDeletar').classList.remove('show')">Cancelar</button>
+        <button class="bn re" id="btnConfirmarDeletar">🗑 Apagar definitivamente</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- CONTAINER DE NOTIFICAÇÕES -->
 <div class="notif-popup" id="notifContainer"></div>
 
