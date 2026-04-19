@@ -1502,7 +1502,9 @@ window._previewCsv = (input) => {
         const sit = _normColCsv(c[iSit] || '');
         if (sit && sit !== 'ativo') { totalIgnorados++; continue; }
       }
-      const turma = iSerie >= 0 && c[iSerie] ? c[iSerie] : turmaPeloArquivo;
+      const serieRaw = iSerie >= 0 ? (c[iSerie] || '').trim() : '';
+      const serieNumericOnly = /^[\dºª°\s]+$/.test(serieRaw);
+      const turma = (serieRaw && !serieNumericOnly) ? serieRaw : turmaPeloArquivo;
       turmasVistas.add(turma);
       totalAtivos++;
     }

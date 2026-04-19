@@ -590,7 +590,7 @@ app.post('/api/admin/importar-turmas',
       erro: `Coluna de nome não encontrada. Colunas detectadas: ${cols.join(' | ')}`
     });
 
-    // Se não há coluna de série, usa o nome do arquivo como turma
+    // Nome do arquivo (sem .csv) como fallback de turma
     const turmaPeloArquivo = (req.file.originalname || '').replace(/\.csv$/i,'').replace(/[_]/g,' ').trim();
 
     const novo = {};
@@ -599,7 +599,10 @@ app.post('/api/admin/importar-turmas',
     for (let i = 0; i < linhasAtivas.length; i++) {
       const c = _splitRow(linhasAtivas[i], sep);
       const nome = (c[iNome] || '').toUpperCase().trim();
-      const serie = iSerie >= 0 ? (c[iSerie] || '').trim() : turmaPeloArquivo;
+      const serieRaw = iSerie >= 0 ? (c[iSerie] || '').trim() : '';
+      // Se série é só número (sem letra de turma A/B/C), o nome do arquivo discrimina a turma
+      const serieNumericOnly = /^[\dºª°\s]+$/.test(serieRaw);
+      const serie = (serieRaw && !serieNumericOnly) ? serieRaw : turmaPeloArquivo;
       if (!nome || !serie) continue;
 
       // Filtra apenas alunos ativos
