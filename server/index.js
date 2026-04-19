@@ -356,7 +356,7 @@ app.delete('/api/ocorrencias/:id', autenticar, exigePerfil('diretor', 'vice'), a
   await db.deletarOcc(id);
   await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'deletar_ocorrencia',
     { occId: id, tipo: occ.tipo, turma: occ.turma, data: occ.data, alunos: (occ.alunos||[]).map(a=>a.nome).join(', ') });
-  broadcast({ tipo: 'ocorrencia_deletada', id });
+  broadcast({ type: 'ocorrencia_deletada', id });
   res.json({ ok: true });
 });
 
