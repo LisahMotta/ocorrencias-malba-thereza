@@ -567,19 +567,19 @@ app.post('/api/admin/importar-turmas',
 
     // ── Formato relatório da escola ──────────────────────────────────────────
     // Colunas: tipo de ensino | série | nome do aluno | ra | dígito do ra | situação
-    const iSerie  = _findCol(normed, 'série', 'serie', 'serie/turma', 'turma', 'class', 'classe');
+    const iSerie  = _findCol(normed, 'série', 'serie', 'serie/turma', 'turma', 'class', 'classe', 'ano', 'turma/serie');
     const iNivel  = _findCol(normed, 'tipo de ensino', 'tipo_de_ensino', 'tipo ensino', 'nivel', 'nível', 'tipo');
-    const iNome   = _findCol(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno');
-    const iRa     = _findCol(normed, 'ra', 'codigo ra', 'cod ra');
-    const iDigito = _findCol(normed, 'digito do ra', 'dígito do ra', 'digito ra', 'dígito ra', 'digito', 'dígito', 'dig');
+    const iNome   = _findCol(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno', 'estudante', 'discente', 'nomealuno');
+    const iRa     = _findCol(normed, 'ra', 'codigo ra', 'cod ra', 'codigo', 'código');
+    const iDigito = _findCol(normed, 'dig. ra', 'dig ra', 'digito do ra', 'dígito do ra', 'digito ra', 'dígito ra', 'digito', 'dígito', 'dig');
     const iSit    = _findCol(normed, 'situação', 'situacao', 'situação do aluno', 'status', 'sit');
 
     if (iNome === -1) return res.status(400).json({
-      erro: `Coluna "nome do aluno" não encontrada. Colunas detectadas: ${cols.join(', ')}`
+      erro: `Coluna de nome não encontrada. Colunas detectadas: ${cols.join(' | ')}`
     });
-    if (iSerie === -1) return res.status(400).json({
-      erro: `Coluna "série" não encontrada. Colunas detectadas: ${cols.join(', ')}`
-    });
+
+    // Se não há coluna de série, usa o nome do arquivo como turma
+    const turmaPeloArquivo = (req.file.originalname || '').replace(/\.csv$/i,'').replace(/[_]/g,' ').trim();
 
     const novo = {};
     let ignorados = 0;
@@ -587,7 +587,7 @@ app.post('/api/admin/importar-turmas',
     for (let i = 1; i < linhasAtivas.length; i++) {
       const c = linhasAtivas[i].split(sep).map(s => s.trim().replace(/^"|"$/g, ''));
       const nome = (c[iNome] || '').toUpperCase().trim();
-      const serie = (c[iSerie] || '').trim();
+      const serie = iSerie >= 0 ? (c[iSerie] || '').trim() : turmaPeloArquivo;
       if (!nome || !serie) continue;
 
       // Filtra apenas alunos ativos
