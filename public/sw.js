@@ -1,5 +1,5 @@
 // sw.js — Service Worker do PWA Ocorrências Malba Thereza
-const CACHE = 'sisroe-v21';
+const CACHE = 'sisroe-v22';
 
 // Arquivos que ficam em cache para funcionar offline
 const ARQUIVOS = [
