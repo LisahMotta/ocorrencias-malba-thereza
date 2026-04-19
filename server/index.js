@@ -571,7 +571,7 @@ app.post('/api/admin/importar-turmas',
     const iNivel  = _findCol(normed, 'tipo de ensino', 'tipo_de_ensino', 'tipo ensino', 'nivel', 'nível', 'tipo');
     const iNome   = _findCol(normed, 'nome do aluno', 'nome aluno', 'nome', 'aluno', 'estudante', 'discente', 'nomealuno');
     const iRa     = _findCol(normed, 'ra', 'codigo ra', 'cod ra', 'codigo', 'código');
-    const iDigito = _findCol(normed, 'digito do ra', 'dígito do ra', 'digito ra', 'dígito ra', 'digito', 'dígito', 'dig');
+    const iDigito = _findCol(normed, 'dig. ra', 'dig ra', 'digito do ra', 'dígito do ra', 'digito ra', 'dígito ra', 'digito', 'dígito', 'dig');
     const iSit    = _findCol(normed, 'situação', 'situacao', 'situação do aluno', 'status', 'sit');
 
     if (iNome === -1) return res.status(400).json({
