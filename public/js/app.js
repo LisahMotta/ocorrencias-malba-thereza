@@ -145,6 +145,7 @@ const TB0 = [
   {n:'A14',l:'Aluno com comportamento desrespeitoso com professor'},
   {n:'A15',l:'Aluno utilizou equipamento eletrônico proibido'},
   {n:'A16',l:'Incidente no intervalo'},
+  {n:'A17',l:'Aluno se acidentou em aula'},
 ];
 
 const TU = [
