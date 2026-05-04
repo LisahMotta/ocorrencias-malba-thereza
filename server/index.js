@@ -55,9 +55,12 @@ const tokenBlocklist = new Set();
 // ─── SEGURANÇA HTTP ──────────────────────────────────────────────────────────
 const helmet = require('helmet');
 app.use(helmet({
-  // CSP desativado — app usa scripts/estilos inline; ativar exigiria hash de cada um
   contentSecurityPolicy: false,
-  // Força HTTPS (HSTS) — só ativo em produção para não quebrar dev local
+  // COEP/COOP quebram Safari/iOS — desativados
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: false,
+  // HSTS só em produção
   hsts: process.env.NODE_ENV === 'production'
     ? { maxAge: 31536000, includeSubDomains: true, preload: true }
     : false,
