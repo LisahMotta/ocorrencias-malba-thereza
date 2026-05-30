@@ -423,3 +423,147 @@ module.exports = {
     return row.filename;
   },
 };
+async listarDiasLetivos(bimestre = null) {
+    if (USE_PG) {
+      if (bimestre) return _pgAll('SELECT * FROM dias_letivos WHERE bimestre = $1 ORDER BY data', [bimestre]);
+      return _pgAll('SELECT * FROM dias_letivos ORDER BY data');
+    }
+    if (bimestre) return _sqAll('SELECT * FROM dias_letivos WHERE bimestre = ? ORDER BY data', [bimestre]);
+    return _sqAll('SELECT * FROM dias_letivos ORDER BY data');
+  },
+
+  async inserirDiaLetivo(data, bimestre = null, observacao = null) {
+    if (USE_PG) return _pgRun(
+      'INSERT INTO dias_letivos (data, bimestre, observacao) VALUES ($1,$2,$3) ON CONFLICT (data) DO UPDATE SET bimestre = EXCLUDED.bimestre, observacao = EXCLUDED.observacao RETURNING id',
+      [data, bimestre, observacao]
+    );
+    return _sqRun(
+      'INSERT OR REPLACE INTO dias_letivos (data, bimestre, observacao) VALUES (?,?,?)',
+      [data, bimestre, observacao]
+    );
+  },
+
+  async inserirDiasLetivosLote(datas, bimestre = null) {
+    let count = 0;
+    for (const data of datas) {
+      try {
+        if (USE_PG) {
+          await pgPool.query(
+            'INSERT INTO dias_letivos (data, bimestre) VALUES ($1,$2) ON CONFLICT (data) DO NOTHING',
+            [data, bimestre]
+          );
+        } else {
+          _sqRun('INSERT OR IGNORE INTO dias_letivos (data, bimestre) VALUES (?,?)', [data, bimestre]);
+        }
+        count++;
+      } catch(e) {
+        console.warn('[diasLetivos] falha em', data, ':', e.message);
+      }
+    }
+    return count;
+  },
+
+  async removerDiaLetivo(data) {
+    if (USE_PG) return _pgRun('DELETE FROM dias_letivos WHERE data = $1', [data]);
+    return _sqRun('DELETE FROM dias_letivos WHERE data = ?', [data]);
+  },
+
+  // ── Frequência ────────────────────────────────────────────
+  async listarFrequenciaTurmaData(turma, data) {
+    if (USE_PG) return _pgAll(
+      'SELECT * FROM frequencia_diaria WHERE aluno_turma = $1 AND data = $2 ORDER BY aluno_nome',
+      [turma, data]
+    );
+    return _sqAll(
+      'SELECT * FROM frequencia_diaria WHERE aluno_turma = ? AND data = ? ORDER BY aluno_nome',
+      [turma, data]
+    );
+  },
+
+  async upsertFrequencia(d) {
+    // d = { aluno_ra, aluno_nome, aluno_turma, data, status, observacao, registrado_por }
+    if (USE_PG) {
+      const res = await pgPool.query(
+        `INSERT INTO frequencia_diaria
+           (aluno_ra, aluno_nome, aluno_turma, data, status, observacao, registrado_por, atualizado_em)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,NOW())
+         ON CONFLICT (aluno_ra, data) DO UPDATE SET
+           status         = EXCLUDED.status,
+           observacao     = EXCLUDED.observacao,
+           registrado_por = EXCLUDED.registrado_por,
+           atualizado_em  = NOW()
+         RETURNING id`,
+        [d.aluno_ra, d.aluno_nome, d.aluno_turma, d.data, d.status, d.observacao || null, d.registrado_por]
+      );
+      return res.rows[0]?.id;
+    }
+    // SQLite — INSERT OR REPLACE recria a linha (perde registrado_em original)
+    return _sqRun(
+      `INSERT OR REPLACE INTO frequencia_diaria
+        (aluno_ra, aluno_nome, aluno_turma, data, status, observacao, registrado_por, atualizado_em)
+       VALUES (?,?,?,?,?,?,?, datetime('now','localtime'))`,
+      [d.aluno_ra, d.aluno_nome, d.aluno_turma, d.data, d.status, d.observacao || null, d.registrado_por]
+    );
+  },
+
+  async registrarFrequenciaLote(registros) {
+    let count = 0;
+    for (const r of registros) {
+      try {
+        await module.exports.upsertFrequencia(r);
+        count++;
+      } catch(e) {
+        console.error('[frequencia] falha em', r.aluno_ra, ':', e.message);
+      }
+    }
+    return count;
+  },
+
+  async atualizarFrequencia(id, dados) {
+    if (USE_PG) return _pgRun(
+      'UPDATE frequencia_diaria SET status=$1, observacao=$2, atualizado_em=NOW() WHERE id=$3',
+      [dados.status, dados.observacao || null, id]
+    );
+    return _sqRun(
+      "UPDATE frequencia_diaria SET status=?, observacao=?, atualizado_em=datetime('now','localtime') WHERE id=?",
+      [dados.status, dados.observacao || null, id]
+    );
+  },
+
+  async getFrequenciaPorId(id) {
+    if (USE_PG) return _pgOne('SELECT * FROM frequencia_diaria WHERE id = $1', [id]);
+    return _sqOne('SELECT * FROM frequencia_diaria WHERE id = ?', [id]);
+  },
+
+  async getResumoFrequenciaMes(turma = null) {
+    if (USE_PG) {
+      if (turma) return _pgAll(
+        'SELECT * FROM vw_resumo_frequencia_mes WHERE aluno_turma = $1 ORDER BY percentual_ausencia DESC NULLS LAST, aluno_nome',
+        [turma]
+      );
+      return _pgAll('SELECT * FROM vw_resumo_frequencia_mes ORDER BY percentual_ausencia DESC NULLS LAST, aluno_nome');
+    }
+    if (turma) return _sqAll(
+      'SELECT * FROM vw_resumo_frequencia_mes WHERE aluno_turma = ? ORDER BY percentual_ausencia DESC, aluno_nome',
+      [turma]
+    );
+    return _sqAll('SELECT * FROM vw_resumo_frequencia_mes ORDER BY percentual_ausencia DESC, aluno_nome');
+  },
+
+  async getHistoricoFrequencia(aluno_ra, dataInicio = null, dataFim = null) {
+    // Default: últimos 90 dias até hoje
+    const hoje = new Date();
+    const inicio90 = new Date(hoje); inicio90.setDate(hoje.getDate() - 90);
+    const _iso = (d) => d.toISOString().slice(0,10);
+    const inicio = dataInicio || _iso(inicio90);
+    const fim    = dataFim    || _iso(hoje);
+
+    if (USE_PG) return _pgAll(
+      'SELECT * FROM frequencia_diaria WHERE aluno_ra = $1 AND data BETWEEN $2 AND $3 ORDER BY data DESC',
+      [aluno_ra, inicio, fim]
+    );
+    return _sqAll(
+      'SELECT * FROM frequencia_diaria WHERE aluno_ra = ? AND data BETWEEN ? AND ? ORDER BY data DESC',
+      [aluno_ra, inicio, fim]
+    );
+  },
