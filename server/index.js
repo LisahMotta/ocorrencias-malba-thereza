@@ -818,6 +818,153 @@ app.delete('/api/foto/:ra', autenticar, exigePerfil(...PODE_EDITAR_CAROMETRO), a
   await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'deletar_foto', { ra });
   res.json({ ok: true });
 });
+ 
+// ─── FREQUÊNCIA ───────────────────────────────────────────────
+const STATUS_FREQ_VALIDOS = ['presente','ausente','justificada','atestado','parcial'];
+const TODOS_AUTENTICADOS = ['professor','agente','secretaria','gerente','poc','coordenador','vice','diretor'];
+
+// Validador simples de data ISO (YYYY-MM-DD)
+function _ehDataISO(s) {
+  return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
+// ── Dias letivos ─────────────────────────────────────────────
+
+// GET — qualquer autenticado pode consultar
+app.get('/api/frequencia/dias-letivos', autenticar, async (req, res) => {
+  const bimestre = req.query.bimestre ? parseInt(req.query.bimestre) : null;
+  if (bimestre && (bimestre < 1 || bimestre > 4)) {
+    return res.status(400).json({ erro: 'Bimestre deve ser 1, 2, 3 ou 4' });
+  }
+  res.json(await db.listarDiasLetivos(bimestre));
+});
+
+// POST individual — só coordenação/gestão
+app.post('/api/frequencia/dias-letivos', autenticar, exigePerfil('coordenador','vice','diretor'), async (req, res) => {
+  const { data, bimestre, observacao } = req.body;
+  if (!_ehDataISO(data)) return res.status(400).json({ erro: 'Data inválida (use YYYY-MM-DD)' });
+  if (bimestre && (bimestre < 1 || bimestre > 4)) {
+    return res.status(400).json({ erro: 'Bimestre deve ser 1, 2, 3 ou 4' });
+  }
+  await db.inserirDiaLetivo(data, bimestre || null, observacao || null);
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'inserir_dia_letivo', { data, bimestre });
+  res.json({ ok: true });
+});
+
+// POST em lote — popular muitos dias de uma vez (início de ano, etc)
+app.post('/api/frequencia/dias-letivos/lote', autenticar, exigePerfil('coordenador','vice','diretor'), async (req, res) => {
+  const { datas, bimestre } = req.body;
+  if (!Array.isArray(datas) || datas.length === 0) {
+    return res.status(400).json({ erro: 'Envie um array `datas` com pelo menos 1 item' });
+  }
+  const invalidas = datas.filter(d => !_ehDataISO(d));
+  if (invalidas.length) return res.status(400).json({ erro: 'Datas inválidas: ' + invalidas.slice(0,3).join(', ') });
+
+  const count = await db.inserirDiasLetivosLote(datas, bimestre || null);
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'inserir_dias_letivos_lote', { total: count, bimestre });
+  res.json({ ok: true, inseridos: count });
+});
+
+// DELETE — só direção
+app.delete('/api/frequencia/dias-letivos/:data', autenticar, exigePerfil('vice','diretor'), async (req, res) => {
+  const data = req.params.data;
+  if (!_ehDataISO(data)) return res.status(400).json({ erro: 'Data inválida' });
+  await db.removerDiaLetivo(data);
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'remover_dia_letivo', { data });
+  res.json({ ok: true });
+});
+
+
+// ── Registro de frequência (chamada) ─────────────────────────
+
+// GET — consultar chamada de uma turma num dia (pra abrir tela de edição)
+app.get('/api/frequencia/turma/:turma/:data', autenticar, exigePerfil(...TODOS_AUTENTICADOS), async (req, res) => {
+  const { turma, data } = req.params;
+  if (!_ehDataISO(data)) return res.status(400).json({ erro: 'Data inválida (use YYYY-MM-DD)' });
+  const registros = await db.listarFrequenciaTurmaData(turma, data);
+  res.json({ turma, data, registros });
+});
+
+// POST — registrar chamada inteira (UPSERT — chamar de novo no mesmo dia atualiza)
+app.post('/api/frequencia/registrar', autenticar, exigePerfil(...TODOS_AUTENTICADOS), async (req, res) => {
+  const { turma, data, registros } = req.body;
+
+  if (!turma) return res.status(400).json({ erro: 'Turma obrigatória' });
+  if (!_ehDataISO(data)) return res.status(400).json({ erro: 'Data inválida (use YYYY-MM-DD)' });
+  if (!Array.isArray(registros) || registros.length === 0) {
+    return res.status(400).json({ erro: 'Envie ao menos 1 registro no array `registros`' });
+  }
+
+  // Validação por item
+  const invalidos = [];
+  for (const r of registros) {
+    if (!r.aluno_ra || !r.aluno_nome) { invalidos.push('faltando aluno_ra/aluno_nome'); continue; }
+    if (!STATUS_FREQ_VALIDOS.includes(r.status)) {
+      invalidos.push(`status inválido em ${r.aluno_nome} (${r.status}). Use: ${STATUS_FREQ_VALIDOS.join(', ')}`);
+    }
+  }
+  if (invalidos.length) return res.status(400).json({ erro: 'Erros nos registros', detalhes: invalidos.slice(0,5) });
+
+  // Prepara payload enriquecido
+  const lote = registros.map(r => ({
+    aluno_ra:       String(r.aluno_ra).trim(),
+    aluno_nome:     String(r.aluno_nome).trim().toUpperCase(),
+    aluno_turma:    turma,
+    data:           data,
+    status:         r.status,
+    observacao:     r.observacao || null,
+    registrado_por: req.usuario.id,
+  }));
+
+  const count = await db.registrarFrequenciaLote(lote);
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'registrar_frequencia',
+    { turma, data, totalRegistros: count });
+
+  res.json({ ok: true, registrados: count, total: registros.length });
+});
+
+// PATCH — corrigir uma marcação isolada
+app.patch('/api/frequencia/:id', autenticar, exigePerfil(...TODOS_AUTENTICADOS), async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ erro: 'ID inválido' });
+
+  const reg = await db.getFrequenciaPorId(id);
+  if (!reg) return res.status(404).json({ erro: 'Registro não encontrado' });
+
+  // Quem não é gestão só pode editar o que ele próprio registrou
+  const ehGestao = ['poc','coordenador','vice','diretor'].includes(req.usuario.perfil);
+  if (!ehGestao && reg.registrado_por !== req.usuario.id) {
+    return res.status(403).json({ erro: 'Você só pode corrigir registros que você mesmo fez. Peça à coordenação.' });
+  }
+
+  const { status, observacao } = req.body;
+  if (!STATUS_FREQ_VALIDOS.includes(status)) {
+    return res.status(400).json({ erro: `Status inválido. Use: ${STATUS_FREQ_VALIDOS.join(', ')}` });
+  }
+  await db.atualizarFrequencia(id, { status, observacao });
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'corrigir_frequencia',
+    { id, statusAnterior: reg.status, statusNovo: status, alunoRa: reg.aluno_ra, data: reg.data });
+  res.json({ ok: true });
+});
+
+
+// ── Consultas (dashboard, relatórios) — só gestão ────────────
+
+// GET — resumo do mês corrente (alimenta dashboard de busca ativa)
+app.get('/api/frequencia/resumo-mes', autenticar, exigePerfil('poc','coordenador','vice','diretor'), async (req, res) => {
+  const turma = req.query.turma || null;
+  res.json(await db.getResumoFrequenciaMes(turma));
+});
+
+// GET — histórico de frequência de um aluno específico
+app.get('/api/frequencia/aluno/:ra', autenticar, exigePerfil('poc','coordenador','vice','diretor'), async (req, res) => {
+  const ra = String(req.params.ra).trim();
+  const inicio = req.query.inicio || null;
+  const fim    = req.query.fim    || null;
+  if (inicio && !_ehDataISO(inicio)) return res.status(400).json({ erro: 'Parâmetro `inicio` inválido' });
+  if (fim && !_ehDataISO(fim))       return res.status(400).json({ erro: 'Parâmetro `fim` inválido' });
+  res.json(await db.getHistoricoFrequencia(ra, inicio, fim));
+});
 
 // ─── SPA ──────────────────────────────────────────────────────────────────────
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
