@@ -491,6 +491,8 @@ function _renderMain() {
   document.getElementById('tabCarometro').style.display = ['professor','poc','coordenador','vice','diretor'].includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabGes').style.display = ['diretor','vice'].includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabBuscaAtiva').style.display = ['poc','coordenador','agente','vice','diretor'].includes(cu.perfil) ? '' : 'none';
+  const btnRelBA = document.getElementById('btnRelatorioBA');
+  if (btnRelBA) btnRelBA.style.display = ['poc','coordenador','vice','diretor'].includes(cu.perfil) ? '' : 'none';
 
   const icons = {professor:'👨‍🏫',agente:'🏫',secretaria:'📝',gerente:'🗂️',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};
   const descs = {
@@ -2816,31 +2818,40 @@ window._gerarRelatorioBA = () => {
   const RISCO_COR = { baixo:'#2e7d32', medio:'#e65100', alto:'#c62828', critico:'#6a1b9a' };
   const STATUS_COR = { monitoramento:'#e65100', em_busca_ativa:'#c62828', contato_realizado:'#1565c0', retornou:'#2e7d32', encerrado:'#555' };
 
+  const RESULTADO_L = {
+    retornou:'Retornou', encaminhado_conselho:'Enc. Conselho Tutelar',
+    encaminhado_cras:'Enc. CRAS/CREAS', encaminhado_saude:'Enc. Saúde',
+    encaminhado_outros:'Enc. outros órgãos', transferido:'Transferido', outro:'Outro',
+  };
   const linhas = lista.map((c, i) => {
     const risco  = c.classificacao_risco || 'baixo';
     const status = c.status || 'monitoramento';
     const rede   = Array.isArray(c.rede_apoio) ? c.rede_apoio.join(', ') : (c.rede_apoio || '—');
-
+    let tiposContato = '—';
+    try {
+      const tc = Array.isArray(c.tipos_contato) ? c.tipos_contato : (c.tipos_contato ? JSON.parse(c.tipos_contato) : []);
+      tiposContato = tc.length ? tc.join(', ') : '—';
+    } catch {}
+    const resultado = c.resultado ? (RESULTADO_L[c.resultado] || c.resultado) : '—';
     let diasAberto = '—';
     if (c.aberto_em) {
       const [dd, mm, yyyy] = (c.aberto_em.split(' ')[0] || '').split('/');
-      if (dd && mm && yyyy) {
-        diasAberto = Math.floor((hoje - new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd))) / 86400000) + ' dias';
-      }
+      if (dd && mm && yyyy) diasAberto = Math.floor((hoje - new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd))) / 86400000) + ' dias';
     }
     return `<tr style="background:${i%2===0?'#fff':'#f9f9f9'}">
-      <td style="padding:7px 10px;font-weight:600">${c.nome}</td>
-      <td style="padding:7px 10px">${c.ra||'—'}</td>
-      <td style="padding:7px 10px">${c.turma||'—'}</td>
-      <td style="padding:7px 10px">${c.qtd_faltas||0}</td>
-      <td style="padding:7px 10px"><span style="color:${STATUS_COR[status]};font-weight:600">${BA_STATUS_L[status]||status}</span></td>
-      <td style="padding:7px 10px"><span style="color:${RISCO_COR[risco]};font-weight:600">${BA_RISCO_L[risco]||risco}</span></td>
-      <td style="padding:7px 10px">${c.responsavel||'—'}</td>
-      <td style="padding:7px 10px">${[c.telefone1,c.telefone2].filter(Boolean).join(' / ')||'—'}</td>
-      <td style="padding:7px 10px">${c.aberto_em||'—'}</td>
-      <td style="padding:7px 10px;font-size:11px">${diasAberto}</td>
-      <td style="padding:7px 10px;font-size:11px">${rede}</td>
-    </tr>`;
+    <td style="padding:6px 8px;font-weight:600">${c.nome}</td>
+    <td style="padding:6px 8px">${c.ra||'—'}</td>
+    <td style="padding:6px 8px">${c.turma||'—'}</td>
+    <td style="padding:6px 8px">${c.qtd_faltas||0}</td>
+    <td style="padding:6px 8px"><span style="color:${STATUS_COR[status]};font-weight:600">${BA_STATUS_L[status]||status}</span></td>
+    <td style="padding:6px 8px"><span style="color:${RISCO_COR[risco]};font-weight:600">${BA_RISCO_L[risco]||risco}</span></td>
+    <td style="padding:6px 8px">${c.contato_responsavel?'✓':'—'}</td>
+    <td style="padding:6px 8px;font-size:10px">${tiposContato}</td>
+    <td style="padding:6px 8px">${c.data_contato||'—'}</td>
+    <td style="padding:6px 8px">${c.gestao_comunicada_em||'—'}</td>
+    <td style="padding:6px 8px">${resultado}</td>
+    <td style="padding:6px 8px;font-size:10px">${rede}</td>
+  </tr>`;
   }).join('');
 
   const totais = {
@@ -2892,10 +2903,9 @@ window._gerarRelatorioBA = () => {
 
   <table>
     <thead><tr>
-      <th>Aluno</th><th>RA</th><th>Turma</th><th>Faltas</th><th>Status</th><th>Risco</th>
-      <th>Responsável</th><th>Telefone(s)</th><th>Aberto em</th><th>Dias aberto</th><th>Rede de Apoio</th>
+      <th>Aluno</th><th>RA</th><th>Turma</th><th>Faltas</th><th>Status</th><th>Risco</th><th>Contato</th><th>Tipo contato</th><th>Data contato</th><th>Gestão comunicada</th><th>Resultado</th><th>Rede de Apoio</th>
     </tr></thead>
-    <tbody>${linhas||'<tr><td colspan="11" style="padding:16px;text-align:center;color:#999">Nenhum caso encontrado com o filtro atual.</td></tr>'}</tbody>
+    <tbody>${linhas||'<tr><td colspan="12" style="padding:16px;text-align:center;color:#999">Nenhum caso encontrado com o filtro atual.</td></tr>'}</tbody>
   </table>
 
   <div class="rodape">SisRoe v2.0 · EE Professora Malba Thereza Ferraz Campaner · Protocolo 179 · CONVIVA SP · SEDUC SP</div>
@@ -2908,6 +2918,9 @@ window._gerarRelatorioBA = () => {
 };
 
 window._abrirFormBuscaAtiva = (prefill) => {
+  const podeClassificar = ['poc','coordenador','vice','diretor'].includes(cu?.perfil);
+  document.getElementById('baSecClassificacao').style.display = podeClassificar ? '' : 'none';
+  document.getElementById('baSecResultado').style.display = podeClassificar ? '' : 'none';
   document.getElementById('baFormId').value = '';
   document.getElementById('baFormTitulo').textContent = 'Novo Caso — Busca Ativa';
   document.getElementById('baNome').value = prefill?.nome || '';
@@ -2925,11 +2938,19 @@ window._abrirFormBuscaAtiva = (prefill) => {
   document.getElementById('baPercentFreq').value = '';
   const motivo = prefill?.semana ? `${prefill.qtdFaltas||2} faltas — semana de ${_semanaFmt(prefill.semana)}` : '';
   document.getElementById('baMotivoAlerta').value = motivo;
-  document.getElementById('baStatus').value = 'monitoramento';
-  document.getElementById('baRisco').value = 'baixo';
-  document.getElementById('baObs').value = '';
+  document.getElementById('baContatoFeito').checked = false;
+  document.getElementById('baDataContato').value = '';
+  document.getElementById('baGestaoComunicadaEm').value = '';
+  document.querySelectorAll('.ba-tipo-contato').forEach(cb => { cb.checked = false; });
+  if (podeClassificar) {
+    document.getElementById('baStatus').value = 'monitoramento';
+    document.getElementById('baRisco').value = 'baixo';
+    document.getElementById('baObs').value = '';
+    document.getElementById('baResultado').value = '';
+    document.getElementById('baResultadoDetalhe').value = '';
+    document.querySelectorAll('.ba-rede').forEach(cb => { cb.checked = false; });
+  }
   document.getElementById('baFormErro').style.display = 'none';
-  document.querySelectorAll('.ba-rede').forEach(cb => { cb.checked = false; });
   document.getElementById('modalBaForm').classList.add('show');
 };
 
@@ -2937,6 +2958,9 @@ window._editarBuscaAtiva = async (id) => {
   const resp = await apiFetch(`/api/busca-ativa/${id}`);
   if (!resp.ok) { toastErro('Erro ao carregar caso.'); return; }
   const c = await resp.json();
+  const podeClassificar = ['poc','coordenador','vice','diretor'].includes(cu?.perfil);
+  document.getElementById('baSecClassificacao').style.display = podeClassificar ? '' : 'none';
+  document.getElementById('baSecResultado').style.display = podeClassificar ? '' : 'none';
   document.getElementById('baFormId').value = id;
   document.getElementById('baFormTitulo').textContent = 'Editar Caso — Busca Ativa';
   document.getElementById('baNome').value = c.nome || '';
@@ -2957,12 +2981,21 @@ window._editarBuscaAtiva = async (id) => {
   document.getElementById('baQtdFaltas').value = c.qtd_faltas || 0;
   document.getElementById('baPercentFreq').value = c.percentual_frequencia || '';
   document.getElementById('baMotivoAlerta').value = c.motivo_alerta || '';
-  document.getElementById('baStatus').value = c.status || 'monitoramento';
-  document.getElementById('baRisco').value = c.classificacao_risco || 'baixo';
-  document.getElementById('baObs').value = c.observacoes || '';
+  document.getElementById('baContatoFeito').checked = !!(c.contato_responsavel);
+  document.getElementById('baDataContato').value = c.data_contato || '';
+  document.getElementById('baGestaoComunicadaEm').value = c.gestao_comunicada_em || '';
+  const tiposContato = Array.isArray(c.tipos_contato) ? c.tipos_contato : (c.tipos_contato ? JSON.parse(c.tipos_contato) : []);
+  document.querySelectorAll('.ba-tipo-contato').forEach(cb => { cb.checked = tiposContato.includes(cb.value); });
+  if (podeClassificar) {
+    document.getElementById('baStatus').value = c.status || 'monitoramento';
+    document.getElementById('baRisco').value = c.classificacao_risco || 'baixo';
+    document.getElementById('baObs').value = c.observacoes || '';
+    document.getElementById('baResultado').value = c.resultado || '';
+    document.getElementById('baResultadoDetalhe').value = c.resultado_detalhe || '';
+    const rede = Array.isArray(c.rede_apoio) ? c.rede_apoio : [];
+    document.querySelectorAll('.ba-rede').forEach(cb => { cb.checked = rede.includes(cb.value); });
+  }
   document.getElementById('baFormErro').style.display = 'none';
-  const rede = Array.isArray(c.rede_apoio) ? c.rede_apoio : [];
-  document.querySelectorAll('.ba-rede').forEach(cb => { cb.checked = rede.includes(cb.value); });
   document.getElementById('modalBaForm').classList.add('show');
 };
 
@@ -2975,13 +3008,12 @@ window._salvarBuscaAtiva = async () => {
     erroEl.style.display = 'block';
     return;
   }
+  const podeClassificar = ['poc','coordenador','vice','diretor'].includes(cu?.perfil);
   const pf = document.getElementById('baPrimeiraFalta').value;
   let pfFmt = '';
-  if (pf) {
-    const [yyyy, mm, dd] = pf.split('-');
-    pfFmt = `${dd}/${mm}/${yyyy}`;
-  }
-  const rede = [...document.querySelectorAll('.ba-rede:checked')].map(cb => cb.value);
+  if (pf) { const [yyyy,mm,dd] = pf.split('-'); pfFmt = `${dd}/${mm}/${yyyy}`; }
+  const tiposContato = [...document.querySelectorAll('.ba-tipo-contato:checked')].map(cb => cb.value);
+  const rede = podeClassificar ? [...document.querySelectorAll('.ba-rede:checked')].map(cb => cb.value) : undefined;
   const payload = {
     nome, ra: document.getElementById('baRa').value.trim(),
     turma: document.getElementById('baTurma').value.trim(),
@@ -2996,10 +3028,18 @@ window._salvarBuscaAtiva = async () => {
     qtdFaltas: parseInt(document.getElementById('baQtdFaltas').value) || 0,
     percentualFrequencia: parseFloat(document.getElementById('baPercentFreq').value) || null,
     motivoAlerta: document.getElementById('baMotivoAlerta').value.trim(),
-    status: document.getElementById('baStatus').value,
-    classificacaoRisco: document.getElementById('baRisco').value,
-    redeApoio: rede,
-    observacoes: document.getElementById('baObs').value.trim(),
+    contatoResponsavel: document.getElementById('baContatoFeito').checked,
+    dataContato: document.getElementById('baDataContato').value,
+    tiposContato,
+    gestaoComunicadaEm: document.getElementById('baGestaoComunicadaEm').value,
+    ...(podeClassificar ? {
+      status: document.getElementById('baStatus').value,
+      classificacaoRisco: document.getElementById('baRisco').value,
+      redeApoio: rede,
+      observacoes: document.getElementById('baObs').value.trim(),
+      resultado: document.getElementById('baResultado').value,
+      resultadoDetalhe: document.getElementById('baResultadoDetalhe').value.trim(),
+    } : {}),
   };
 
   let resp;
