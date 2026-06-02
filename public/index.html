@@ -328,97 +328,6 @@
         </select>
       </div>
       <div id="baLista"></div>
-
-      <!-- MODAL NOVO CASO -->
-      <div class="mo" id="modalBaForm" onclick="if(event.target===this)this.classList.remove('show')">
-        <div class="md ba-modal" onclick="event.stopPropagation()" style="max-width:560px">
-          <div class="mh">
-            <span class="mt2" id="baFormTitulo">Novo Caso — Busca Ativa</span>
-            <button class="mc" onclick="document.getElementById('modalBaForm').classList.remove('show')">✕</button>
-          </div>
-          <div style="padding:16px;overflow-y:auto;max-height:75vh">
-            <input type="hidden" id="baFormId">
-            <div class="fl" style="font-size:12px;margin-bottom:8px">Dados do aluno</div>
-            <div class="fr">
-              <div class="fg"><label>Nome completo *</label><input type="text" id="baNome" placeholder="Nome do aluno"></div>
-              <div class="fg" style="max-width:130px"><label>RA</label><input type="text" id="baRa" placeholder="RA"></div>
-            </div>
-            <div class="fr">
-              <div class="fg"><label>Turma</label><input type="text" id="baTurma" placeholder="Ex: 9º Ano A"></div>
-              <div class="fg" style="max-width:130px"><label>Série</label><input type="text" id="baSerie" placeholder="Ex: 9º Ano"></div>
-              <div class="fg" style="max-width:130px"><label>Turno</label>
-                <select id="baTurno"><option value="">—</option><option>Manhã</option><option>Tarde</option><option>Noite</option></select>
-              </div>
-            </div>
-            <div class="fr">
-              <div class="fg"><label>Data de Nascimento</label><input type="date" id="baDataNasc"></div>
-              <div class="fg"><label>Responsável</label><input type="text" id="baResponsavel" placeholder="Nome do responsável"></div>
-            </div>
-            <div class="fr">
-              <div class="fg"><label>Telefone 1</label><input type="tel" id="baTel1" placeholder="(12) 99999-9999"></div>
-              <div class="fg"><label>Telefone 2</label><input type="tel" id="baTel2" placeholder="(12) 99999-9999"></div>
-            </div>
-            <div class="fg"><label>Endereço</label><input type="text" id="baEndereco" placeholder="Rua, nº, bairro"></div>
-            <div class="fl" style="font-size:12px;margin-top:12px;margin-bottom:8px">Situação de frequência</div>
-            <div class="fr">
-              <div class="fg"><label>1ª Falta registrada</label><input type="date" id="baPrimeiraFalta"></div>
-              <div class="fg" style="max-width:100px"><label>Qtd. Faltas</label><input type="number" id="baQtdFaltas" min="0" value="0"></div>
-              <div class="fg" style="max-width:110px"><label>% Frequência</label><input type="number" id="baPercentFreq" min="0" max="100" step="0.1" placeholder="75.0"></div>
-            </div>
-            <div class="fg"><label>Motivo do alerta</label><input type="text" id="baMotivoAlerta" placeholder="Ex: 2 faltas na semana de 02/06/2026"></div>
-            <div class="fl" style="font-size:12px;margin-top:12px;margin-bottom:8px">Classificação</div>
-            <div class="fr">
-              <div class="fg"><label>Status</label>
-                <select id="baStatus">
-                  <option value="monitoramento">Monitoramento</option>
-                  <option value="em_busca_ativa">Em Busca Ativa</option>
-                  <option value="contato_realizado">Contato Realizado</option>
-                  <option value="retornou">Retornou</option>
-                  <option value="encerrado">Encerrado</option>
-                </select>
-              </div>
-              <div class="fg"><label>Risco</label>
-                <select id="baRisco">
-                  <option value="baixo">Baixo</option>
-                  <option value="medio">Médio</option>
-                  <option value="alto">Alto</option>
-                  <option value="critico">Crítico</option>
-                </select>
-              </div>
-            </div>
-            <div class="fg">
-              <label>Rede de Apoio acionada</label>
-              <div class="ba-rede-apoio">
-                <label><input type="checkbox" class="ba-rede" value="Conselho Tutelar"> Conselho Tutelar</label>
-                <label><input type="checkbox" class="ba-rede" value="CRAS"> CRAS</label>
-                <label><input type="checkbox" class="ba-rede" value="CREAS"> CREAS</label>
-                <label><input type="checkbox" class="ba-rede" value="UBS"> UBS</label>
-                <label><input type="checkbox" class="ba-rede" value="CAPS"> CAPS</label>
-                <label><input type="checkbox" class="ba-rede" value="Saúde Mental"> Saúde Mental</label>
-                <label><input type="checkbox" class="ba-rede" value="Assistência Social"> Assistência Social</label>
-                <label><input type="checkbox" class="ba-rede" value="Polícia Militar"> Polícia Militar</label>
-              </div>
-            </div>
-            <div class="fg"><label>Observações</label><textarea id="baObs" rows="3" placeholder="Observações gerais sobre o caso..."></textarea></div>
-            <div id="baFormErro" style="color:var(--re);font-size:13px;display:none;margin-bottom:8px"></div>
-            <div class="fr" style="gap:8px;margin-top:12px">
-              <button class="bp" style="flex:1" onclick="window._salvarBuscaAtiva()">Salvar</button>
-              <button class="bn" onclick="document.getElementById('modalBaForm').classList.remove('show')">Cancelar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- MODAL DETALHES / AÇÕES -->
-      <div class="mo" id="modalBaDetalhe" onclick="if(event.target===this)this.classList.remove('show')">
-        <div class="md ba-modal" onclick="event.stopPropagation()" style="max-width:600px">
-          <div class="mh">
-            <span class="mt2" id="baDetTitulo">Caso — Busca Ativa</span>
-            <button class="mc" onclick="document.getElementById('modalBaDetalhe').classList.remove('show')">✕</button>
-          </div>
-          <div id="baDetCorpo" style="padding:16px;overflow-y:auto;max-height:80vh"></div>
-        </div>
-      </div>
     </div>
 
     <!-- GESTÃO -->
@@ -552,6 +461,97 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL BUSCA ATIVA — NOVO CASO / EDITAR -->
+<div class="mo" id="modalBaForm" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="md ba-modal" onclick="event.stopPropagation()" style="max-width:560px">
+    <div class="mh">
+      <span class="mt2" id="baFormTitulo">Novo Caso — Busca Ativa</span>
+      <button class="mc" onclick="document.getElementById('modalBaForm').classList.remove('show')">✕</button>
+    </div>
+    <div style="padding:16px;overflow-y:auto;max-height:75vh">
+      <input type="hidden" id="baFormId">
+      <div class="fl" style="font-size:12px;margin-bottom:8px">Dados do aluno</div>
+      <div class="fr">
+        <div class="fg"><label>Nome completo *</label><input type="text" id="baNome" placeholder="Nome do aluno"></div>
+        <div class="fg" style="max-width:130px"><label>RA</label><input type="text" id="baRa" placeholder="RA"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>Turma</label><input type="text" id="baTurma" placeholder="Ex: 9º Ano A"></div>
+        <div class="fg" style="max-width:130px"><label>Série</label><input type="text" id="baSerie" placeholder="Ex: 9º Ano"></div>
+        <div class="fg" style="max-width:130px"><label>Turno</label>
+          <select id="baTurno"><option value="">—</option><option>Manhã</option><option>Tarde</option><option>Noite</option></select>
+        </div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>Data de Nascimento</label><input type="date" id="baDataNasc"></div>
+        <div class="fg"><label>Responsável</label><input type="text" id="baResponsavel" placeholder="Nome do responsável"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>Telefone 1</label><input type="tel" id="baTel1" placeholder="(12) 99999-9999"></div>
+        <div class="fg"><label>Telefone 2</label><input type="tel" id="baTel2" placeholder="(12) 99999-9999"></div>
+      </div>
+      <div class="fg"><label>Endereço</label><input type="text" id="baEndereco" placeholder="Rua, nº, bairro"></div>
+      <div class="fl" style="font-size:12px;margin-top:12px;margin-bottom:8px">Situação de frequência</div>
+      <div class="fr">
+        <div class="fg"><label>1ª Falta registrada</label><input type="date" id="baPrimeiraFalta"></div>
+        <div class="fg" style="max-width:100px"><label>Qtd. Faltas</label><input type="number" id="baQtdFaltas" min="0" value="0"></div>
+        <div class="fg" style="max-width:110px"><label>% Frequência</label><input type="number" id="baPercentFreq" min="0" max="100" step="0.1" placeholder="75.0"></div>
+      </div>
+      <div class="fg"><label>Motivo do alerta</label><input type="text" id="baMotivoAlerta" placeholder="Ex: 2 faltas na semana de 02/06/2026"></div>
+      <div class="fl" style="font-size:12px;margin-top:12px;margin-bottom:8px">Classificação</div>
+      <div class="fr">
+        <div class="fg"><label>Status</label>
+          <select id="baStatus">
+            <option value="monitoramento">Monitoramento</option>
+            <option value="em_busca_ativa">Em Busca Ativa</option>
+            <option value="contato_realizado">Contato Realizado</option>
+            <option value="retornou">Retornou</option>
+            <option value="encerrado">Encerrado</option>
+          </select>
+        </div>
+        <div class="fg"><label>Risco</label>
+          <select id="baRisco">
+            <option value="baixo">Baixo</option>
+            <option value="medio">Médio</option>
+            <option value="alto">Alto</option>
+            <option value="critico">Crítico</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Rede de Apoio acionada</label>
+        <div class="ba-rede-apoio">
+          <label><input type="checkbox" class="ba-rede" value="Conselho Tutelar"> Conselho Tutelar</label>
+          <label><input type="checkbox" class="ba-rede" value="CRAS"> CRAS</label>
+          <label><input type="checkbox" class="ba-rede" value="CREAS"> CREAS</label>
+          <label><input type="checkbox" class="ba-rede" value="UBS"> UBS</label>
+          <label><input type="checkbox" class="ba-rede" value="CAPS"> CAPS</label>
+          <label><input type="checkbox" class="ba-rede" value="Saúde Mental"> Saúde Mental</label>
+          <label><input type="checkbox" class="ba-rede" value="Assistência Social"> Assistência Social</label>
+          <label><input type="checkbox" class="ba-rede" value="Polícia Militar"> Polícia Militar</label>
+        </div>
+      </div>
+      <div class="fg"><label>Observações</label><textarea id="baObs" rows="3" placeholder="Observações gerais sobre o caso..."></textarea></div>
+      <div id="baFormErro" style="color:var(--re);font-size:13px;display:none;margin-bottom:8px"></div>
+      <div class="fr" style="gap:8px;margin-top:12px">
+        <button class="bp" style="flex:1" onclick="window._salvarBuscaAtiva()">Salvar</button>
+        <button class="bn" onclick="document.getElementById('modalBaForm').classList.remove('show')">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL BUSCA ATIVA — DETALHES / AÇÕES -->
+<div class="mo" id="modalBaDetalhe" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="md ba-modal" onclick="event.stopPropagation()" style="max-width:600px">
+    <div class="mh">
+      <span class="mt2" id="baDetTitulo">Caso — Busca Ativa</span>
+      <button class="mc" onclick="document.getElementById('modalBaDetalhe').classList.remove('show')">✕</button>
+    </div>
+    <div id="baDetCorpo" style="padding:16px;overflow-y:auto;max-height:80vh"></div>
   </div>
 </div>
 
