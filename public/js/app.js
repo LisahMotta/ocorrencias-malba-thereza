@@ -490,7 +490,7 @@ function _renderMain() {
   document.getElementById('tabSeg').style.display = (cu.perfil==='coordenador' && COORD_SEGMENTOS[cu.nome]) ? '' : 'none';
   document.getElementById('tabCarometro').style.display = ['professor','poc','coordenador','vice','diretor'].includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabGes').style.display = ['diretor','vice'].includes(cu.perfil) ? '' : 'none';
-  document.getElementById('tabBuscaAtiva').style.display = ['coordenador','vice','diretor'].includes(cu.perfil) ? '' : 'none';
+  document.getElementById('tabBuscaAtiva').style.display = ['poc','coordenador','agente','vice','diretor'].includes(cu.perfil) ? '' : 'none';
 
   const icons = {professor:'👨‍🏫',agente:'🏫',secretaria:'📝',gerente:'🗂️',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};
   const descs = {
@@ -841,7 +841,7 @@ function renderDash() {
   const al=[];
   if(urg>0) al.push(`<div class="ab re" style="margin-bottom:8px">⚠ ${urg} ocorrência(s) de urgência/emergência.</div>`);
   if(pend>0&&isEdit()) al.push(`<div class="ab or" style="margin-bottom:8px">📋 ${pend} ocorrência(s) aguardando complemento.</div>`);
-  if(['coordenador','vice','diretor'].includes(cu?.perfil)) {
+  if(['poc','coordenador','agente','vice','diretor'].includes(cu?.perfil)) {
     const baAlertas = _detectarAlertasBuscaAtiva();
     if (baAlertas.length > 0) {
       al.push(`<div class="ab bl" style="margin-bottom:8px;cursor:pointer" onclick="showTab('buscaativa',document.getElementById('tabBuscaAtiva'))">
@@ -2795,6 +2795,116 @@ window._renderBuscaAtiva = () => {
       </div>
     </div>`;
   }).join('');
+};
+
+window._gerarRelatorioBA = () => {
+  const filtroStatus = document.getElementById('baFiltroStatus')?.value || '';
+  const filtroRisco  = document.getElementById('baFiltroRisco')?.value  || '';
+  let lista = [..._baCasos];
+  if (filtroStatus) lista = lista.filter(c => c.status === filtroStatus);
+  if (filtroRisco)  lista = lista.filter(c => c.classificacao_risco === filtroRisco);
+
+  const hoje = new Date();
+  const dataHoje = hoje.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const geradoEm = hoje.toLocaleString('pt-BR');
+
+  const filtroDesc = [
+    filtroStatus ? `Status: ${BA_STATUS_L[filtroStatus]||filtroStatus}` : '',
+    filtroRisco  ? `Risco: ${BA_RISCO_L[filtroRisco]||filtroRisco}`    : '',
+  ].filter(Boolean).join(' · ') || 'Todos os casos';
+
+  const RISCO_COR = { baixo:'#2e7d32', medio:'#e65100', alto:'#c62828', critico:'#6a1b9a' };
+  const STATUS_COR = { monitoramento:'#e65100', em_busca_ativa:'#c62828', contato_realizado:'#1565c0', retornou:'#2e7d32', encerrado:'#555' };
+
+  const linhas = lista.map((c, i) => {
+    const risco  = c.classificacao_risco || 'baixo';
+    const status = c.status || 'monitoramento';
+    const rede   = Array.isArray(c.rede_apoio) ? c.rede_apoio.join(', ') : (c.rede_apoio || '—');
+
+    let diasAberto = '—';
+    if (c.aberto_em) {
+      const [dd, mm, yyyy] = (c.aberto_em.split(' ')[0] || '').split('/');
+      if (dd && mm && yyyy) {
+        diasAberto = Math.floor((hoje - new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd))) / 86400000) + ' dias';
+      }
+    }
+    return `<tr style="background:${i%2===0?'#fff':'#f9f9f9'}">
+      <td style="padding:7px 10px;font-weight:600">${c.nome}</td>
+      <td style="padding:7px 10px">${c.ra||'—'}</td>
+      <td style="padding:7px 10px">${c.turma||'—'}</td>
+      <td style="padding:7px 10px">${c.qtd_faltas||0}</td>
+      <td style="padding:7px 10px"><span style="color:${STATUS_COR[status]};font-weight:600">${BA_STATUS_L[status]||status}</span></td>
+      <td style="padding:7px 10px"><span style="color:${RISCO_COR[risco]};font-weight:600">${BA_RISCO_L[risco]||risco}</span></td>
+      <td style="padding:7px 10px">${c.responsavel||'—'}</td>
+      <td style="padding:7px 10px">${[c.telefone1,c.telefone2].filter(Boolean).join(' / ')||'—'}</td>
+      <td style="padding:7px 10px">${c.aberto_em||'—'}</td>
+      <td style="padding:7px 10px;font-size:11px">${diasAberto}</td>
+      <td style="padding:7px 10px;font-size:11px">${rede}</td>
+    </tr>`;
+  }).join('');
+
+  const totais = {
+    total: lista.length,
+    monitoramento:     lista.filter(c=>c.status==='monitoramento').length,
+    em_busca_ativa:    lista.filter(c=>c.status==='em_busca_ativa').length,
+    contato_realizado: lista.filter(c=>c.status==='contato_realizado').length,
+    retornou:          lista.filter(c=>c.status==='retornou').length,
+    encerrado:         lista.filter(c=>c.status==='encerrado').length,
+    alto_critico:      lista.filter(c=>['alto','critico'].includes(c.classificacao_risco)).length,
+  };
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head>
+  <meta charset="UTF-8">
+  <title>Relatório Busca Ativa — EE Malba Thereza</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;font-size:12px;color:#222;padding:20px}
+    h1{font-size:16px;margin-bottom:2px}
+    h2{font-size:13px;font-weight:normal;color:#555;margin-bottom:16px}
+    .resumo{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+    .card{border:1px solid #ddd;border-radius:6px;padding:10px 16px;min-width:100px;text-align:center}
+    .card .n{font-size:22px;font-weight:700}
+    .card .l{font-size:10px;color:#666;margin-top:2px}
+    table{width:100%;border-collapse:collapse;font-size:11px}
+    th{background:#b71c1c;color:#fff;padding:8px 10px;text-align:left;font-size:11px}
+    td{border-bottom:1px solid #eee;vertical-align:top}
+    .rodape{margin-top:16px;font-size:10px;color:#999;text-align:center}
+    @media print{
+      body{padding:10px}
+      .card{break-inside:avoid}
+      tr{break-inside:avoid}
+    }
+  </style>
+</head><body>
+  <h1>📋 Relatório — Busca Ativa de Alunos</h1>
+  <h2>EE Professora Malba Thereza Ferraz Campaner · ${dataHoje}</h2>
+  <p style="font-size:11px;color:#555;margin-bottom:14px">Filtro: <strong>${filtroDesc}</strong> · Gerado em ${geradoEm} por ${cu?.nome||'—'}</p>
+
+  <div class="resumo">
+    <div class="card"><div class="n">${totais.total}</div><div class="l">Total de casos</div></div>
+    <div class="card"><div class="n" style="color:#e65100">${totais.monitoramento}</div><div class="l">Monitoramento</div></div>
+    <div class="card"><div class="n" style="color:#c62828">${totais.em_busca_ativa}</div><div class="l">Em Busca Ativa</div></div>
+    <div class="card"><div class="n" style="color:#1565c0">${totais.contato_realizado}</div><div class="l">Contato Realizado</div></div>
+    <div class="card"><div class="n" style="color:#2e7d32">${totais.retornou}</div><div class="l">Retornou</div></div>
+    <div class="card"><div class="n" style="color:#555">${totais.encerrado}</div><div class="l">Encerrado</div></div>
+    <div class="card"><div class="n" style="color:#6a1b9a">${totais.alto_critico}</div><div class="l">Risco Alto/Crítico</div></div>
+  </div>
+
+  <table>
+    <thead><tr>
+      <th>Aluno</th><th>RA</th><th>Turma</th><th>Faltas</th><th>Status</th><th>Risco</th>
+      <th>Responsável</th><th>Telefone(s)</th><th>Aberto em</th><th>Dias aberto</th><th>Rede de Apoio</th>
+    </tr></thead>
+    <tbody>${linhas||'<tr><td colspan="11" style="padding:16px;text-align:center;color:#999">Nenhum caso encontrado com o filtro atual.</td></tr>'}</tbody>
+  </table>
+
+  <div class="rodape">SisRoe v2.0 · EE Professora Malba Thereza Ferraz Campaner · Protocolo 179 · CONVIVA SP · SEDUC SP</div>
+  <script>window.onload=()=>window.print();<\/script>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  if (w) { w.document.write(html); w.document.close(); }
+  else alert('Permita popups para gerar o relatório.');
 };
 
 window._abrirFormBuscaAtiva = (prefill) => {
