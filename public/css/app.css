@@ -1386,3 +1386,11 @@ button:focus-visible{border-radius:var(--radius-sm)}
     line-height: 2;
   }
 }
+
+/* ── Busca Ativa ─────────────────────────────────────────────────────────── */
+.ba-card{transition:box-shadow .2s}
+.ba-card:hover{box-shadow:var(--shadow-md)}
+.ba-rede-apoio{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.ba-rede-apoio label{display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer}
+.ba-rede-apoio input[type=checkbox]{width:14px;height:14px;accent-color:var(--bl)}
+.ba-modal{animation:modalIn .2s var(--ease) both}
