@@ -77,6 +77,68 @@ async function _initSqlite() {
       enviado_por TEXT,
       enviado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS busca_ativa (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ra TEXT,
+      nome TEXT NOT NULL,
+      turma TEXT,
+      serie TEXT,
+      turno TEXT,
+      data_nascimento TEXT,
+      responsavel TEXT,
+      telefone1 TEXT,
+      telefone2 TEXT,
+      endereco TEXT,
+      data_primeira_falta TEXT,
+      qtd_faltas INTEGER DEFAULT 0,
+      percentual_frequencia REAL,
+      motivo_alerta TEXT,
+      status TEXT NOT NULL DEFAULT 'monitoramento',
+      classificacao_risco TEXT DEFAULT 'baixo',
+      rede_apoio TEXT,
+      observacoes TEXT,
+      aberto_por_nome TEXT,
+      aberto_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS acoes_busca_ativa (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      busca_ativa_id INTEGER NOT NULL,
+      data TEXT NOT NULL,
+      responsavel TEXT NOT NULL,
+      tipo TEXT NOT NULL,
+      resultado TEXT,
+      observacoes TEXT,
+      criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS dias_letivos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      data TEXT NOT NULL UNIQUE,
+      bimestre INTEGER,
+      observacao TEXT,
+      criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS frequencia_diaria (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      aluno_ra TEXT NOT NULL,
+      aluno_nome TEXT NOT NULL,
+      aluno_turma TEXT NOT NULL,
+      data TEXT NOT NULL,
+      status TEXT NOT NULL,
+      observacao TEXT,
+      registrado_por INTEGER,
+      registrado_em TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      atualizado_em TEXT,
+      UNIQUE(aluno_ra, data)
+    );
+    CREATE VIEW IF NOT EXISTS vw_resumo_frequencia_mes AS
+    SELECT aluno_ra, aluno_nome, aluno_turma,
+      COUNT(CASE WHEN status='ausente' THEN 1 END) AS total_ausencias,
+      COUNT(CASE WHEN status='presente' THEN 1 END) AS total_presencas,
+      COUNT(*) AS total_registros,
+      ROUND(CAST(COUNT(CASE WHEN status='ausente' THEN 1 END) AS REAL) * 100.0 / COUNT(*), 1) AS percentual_ausencia
+    FROM frequencia_diaria
+    WHERE strftime('%Y-%m', data) = strftime('%Y-%m', 'now')
+    GROUP BY aluno_ra, aluno_nome, aluno_turma;
   `);
   const migracoes = [
     "ALTER TABLE ocorrencias ADD COLUMN conselho_tutelar TEXT",
@@ -174,6 +236,70 @@ async function _initPg() {
       enviado_por TEXT,
       enviado_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI')
     );
+    CREATE TABLE IF NOT EXISTS busca_ativa (
+      id SERIAL PRIMARY KEY,
+      ra TEXT,
+      nome TEXT NOT NULL,
+      turma TEXT,
+      serie TEXT,
+      turno TEXT,
+      data_nascimento TEXT,
+      responsavel TEXT,
+      telefone1 TEXT,
+      telefone2 TEXT,
+      endereco TEXT,
+      data_primeira_falta TEXT,
+      qtd_faltas INTEGER DEFAULT 0,
+      percentual_frequencia REAL,
+      motivo_alerta TEXT,
+      status TEXT NOT NULL DEFAULT 'monitoramento',
+      classificacao_risco TEXT DEFAULT 'baixo',
+      rede_apoio TEXT,
+      observacoes TEXT,
+      aberto_por_nome TEXT,
+      aberto_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI')
+    );
+    CREATE TABLE IF NOT EXISTS acoes_busca_ativa (
+      id SERIAL PRIMARY KEY,
+      busca_ativa_id INTEGER NOT NULL,
+      data TEXT NOT NULL,
+      responsavel TEXT NOT NULL,
+      tipo TEXT NOT NULL,
+      resultado TEXT,
+      observacoes TEXT,
+      criado_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI')
+    );
+    CREATE TABLE IF NOT EXISTS dias_letivos (
+      id SERIAL PRIMARY KEY,
+      data TEXT NOT NULL UNIQUE,
+      bimestre INTEGER,
+      observacao TEXT,
+      criado_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI')
+    );
+    CREATE TABLE IF NOT EXISTS frequencia_diaria (
+      id SERIAL PRIMARY KEY,
+      aluno_ra TEXT NOT NULL,
+      aluno_nome TEXT NOT NULL,
+      aluno_turma TEXT NOT NULL,
+      data TEXT NOT NULL,
+      status TEXT NOT NULL,
+      observacao TEXT,
+      registrado_por INTEGER,
+      registrado_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI'),
+      atualizado_em TEXT,
+      UNIQUE(aluno_ra, data)
+    );
+  `);
+  await pgPool.query(`
+    CREATE OR REPLACE VIEW vw_resumo_frequencia_mes AS
+    SELECT aluno_ra, aluno_nome, aluno_turma,
+      COUNT(*) FILTER (WHERE status='ausente') AS total_ausencias,
+      COUNT(*) FILTER (WHERE status='presente') AS total_presencas,
+      COUNT(*) AS total_registros,
+      ROUND(100.0 * COUNT(*) FILTER (WHERE status='ausente') / NULLIF(COUNT(*), 0), 1) AS percentual_ausencia
+    FROM frequencia_diaria
+    WHERE date_trunc('month', TO_DATE(data, 'YYYY-MM-DD')) = date_trunc('month', NOW() AT TIME ZONE 'America/Sao_Paulo')
+    GROUP BY aluno_ra, aluno_nome, aluno_turma;
   `);
   console.log('✅ Banco PostgreSQL pronto');
 }
@@ -422,8 +548,66 @@ module.exports = {
     else _sqRun('DELETE FROM fotos_alunos WHERE ra = ?', [ra]);
     return row.filename;
   },
-};
-async listarDiasLetivos(bimestre = null) {
+
+  // ── Busca Ativa ───────────────────────────────────────────────────────────
+  async listarBuscaAtiva() {
+    if (USE_PG) return _pgAll('SELECT * FROM busca_ativa ORDER BY id DESC');
+    return _sqAll('SELECT * FROM busca_ativa ORDER BY id DESC');
+  },
+  async getBuscaAtiva(id) {
+    if (USE_PG) return _pgOne('SELECT * FROM busca_ativa WHERE id = $1', [id]);
+    return _sqOne('SELECT * FROM busca_ativa WHERE id = ?', [id]);
+  },
+  async inserirBuscaAtiva(d) {
+    const campos = ['ra','nome','turma','serie','turno','data_nascimento','responsavel','telefone1','telefone2','endereco','data_primeira_falta','qtd_faltas','percentual_frequencia','motivo_alerta','status','classificacao_risco','rede_apoio','observacoes','aberto_por_nome'];
+    const vals = [d.ra||'',d.nome,d.turma||'',d.serie||'',d.turno||'',d.dataNascimento||'',d.responsavel||'',d.telefone1||'',d.telefone2||'',d.endereco||'',d.dataPrimeiraFalta||'',d.qtdFaltas||0,d.percentualFrequencia||null,d.motivoAlerta||'',d.status||'monitoramento',d.classificacaoRisco||'baixo',d.redeApoio?JSON.stringify(d.redeApoio):'[]',d.observacoes||'',d.abertoPorNome||''];
+    if (USE_PG) {
+      const ph = campos.map((_,i)=>`$${i+1}`).join(',');
+      return _pgRun(`INSERT INTO busca_ativa (${campos.join(',')}) VALUES (${ph}) RETURNING id`, vals);
+    }
+    const ph = campos.map(()=>'?').join(',');
+    return _sqRun(`INSERT INTO busca_ativa (${campos.join(',')}) VALUES (${ph})`, vals);
+  },
+  async atualizarBuscaAtiva(id, d) {
+    const campos = ['responsavel','telefone1','telefone2','endereco','data_nascimento','status','classificacao_risco','rede_apoio','observacoes','qtd_faltas','percentual_frequencia'];
+    const vals = [d.responsavel||'',d.telefone1||'',d.telefone2||'',d.endereco||'',d.dataNascimento||'',d.status||'monitoramento',d.classificacaoRisco||'baixo',d.redeApoio?JSON.stringify(d.redeApoio):'[]',d.observacoes||'',d.qtdFaltas||0,d.percentualFrequencia||null];
+    if (USE_PG) {
+      const set = campos.map((c,i)=>`${c}=$${i+1}`).join(',');
+      await _pgRun(`UPDATE busca_ativa SET ${set} WHERE id=$${campos.length+1}`, [...vals, id]);
+    } else {
+      const set = campos.map(c=>`${c}=?`).join(',');
+      _sqRun(`UPDATE busca_ativa SET ${set} WHERE id=?`, [...vals, id]);
+    }
+  },
+  async deletarBuscaAtiva(id) {
+    if (USE_PG) {
+      await _pgRun('DELETE FROM acoes_busca_ativa WHERE busca_ativa_id = $1', [id]);
+      return _pgRun('DELETE FROM busca_ativa WHERE id = $1', [id]);
+    }
+    _sqRun('DELETE FROM acoes_busca_ativa WHERE busca_ativa_id = ?', [id]);
+    return _sqRun('DELETE FROM busca_ativa WHERE id = ?', [id]);
+  },
+
+  // ── Ações Busca Ativa ─────────────────────────────────────────────────────
+  async listarAcoesBuscaAtiva(buscaAtivaId) {
+    if (USE_PG) return _pgAll('SELECT * FROM acoes_busca_ativa WHERE busca_ativa_id = $1 ORDER BY id ASC', [buscaAtivaId]);
+    return _sqAll('SELECT * FROM acoes_busca_ativa WHERE busca_ativa_id = ? ORDER BY id ASC', [buscaAtivaId]);
+  },
+  async inserirAcaoBuscaAtiva(d) {
+    if (USE_PG) {
+      return _pgRun('INSERT INTO acoes_busca_ativa (busca_ativa_id,data,responsavel,tipo,resultado,observacoes) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
+        [d.buscaAtivaId, d.data, d.responsavel, d.tipo, d.resultado||'', d.observacoes||'']);
+    }
+    return _sqRun('INSERT INTO acoes_busca_ativa (busca_ativa_id,data,responsavel,tipo,resultado,observacoes) VALUES (?,?,?,?,?,?)',
+      [d.buscaAtivaId, d.data, d.responsavel, d.tipo, d.resultado||'', d.observacoes||'']);
+  },
+  async deletarAcaoBuscaAtiva(id) {
+    if (USE_PG) return _pgRun('DELETE FROM acoes_busca_ativa WHERE id = $1', [id]);
+    return _sqRun('DELETE FROM acoes_busca_ativa WHERE id = ?', [id]);
+  },
+
+  // ── Dias letivos ──────────────────────────────────────────────────────────
+  async listarDiasLetivos(bimestre = null) {
     if (USE_PG) {
       if (bimestre) return _pgAll('SELECT * FROM dias_letivos WHERE bimestre = $1 ORDER BY data', [bimestre]);
       return _pgAll('SELECT * FROM dias_letivos ORDER BY data');
@@ -567,3 +751,4 @@ async listarDiasLetivos(bimestre = null) {
       [aluno_ra, inicio, fim]
     );
   },
+};
