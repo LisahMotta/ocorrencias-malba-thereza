@@ -819,6 +819,70 @@ app.delete('/api/foto/:ra', autenticar, exigePerfil(...PODE_EDITAR_CAROMETRO), a
   res.json({ ok: true });
 });
 
+// ─── BUSCA ATIVA ──────────────────────────────────────────────────────────────
+const PODE_BUSCA_ATIVA = ['coordenador', 'vice', 'diretor'];
+
+app.get('/api/busca-ativa', autenticar, exigePerfil(...PODE_BUSCA_ATIVA), async (req, res) => {
+  const casos = await db.listarBuscaAtiva();
+  res.json(casos.map(c => ({ ...c, rede_apoio: c.rede_apoio ? JSON.parse(c.rede_apoio) : [] })));
+});
+
+app.post('/api/busca-ativa', autenticar, exigePerfil(...PODE_BUSCA_ATIVA), async (req, res) => {
+  const d = req.body;
+  if (!d.nome) return res.status(400).json({ erro: 'Nome obrigatório' });
+  const id = await db.inserirBuscaAtiva({ ...d, abertoPorNome: req.usuario.nome });
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'abrir_busca_ativa', { nome: d.nome, ra: d.ra });
+  const caso = await db.getBuscaAtiva(id);
+  broadcast({ type: 'busca_ativa_nova', caso: { ...caso, rede_apoio: caso.rede_apoio ? JSON.parse(caso.rede_apoio) : [] } });
+  res.json({ ok: true, id });
+});
+
+app.get('/api/busca-ativa/:id', autenticar, exigePerfil(...PODE_BUSCA_ATIVA), async (req, res) => {
+  const id = parseInt(req.params.id);
+  const caso = await db.getBuscaAtiva(id);
+  if (!caso) return res.status(404).json({ erro: 'Caso não encontrado' });
+  const acoes = await db.listarAcoesBuscaAtiva(id);
+  res.json({ ...caso, rede_apoio: caso.rede_apoio ? JSON.parse(caso.rede_apoio) : [], acoes });
+});
+
+app.put('/api/busca-ativa/:id', autenticar, exigePerfil(...PODE_BUSCA_ATIVA), async (req, res) => {
+  const id = parseInt(req.params.id);
+  const caso = await db.getBuscaAtiva(id);
+  if (!caso) return res.status(404).json({ erro: 'Caso não encontrado' });
+  await db.atualizarBuscaAtiva(id, req.body);
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'atualizar_busca_ativa', { id, status: req.body.status });
+  const atualizado = await db.getBuscaAtiva(id);
+  broadcast({ type: 'busca_ativa_atualizada', caso: { ...atualizado, rede_apoio: atualizado.rede_apoio ? JSON.parse(atualizado.rede_apoio) : [] } });
+  res.json({ ok: true });
+});
+
+app.delete('/api/busca-ativa/:id', autenticar, exigePerfil('diretor', 'vice'), async (req, res) => {
+  const id = parseInt(req.params.id);
+  const caso = await db.getBuscaAtiva(id);
+  if (!caso) return res.status(404).json({ erro: 'Caso não encontrado' });
+  await db.deletarBuscaAtiva(id);
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'deletar_busca_ativa', { id, nome: caso.nome });
+  broadcast({ type: 'busca_ativa_deletada', id });
+  res.json({ ok: true });
+});
+
+app.post('/api/busca-ativa/:id/acoes', autenticar, exigePerfil(...PODE_BUSCA_ATIVA), async (req, res) => {
+  const id = parseInt(req.params.id);
+  const caso = await db.getBuscaAtiva(id);
+  if (!caso) return res.status(404).json({ erro: 'Caso não encontrado' });
+  const { data, tipo, resultado, observacoes } = req.body;
+  if (!data || !tipo) return res.status(400).json({ erro: 'Data e tipo obrigatórios' });
+  const acaoId = await db.inserirAcaoBuscaAtiva({
+    buscaAtivaId: id, data, responsavel: req.usuario.nome, tipo, resultado, observacoes,
+  });
+  res.json({ ok: true, id: acaoId });
+});
+
+app.delete('/api/busca-ativa/:id/acoes/:acaoId', autenticar, exigePerfil('diretor', 'vice'), async (req, res) => {
+  await db.deletarAcaoBuscaAtiva(parseInt(req.params.acaoId));
+  res.json({ ok: true });
+});
+
 // ─── SPA ──────────────────────────────────────────────────────────────────────
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
 

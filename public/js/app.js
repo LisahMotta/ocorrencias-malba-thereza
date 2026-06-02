@@ -297,7 +297,7 @@ window._doLogout = () => {
 
   // 5. Reseta aba visualmente para Início
   document.querySelectorAll('.nt button').forEach((b, i) => b.classList.toggle('act', i === 0));
-  ['dashboard','registrar','ocorrencias','relatorio','alunos','segmento','carometro','gestao']
+  ['dashboard','registrar','ocorrencias','relatorio','alunos','segmento','carometro','gestao','buscaativa']
     .forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.style.display = t === 'dashboard' ? '' : 'none';
@@ -441,6 +441,17 @@ function _iniciarWS() {
     window._renderGrafico();
   });
 
+  onEvento('busca_ativa_nova', () => {
+    if (document.getElementById('tab-buscaativa')?.style.display !== 'none') window._renderBuscaAtiva();
+    renderDash();
+  });
+  onEvento('busca_ativa_atualizada', () => {
+    if (document.getElementById('tab-buscaativa')?.style.display !== 'none') window._renderBuscaAtiva();
+  });
+  onEvento('busca_ativa_deletada', () => {
+    if (document.getElementById('tab-buscaativa')?.style.display !== 'none') window._renderBuscaAtiva();
+  });
+
   onEvento('chat_msg', (msg) => {
     receberMsgChat(msg.msg);
     // Incrementa badge se não for o remetente
@@ -479,6 +490,7 @@ function _renderMain() {
   document.getElementById('tabSeg').style.display = (cu.perfil==='coordenador' && COORD_SEGMENTOS[cu.nome]) ? '' : 'none';
   document.getElementById('tabCarometro').style.display = ['professor','poc','coordenador','vice','diretor'].includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabGes').style.display = ['diretor','vice'].includes(cu.perfil) ? '' : 'none';
+  document.getElementById('tabBuscaAtiva').style.display = ['coordenador','vice','diretor'].includes(cu.perfil) ? '' : 'none';
 
   const icons = {professor:'👨‍🏫',agente:'🏫',secretaria:'📝',gerente:'🗂️',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};
   const descs = {
@@ -829,6 +841,14 @@ function renderDash() {
   const al=[];
   if(urg>0) al.push(`<div class="ab re" style="margin-bottom:8px">⚠ ${urg} ocorrência(s) de urgência/emergência.</div>`);
   if(pend>0&&isEdit()) al.push(`<div class="ab or" style="margin-bottom:8px">📋 ${pend} ocorrência(s) aguardando complemento.</div>`);
+  if(['coordenador','vice','diretor'].includes(cu?.perfil)) {
+    const baAlertas = _detectarAlertasBuscaAtiva();
+    if (baAlertas.length > 0) {
+      al.push(`<div class="ab bl" style="margin-bottom:8px;cursor:pointer" onclick="showTab('buscaativa',document.getElementById('tabBuscaAtiva'))">
+        🔍 <strong>${baAlertas.length} aluno(s)</strong> com 2 ou mais faltas na mesma semana — <u>Verificar Busca Ativa</u>
+      </div>`);
+    }
+  }
   document.getElementById('dashAlerts').innerHTML=al.join('');
 
   // Recentes com badge
@@ -1087,7 +1107,7 @@ window.closeModal = (e) => {
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
 window.showTab = (name, btn) => {
-  ['dashboard','registrar','ocorrencias','relatorio','alunos','segmento','carometro','gestao'].forEach(t => {
+  ['dashboard','registrar','ocorrencias','relatorio','alunos','segmento','carometro','gestao','buscaativa'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===name ? '' : 'none';
   });
   document.querySelectorAll('.nt button').forEach(b=>b.classList.remove('act'));
@@ -1099,7 +1119,6 @@ window.showTab = (name, btn) => {
   if(name==='alunos') {
     _initAbaAlunos();
     window.renderAlunos();
-    // Mostrar seção de pesquisa/sinalização apenas para equipe gestora
     const sec = document.getElementById('aPesquisaSection');
     if (sec) {
       const podeMonitorar = ['poc','coordenador','vice','diretor'].includes(cu?.perfil);
@@ -1108,6 +1127,7 @@ window.showTab = (name, btn) => {
     }
   }
   if(name==='segmento') window.renderSegmento();
+  if(name==='buscaativa') window._initAbaBuscaAtiva();
 };
 
 let usuariosDB = []; // usuários carregados do banco
@@ -2639,6 +2659,381 @@ window._deletarFoto = async (ra) => {
   if (_cBlobUrls[ra]) { URL.revokeObjectURL(_cBlobUrls[ra]); delete _cBlobUrls[ra]; }
   toastOk('Foto removida.');
   await window._carregarCarometro();
+};
+
+// ─── BUSCA ATIVA ──────────────────────────────────────────────────────────────
+let _baCasos = [];
+
+const BA_STATUS_L = {
+  monitoramento:'Monitoramento', em_busca_ativa:'Em Busca Ativa',
+  contato_realizado:'Contato Realizado', retornou:'Retornou', encerrado:'Encerrado',
+};
+const BA_RISCO_L = { baixo:'Baixo', medio:'Médio', alto:'Alto', critico:'Crítico' };
+const BA_RISCO_CL = { baixo:'gr', medio:'or', alto:'re', critico:'re' };
+const BA_STATUS_CL = {
+  monitoramento:'or', em_busca_ativa:'re', contato_realizado:'bl', retornou:'gr', encerrado:'',
+};
+
+function _detectarAlertasBuscaAtiva() {
+  const a11 = occ.filter(o => o.numero === 'A11' || o.tipo === 'Aluno faltou sem justificativa');
+  const porAluno = {};
+  a11.forEach(o => {
+    (o.alunos || []).forEach(a => {
+      const key = a.ra || a.nome;
+      if (!key) return;
+      if (!porAluno[key]) porAluno[key] = { aluno: a, turma: o.turma, occs: [] };
+      porAluno[key].occs.push(o);
+    });
+  });
+  const alertas = [];
+  Object.values(porAluno).forEach(({ aluno, turma, occs }) => {
+    const semanas = {};
+    occs.forEach(o => {
+      const [dd, mm, yyyy] = (o.data || '').split('/');
+      if (!dd || !mm || !yyyy) return;
+      const d = new Date(parseInt(yyyy), parseInt(mm) - 1, parseInt(dd));
+      const dow = d.getDay() || 7;
+      const seg = new Date(d); seg.setDate(d.getDate() - dow + 1);
+      const wk = seg.toISOString().slice(0, 10);
+      if (!semanas[wk]) semanas[wk] = [];
+      semanas[wk].push(o);
+    });
+    Object.entries(semanas).forEach(([semana, ws]) => {
+      if (ws.length >= 2) alertas.push({ aluno, turma, qtdFaltas: occs.length, semana });
+    });
+  });
+  return alertas;
+}
+
+function _semanaFmt(isoDate) {
+  const [y, m, d] = isoDate.split('-');
+  const seg = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+  const sex = new Date(seg); sex.setDate(seg.getDate() + 4);
+  return `${seg.toLocaleDateString('pt-BR')} a ${sex.toLocaleDateString('pt-BR')}`;
+}
+
+window._initAbaBuscaAtiva = async () => {
+  await window._carregarBuscaAtiva();
+  window._renderBuscaAtiva();
+  _renderAlertaBaBanner();
+};
+
+window._carregarBuscaAtiva = async () => {
+  try {
+    const resp = await apiFetch('/api/busca-ativa');
+    if (resp.ok) _baCasos = await resp.json();
+  } catch(e) { console.error('[busca-ativa] Erro ao carregar:', e); }
+};
+
+function _renderAlertaBaBanner() {
+  const banner = document.getElementById('baAlertaBanner');
+  if (!banner) return;
+  const alertas = _detectarAlertasBuscaAtiva();
+  if (!alertas.length) { banner.style.display = 'none'; return; }
+  banner.style.display = '';
+  banner.innerHTML = `<div class="ab bl" style="margin-bottom:12px">
+    🔍 <strong>${alertas.length} aluno(s)</strong> com 2+ faltas na mesma semana:
+    <ul style="margin:6px 0 4px 16px;font-size:13px">
+      ${alertas.map(a => {
+        const nome = a.aluno.nome || '—';
+        const turma = a.turma || '—';
+        const semana = _semanaFmt(a.semana);
+        const jaAberto = _baCasos.some(c => c.ra && c.ra === a.aluno.ra || c.nome === a.aluno.nome);
+        return `<li><strong>${nome}</strong> · ${turma} · Semana ${semana} · ${a.qtdFaltas} falta(s) total
+          ${jaAberto ? '<span class="lt gr">Caso aberto</span>' : `<button class="bn bl" style="padding:2px 8px;font-size:11px;margin-left:6px" onclick="window._abrirFormBuscaAtiva(${JSON.stringify({nome,ra:a.aluno.ra||'',turma,qtdFaltas:a.qtdFaltas,semana}).replace(/"/g,'&quot;')})">+ Abrir caso</button>`}
+        </li>`;
+      }).join('')}
+    </ul>
+  </div>`;
+}
+
+window._renderBuscaAtiva = () => {
+  const filtroStatus = document.getElementById('baFiltroStatus')?.value || '';
+  const filtroRisco = document.getElementById('baFiltroRisco')?.value || '';
+  let lista = [..._baCasos];
+  if (filtroStatus) lista = lista.filter(c => c.status === filtroStatus);
+  if (filtroRisco) lista = lista.filter(c => c.classificacao_risco === filtroRisco);
+
+  const el = document.getElementById('baLista');
+  if (!el) return;
+  if (!lista.length) {
+    el.innerHTML = '<div class="es">Nenhum caso de busca ativa encontrado.</div>';
+    return;
+  }
+
+  const hoje = new Date();
+  el.innerHTML = lista.map(c => {
+    const risco = c.classificacao_risco || 'baixo';
+    const status = c.status || 'monitoramento';
+    const stCl = BA_STATUS_CL[status] || '';
+    const riCl = BA_RISCO_CL[risco] || 'gr';
+    let diasSem = '—';
+    if (c.aberto_em) {
+      const [dd, mm, yyyy] = (c.aberto_em.split(' ')[0] || '').split('/');
+      if (dd && mm && yyyy) {
+        const ab = new Date(parseInt(yyyy), parseInt(mm) - 1, parseInt(dd));
+        diasSem = Math.floor((hoje - ab) / 86400000);
+      }
+    }
+    return `<div class="fc ba-card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:600;font-size:14px">${c.nome}</div>
+          <div style="font-size:12px;color:var(--mu)">RA: ${c.ra||'—'} · ${c.turma||'—'} · ${c.turno||'—'}</div>
+          <div style="font-size:12px;color:var(--mu);margin-top:2px">Faltas: <strong>${c.qtd_faltas||0}</strong> · Dias sem freq.: <strong>${diasSem}</strong></div>
+          ${c.motivo_alerta ? `<div style="font-size:11px;color:var(--mu);margin-top:2px">${c.motivo_alerta}</div>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="lt ${stCl}" style="font-size:10px">${BA_STATUS_L[status]||status}</span>
+          <span class="lt ${riCl}" style="font-size:10px">Risco: ${BA_RISCO_L[risco]||risco}</span>
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="bn bl" style="font-size:12px;padding:4px 12px" onclick="window._abrirDetalheBuscaAtiva(${c.id})">📋 Ver / Ações</button>
+        <button class="bn" style="font-size:12px;padding:4px 12px" onclick="window._editarBuscaAtiva(${c.id})">✏ Editar</button>
+        ${['diretor','vice'].includes(cu?.perfil) ? `<button class="bn re" style="font-size:12px;padding:4px 12px" onclick="window._deletarBuscaAtiva(${c.id})">🗑</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+};
+
+window._abrirFormBuscaAtiva = (prefill) => {
+  document.getElementById('baFormId').value = '';
+  document.getElementById('baFormTitulo').textContent = 'Novo Caso — Busca Ativa';
+  document.getElementById('baNome').value = prefill?.nome || '';
+  document.getElementById('baRa').value = prefill?.ra || '';
+  document.getElementById('baTurma').value = prefill?.turma || '';
+  document.getElementById('baSerie').value = prefill?.serie || '';
+  document.getElementById('baTurno').value = '';
+  document.getElementById('baDataNasc').value = '';
+  document.getElementById('baResponsavel').value = '';
+  document.getElementById('baTel1').value = '';
+  document.getElementById('baTel2').value = '';
+  document.getElementById('baEndereco').value = '';
+  document.getElementById('baPrimeiraFalta').value = '';
+  document.getElementById('baQtdFaltas').value = prefill?.qtdFaltas || 0;
+  document.getElementById('baPercentFreq').value = '';
+  const motivo = prefill?.semana ? `${prefill.qtdFaltas||2} faltas — semana de ${_semanaFmt(prefill.semana)}` : '';
+  document.getElementById('baMotivoAlerta').value = motivo;
+  document.getElementById('baStatus').value = 'monitoramento';
+  document.getElementById('baRisco').value = 'baixo';
+  document.getElementById('baObs').value = '';
+  document.getElementById('baFormErro').style.display = 'none';
+  document.querySelectorAll('.ba-rede').forEach(cb => { cb.checked = false; });
+  document.getElementById('modalBaForm').classList.add('show');
+};
+
+window._editarBuscaAtiva = async (id) => {
+  const resp = await apiFetch(`/api/busca-ativa/${id}`);
+  if (!resp.ok) { toastErro('Erro ao carregar caso.'); return; }
+  const c = await resp.json();
+  document.getElementById('baFormId').value = id;
+  document.getElementById('baFormTitulo').textContent = 'Editar Caso — Busca Ativa';
+  document.getElementById('baNome').value = c.nome || '';
+  document.getElementById('baRa').value = c.ra || '';
+  document.getElementById('baTurma').value = c.turma || '';
+  document.getElementById('baSerie').value = c.serie || '';
+  document.getElementById('baTurno').value = c.turno || '';
+  document.getElementById('baDataNasc').value = c.data_nascimento || '';
+  document.getElementById('baResponsavel').value = c.responsavel || '';
+  document.getElementById('baTel1').value = c.telefone1 || '';
+  document.getElementById('baTel2').value = c.telefone2 || '';
+  document.getElementById('baEndereco').value = c.endereco || '';
+  const pf = c.data_primeira_falta || '';
+  if (pf && pf.includes('/')) {
+    const [dd,mm,yyyy] = pf.split('/');
+    document.getElementById('baPrimeiraFalta').value = `${yyyy}-${mm}-${dd}`;
+  } else document.getElementById('baPrimeiraFalta').value = pf;
+  document.getElementById('baQtdFaltas').value = c.qtd_faltas || 0;
+  document.getElementById('baPercentFreq').value = c.percentual_frequencia || '';
+  document.getElementById('baMotivoAlerta').value = c.motivo_alerta || '';
+  document.getElementById('baStatus').value = c.status || 'monitoramento';
+  document.getElementById('baRisco').value = c.classificacao_risco || 'baixo';
+  document.getElementById('baObs').value = c.observacoes || '';
+  document.getElementById('baFormErro').style.display = 'none';
+  const rede = Array.isArray(c.rede_apoio) ? c.rede_apoio : [];
+  document.querySelectorAll('.ba-rede').forEach(cb => { cb.checked = rede.includes(cb.value); });
+  document.getElementById('modalBaForm').classList.add('show');
+};
+
+window._salvarBuscaAtiva = async () => {
+  const id = document.getElementById('baFormId').value;
+  const nome = document.getElementById('baNome').value.trim();
+  if (!nome) {
+    const erroEl = document.getElementById('baFormErro');
+    erroEl.textContent = 'Nome do aluno obrigatório.';
+    erroEl.style.display = 'block';
+    return;
+  }
+  const pf = document.getElementById('baPrimeiraFalta').value;
+  let pfFmt = '';
+  if (pf) {
+    const [yyyy, mm, dd] = pf.split('-');
+    pfFmt = `${dd}/${mm}/${yyyy}`;
+  }
+  const rede = [...document.querySelectorAll('.ba-rede:checked')].map(cb => cb.value);
+  const payload = {
+    nome, ra: document.getElementById('baRa').value.trim(),
+    turma: document.getElementById('baTurma').value.trim(),
+    serie: document.getElementById('baSerie').value.trim(),
+    turno: document.getElementById('baTurno').value,
+    dataNascimento: document.getElementById('baDataNasc').value,
+    responsavel: document.getElementById('baResponsavel').value.trim(),
+    telefone1: document.getElementById('baTel1').value.trim(),
+    telefone2: document.getElementById('baTel2').value.trim(),
+    endereco: document.getElementById('baEndereco').value.trim(),
+    dataPrimeiraFalta: pfFmt,
+    qtdFaltas: parseInt(document.getElementById('baQtdFaltas').value) || 0,
+    percentualFrequencia: parseFloat(document.getElementById('baPercentFreq').value) || null,
+    motivoAlerta: document.getElementById('baMotivoAlerta').value.trim(),
+    status: document.getElementById('baStatus').value,
+    classificacaoRisco: document.getElementById('baRisco').value,
+    redeApoio: rede,
+    observacoes: document.getElementById('baObs').value.trim(),
+  };
+
+  let resp;
+  if (id) {
+    resp = await apiFetch(`/api/busca-ativa/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+  } else {
+    resp = await apiFetch('/api/busca-ativa', { method: 'POST', body: JSON.stringify(payload) });
+  }
+  if (!resp.ok) { const d = await resp.json(); toastErro(d.erro || 'Erro ao salvar.'); return; }
+  document.getElementById('modalBaForm').classList.remove('show');
+  toastOk(id ? 'Caso atualizado!' : 'Caso aberto com sucesso!');
+  await window._carregarBuscaAtiva();
+  window._renderBuscaAtiva();
+  _renderAlertaBaBanner();
+};
+
+window._abrirDetalheBuscaAtiva = async (id) => {
+  const resp = await apiFetch(`/api/busca-ativa/${id}`);
+  if (!resp.ok) { toastErro('Erro ao carregar caso.'); return; }
+  const c = await resp.json();
+  document.getElementById('baDetTitulo').textContent = c.nome;
+  const podeExcluirAcao = ['diretor','vice'].includes(cu?.perfil);
+
+  const redeHtml = (c.rede_apoio||[]).length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">${(c.rede_apoio||[]).map(r=>`<span class="lt bl" style="font-size:10px">${r}</span>`).join('')}</div>`
+    : '<span style="color:var(--mu);font-size:12px">Nenhuma</span>';
+
+  const acoesHtml = (c.acoes||[]).length
+    ? `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px">
+        <thead><tr style="background:var(--mgl)">
+          <th style="padding:4px 8px;text-align:left">Data</th>
+          <th style="padding:4px 8px;text-align:left">Tipo</th>
+          <th style="padding:4px 8px;text-align:left">Responsável</th>
+          <th style="padding:4px 8px;text-align:left">Resultado</th>
+          ${podeExcluirAcao ? '<th style="padding:4px 8px"></th>' : ''}
+        </tr></thead>
+        <tbody>${c.acoes.map(a=>`<tr style="border-bottom:1px solid var(--bd)">
+          <td style="padding:4px 8px">${a.data}</td>
+          <td style="padding:4px 8px">${a.tipo}</td>
+          <td style="padding:4px 8px">${a.responsavel}</td>
+          <td style="padding:4px 8px">${a.resultado||'—'}</td>
+          ${podeExcluirAcao ? `<td style="padding:4px 8px"><button class="bn re" style="padding:2px 6px;font-size:10px" onclick="window._deletarAcaoBuscaAtiva(${id},${a.id})">🗑</button></td>` : ''}
+        </tr>${a.observacoes?`<tr><td colspan="${podeExcluirAcao?5:4}" style="padding:2px 8px 6px;color:var(--mu);font-size:11px">Obs: ${a.observacoes}</td></tr>`:''}`).join('')}
+        </tbody></table>`
+    : '<div style="color:var(--mu);font-size:12px;margin-top:4px">Nenhuma ação registrada.</div>';
+
+  document.getElementById('baDetCorpo').innerHTML = `
+    <div class="fr" style="gap:16px;flex-wrap:wrap;margin-bottom:12px">
+      <div style="flex:1;min-width:200px">
+        <div class="fl" style="font-size:12px;margin-bottom:8px">Dados do aluno</div>
+        <table style="font-size:13px;width:100%;border-collapse:collapse">
+          <tr><td style="color:var(--mu);padding:2px 0;min-width:110px">RA</td><td>${c.ra||'—'}</td></tr>
+          <tr><td style="color:var(--mu);padding:2px 0">Turma</td><td>${c.turma||'—'}</td></tr>
+          <tr><td style="color:var(--mu);padding:2px 0">Turno</td><td>${c.turno||'—'}</td></tr>
+          <tr><td style="color:var(--mu);padding:2px 0">Nascimento</td><td>${c.data_nascimento||'—'}</td></tr>
+          <tr><td style="color:var(--mu);padding:2px 0">Responsável</td><td>${c.responsavel||'—'}</td></tr>
+          <tr><td style="color:var(--mu);padding:2px 0">Telefone 1</td><td>${c.telefone1||'—'}</td></tr>
+          <tr><td style="color:var(--mu);padding:2px 0">Telefone 2</td><td>${c.telefone2||'—'}</td></tr>
+          <tr><td style="color:var(--mu);padding:2px 0">Endereço</td><td>${c.endereco||'—'}</td></tr>
+        </table>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div class="fl" style="font-size:12px;margin-bottom:8px">Situação de frequência</div>
+        <table style="font-size:13px;width:100%;border-collapse:collapse">
+          <tr><td style="color:var(--mu);padding:2px 0;min-width:110px">1ª Falta</td><td>${c.data_primeira_falta||'—'}</td></tr>
+          <tr><td style="color:var(--mu);padding:2px 0">Qtd. Faltas</td><td><strong>${c.qtd_faltas||0}</strong></td></tr>
+          <tr><td style="color:var(--mu);padding:2px 0">% Frequência</td><td>${c.percentual_frequencia!=null?c.percentual_frequencia+'%':'—'}</td></tr>
+          <tr><td style="color:var(--mu);padding:2px 0">Motivo alerta</td><td>${c.motivo_alerta||'—'}</td></tr>
+        </table>
+        <div class="fl" style="font-size:12px;margin-top:12px;margin-bottom:4px">Classificação</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="lt ${BA_STATUS_CL[c.status]||''}">${BA_STATUS_L[c.status]||c.status}</span>
+          <span class="lt ${BA_RISCO_CL[c.classificacao_risco]||'gr'}">Risco: ${BA_RISCO_L[c.classificacao_risco]||c.classificacao_risco}</span>
+        </div>
+        <div class="fl" style="font-size:12px;margin-top:12px;margin-bottom:4px">Rede de Apoio</div>
+        ${redeHtml}
+      </div>
+    </div>
+    ${c.observacoes?`<div class="ab" style="margin-bottom:12px;font-size:13px"><strong>Observações:</strong><br>${c.observacoes}</div>`:''}
+    <div class="fl" style="font-size:12px;margin-bottom:8px">Histórico de Ações</div>
+    ${acoesHtml}
+    <div class="fl" style="font-size:12px;margin-top:14px;margin-bottom:8px">Registrar Nova Ação</div>
+    <div id="baNovaAcaoForm">
+      <div class="fr">
+        <div class="fg"><label>Data *</label><input type="date" id="baAcaoData" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="fg"><label>Tipo *</label>
+          <select id="baAcaoTipo">
+            <option value="">Selecione...</option>
+            <option>Ligação telefônica</option>
+            <option>WhatsApp</option>
+            <option>Visita domiciliar</option>
+            <option>Reunião presencial</option>
+            <option>Ofício</option>
+            <option>Conselho Tutelar</option>
+            <option>CRAS</option>
+            <option>CREAS</option>
+            <option>Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>Resultado</label><input type="text" id="baAcaoResultado" placeholder="O que foi obtido nesta ação"></div>
+      <div class="fg"><label>Observações</label><textarea id="baAcaoObs" rows="2" placeholder="Detalhes adicionais..."></textarea></div>
+      <button class="bn bl" style="margin-top:6px" onclick="window._registrarAcaoBuscaAtiva(${id})">➕ Registrar Ação</button>
+    </div>
+  `;
+  document.getElementById('modalBaDetalhe').classList.add('show');
+};
+
+window._registrarAcaoBuscaAtiva = async (casoId) => {
+  const data = document.getElementById('baAcaoData').value;
+  const tipo = document.getElementById('baAcaoTipo').value;
+  if (!data || !tipo) { toastAviso('Preencha data e tipo da ação.'); return; }
+  const resp = await apiFetch(`/api/busca-ativa/${casoId}/acoes`, {
+    method: 'POST',
+    body: JSON.stringify({
+      data, tipo,
+      resultado: document.getElementById('baAcaoResultado').value.trim(),
+      observacoes: document.getElementById('baAcaoObs').value.trim(),
+    }),
+  });
+  if (!resp.ok) { toastErro('Erro ao registrar ação.'); return; }
+  toastOk('Ação registrada!');
+  await window._carregarBuscaAtiva();
+  window._renderBuscaAtiva();
+  window._abrirDetalheBuscaAtiva(casoId);
+};
+
+window._deletarAcaoBuscaAtiva = async (casoId, acaoId) => {
+  if (!confirm('Remover esta ação?')) return;
+  const resp = await apiFetch(`/api/busca-ativa/${casoId}/acoes/${acaoId}`, { method: 'DELETE' });
+  if (!resp.ok) { toastErro('Erro ao remover.'); return; }
+  toastOk('Ação removida.');
+  await window._carregarBuscaAtiva();
+  window._renderBuscaAtiva();
+  window._abrirDetalheBuscaAtiva(casoId);
+};
+
+window._deletarBuscaAtiva = async (id) => {
+  if (!confirm('Apagar este caso de Busca Ativa? Ação irreversível.')) return;
+  const resp = await apiFetch(`/api/busca-ativa/${id}`, { method: 'DELETE' });
+  if (!resp.ok) { toastErro('Erro ao apagar.'); return; }
+  toastOk('Caso apagado.');
+  await window._carregarBuscaAtiva();
+  window._renderBuscaAtiva();
 };
 
 // ─── BOOTSTRAP ────────────────────────────────────────────────────────────────
