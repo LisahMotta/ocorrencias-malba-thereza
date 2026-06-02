@@ -98,7 +98,13 @@ async function _initSqlite() {
       rede_apoio TEXT,
       observacoes TEXT,
       aberto_por_nome TEXT,
-      aberto_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+      aberto_em TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      contato_responsavel INTEGER DEFAULT 0,
+      data_contato TEXT,
+      tipos_contato TEXT,
+      gestao_comunicada_em TEXT,
+      resultado TEXT,
+      resultado_detalhe TEXT
     );
     CREATE TABLE IF NOT EXISTS acoes_busca_ativa (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -149,6 +155,12 @@ async function _initSqlite() {
     "CREATE INDEX IF NOT EXISTS idx_occ_status ON ocorrencias(status)",
     "CREATE INDEX IF NOT EXISTS idx_occ_data   ON ocorrencias(data)",
     "CREATE INDEX IF NOT EXISTS idx_chat_occ   ON chats(occ_id)",
+    "ALTER TABLE busca_ativa ADD COLUMN contato_responsavel INTEGER DEFAULT 0",
+    "ALTER TABLE busca_ativa ADD COLUMN data_contato TEXT",
+    "ALTER TABLE busca_ativa ADD COLUMN tipos_contato TEXT",
+    "ALTER TABLE busca_ativa ADD COLUMN gestao_comunicada_em TEXT",
+    "ALTER TABLE busca_ativa ADD COLUMN resultado TEXT",
+    "ALTER TABLE busca_ativa ADD COLUMN resultado_detalhe TEXT",
   ];
   try { sqliteDb.run("SELECT placon FROM ocorrencias LIMIT 1"); }
   catch { migracoes.forEach(sql => { try { sqliteDb.run(sql); } catch {} }); }
@@ -257,7 +269,13 @@ async function _initPg() {
       rede_apoio TEXT,
       observacoes TEXT,
       aberto_por_nome TEXT,
-      aberto_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI')
+      aberto_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI'),
+      contato_responsavel INTEGER DEFAULT 0,
+      data_contato TEXT,
+      tipos_contato TEXT,
+      gestao_comunicada_em TEXT,
+      resultado TEXT,
+      resultado_detalhe TEXT
     );
     CREATE TABLE IF NOT EXISTS acoes_busca_ativa (
       id SERIAL PRIMARY KEY,
@@ -301,6 +319,17 @@ async function _initPg() {
     WHERE date_trunc('month', TO_DATE(data, 'YYYY-MM-DD')) = date_trunc('month', NOW() AT TIME ZONE 'America/Sao_Paulo')
     GROUP BY aluno_ra, aluno_nome, aluno_turma;
   `);
+  const migPg = [
+    "ALTER TABLE busca_ativa ADD COLUMN IF NOT EXISTS contato_responsavel INTEGER DEFAULT 0",
+    "ALTER TABLE busca_ativa ADD COLUMN IF NOT EXISTS data_contato TEXT",
+    "ALTER TABLE busca_ativa ADD COLUMN IF NOT EXISTS tipos_contato TEXT",
+    "ALTER TABLE busca_ativa ADD COLUMN IF NOT EXISTS gestao_comunicada_em TEXT",
+    "ALTER TABLE busca_ativa ADD COLUMN IF NOT EXISTS resultado TEXT",
+    "ALTER TABLE busca_ativa ADD COLUMN IF NOT EXISTS resultado_detalhe TEXT",
+  ];
+  for (const sql of migPg) {
+    try { await pgPool.query(sql); } catch {}
+  }
   console.log('✅ Banco PostgreSQL pronto');
 }
 
@@ -562,8 +591,8 @@ module.exports = {
     return _sqOne('SELECT * FROM busca_ativa WHERE id = ?', [id]);
   },
   async inserirBuscaAtiva(d) {
-    const campos = ['ra','nome','turma','serie','turno','data_nascimento','responsavel','telefone1','telefone2','endereco','data_primeira_falta','qtd_faltas','percentual_frequencia','motivo_alerta','status','classificacao_risco','rede_apoio','observacoes','aberto_por_nome'];
-    const vals = [d.ra||'',d.nome,d.turma||'',d.serie||'',d.turno||'',d.dataNascimento||'',d.responsavel||'',d.telefone1||'',d.telefone2||'',d.endereco||'',d.dataPrimeiraFalta||'',d.qtdFaltas||0,d.percentualFrequencia||null,d.motivoAlerta||'',d.status||'monitoramento',d.classificacaoRisco||'baixo',d.redeApoio?JSON.stringify(d.redeApoio):'[]',d.observacoes||'',d.abertoPorNome||''];
+    const campos = ['ra','nome','turma','serie','turno','data_nascimento','responsavel','telefone1','telefone2','endereco','data_primeira_falta','qtd_faltas','percentual_frequencia','motivo_alerta','status','classificacao_risco','rede_apoio','observacoes','aberto_por_nome','contato_responsavel','data_contato','tipos_contato','gestao_comunicada_em','resultado','resultado_detalhe'];
+    const vals = [d.ra||'',d.nome,d.turma||'',d.serie||'',d.turno||'',d.dataNascimento||'',d.responsavel||'',d.telefone1||'',d.telefone2||'',d.endereco||'',d.dataPrimeiraFalta||'',d.qtdFaltas||0,d.percentualFrequencia||null,d.motivoAlerta||'',d.status||'monitoramento',d.classificacaoRisco||'baixo',d.redeApoio?JSON.stringify(d.redeApoio):'[]',d.observacoes||'',d.abertoPorNome||'',d.contatoResponsavel?1:0,d.dataContato||'',d.tiposContato?JSON.stringify(d.tiposContato):'[]',d.gestaoComunicadaEm||'',d.resultado||'',d.resultadoDetalhe||''];
     if (USE_PG) {
       const ph = campos.map((_,i)=>`$${i+1}`).join(',');
       return _pgRun(`INSERT INTO busca_ativa (${campos.join(',')}) VALUES (${ph}) RETURNING id`, vals);
@@ -572,8 +601,8 @@ module.exports = {
     return _sqRun(`INSERT INTO busca_ativa (${campos.join(',')}) VALUES (${ph})`, vals);
   },
   async atualizarBuscaAtiva(id, d) {
-    const campos = ['responsavel','telefone1','telefone2','endereco','data_nascimento','status','classificacao_risco','rede_apoio','observacoes','qtd_faltas','percentual_frequencia'];
-    const vals = [d.responsavel||'',d.telefone1||'',d.telefone2||'',d.endereco||'',d.dataNascimento||'',d.status||'monitoramento',d.classificacaoRisco||'baixo',d.redeApoio?JSON.stringify(d.redeApoio):'[]',d.observacoes||'',d.qtdFaltas||0,d.percentualFrequencia||null];
+    const campos = ['responsavel','telefone1','telefone2','endereco','data_nascimento','status','classificacao_risco','rede_apoio','observacoes','qtd_faltas','percentual_frequencia','contato_responsavel','data_contato','tipos_contato','gestao_comunicada_em','resultado','resultado_detalhe','motivo_alerta','turma','serie','turno','data_nascimento','data_primeira_falta'];
+    const vals = [d.responsavel||'',d.telefone1||'',d.telefone2||'',d.endereco||'',d.dataNascimento||'',d.status||'monitoramento',d.classificacaoRisco||'baixo',d.redeApoio?JSON.stringify(d.redeApoio):'[]',d.observacoes||'',d.qtdFaltas||0,d.percentualFrequencia||null,d.contatoResponsavel?1:0,d.dataContato||'',d.tiposContato?JSON.stringify(d.tiposContato):'[]',d.gestaoComunicadaEm||'',d.resultado||'',d.resultadoDetalhe||'',d.motivoAlerta||'',d.turma||'',d.serie||'',d.turno||'',d.dataNascimento||'',d.dataPrimeiraFalta||''];
     if (USE_PG) {
       const set = campos.map((c,i)=>`${c}=$${i+1}`).join(',');
       await _pgRun(`UPDATE busca_ativa SET ${set} WHERE id=$${campos.length+1}`, [...vals, id]);
