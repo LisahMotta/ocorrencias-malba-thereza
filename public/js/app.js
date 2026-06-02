@@ -490,7 +490,7 @@ function _renderMain() {
   document.getElementById('tabSeg').style.display = (cu.perfil==='coordenador' && COORD_SEGMENTOS[cu.nome]) ? '' : 'none';
   document.getElementById('tabCarometro').style.display = ['professor','poc','coordenador','vice','diretor'].includes(cu.perfil) ? '' : 'none';
   document.getElementById('tabGes').style.display = ['diretor','vice'].includes(cu.perfil) ? '' : 'none';
-  document.getElementById('tabBuscaAtiva').style.display = ['coordenador','vice','diretor'].includes(cu.perfil) ? '' : 'none';
+  document.getElementById('tabBuscaAtiva').style.display = ['poc','coordenador','agente','vice','diretor'].includes(cu.perfil) ? '' : 'none';
 
   const icons = {professor:'👨‍🏫',agente:'🏫',secretaria:'📝',gerente:'🗂️',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};
   const descs = {
@@ -841,7 +841,7 @@ function renderDash() {
   const al=[];
   if(urg>0) al.push(`<div class="ab re" style="margin-bottom:8px">⚠ ${urg} ocorrência(s) de urgência/emergência.</div>`);
   if(pend>0&&isEdit()) al.push(`<div class="ab or" style="margin-bottom:8px">📋 ${pend} ocorrência(s) aguardando complemento.</div>`);
-  if(['coordenador','vice','diretor'].includes(cu?.perfil)) {
+  if(['poc','coordenador','agente','vice','diretor'].includes(cu?.perfil)) {
     const baAlertas = _detectarAlertasBuscaAtiva();
     if (baAlertas.length > 0) {
       al.push(`<div class="ab bl" style="margin-bottom:8px;cursor:pointer" onclick="showTab('buscaativa',document.getElementById('tabBuscaAtiva'))">

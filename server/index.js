@@ -968,7 +968,7 @@ app.get('/api/frequencia/aluno/:ra', autenticar, exigePerfil('poc','coordenador'
 });
 
 // ─── BUSCA ATIVA ──────────────────────────────────────────────────────────────
-const PODE_BUSCA_ATIVA = ['coordenador', 'vice', 'diretor'];
+const PODE_BUSCA_ATIVA = ['poc', 'coordenador', 'agente', 'vice', 'diretor'];
 
 app.get('/api/busca-ativa', autenticar, exigePerfil(...PODE_BUSCA_ATIVA), async (req, res) => {
   const casos = await db.listarBuscaAtiva();
