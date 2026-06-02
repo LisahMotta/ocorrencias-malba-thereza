@@ -308,7 +308,10 @@
       <div id="baAlertaBanner" style="display:none"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
         <div class="st" style="margin:0;border:none;padding:0">🔍 Busca Ativa de Alunos</div>
-        <button class="bp" style="padding:8px 16px;font-size:13px" onclick="window._abrirFormBuscaAtiva()">+ Novo Caso</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="bn" style="padding:8px 14px;font-size:13px" onclick="window._gerarRelatorioBA()">🖨 Relatório</button>
+          <button class="bp" style="padding:8px 16px;font-size:13px" onclick="window._abrirFormBuscaAtiva()">+ Novo Caso</button>
+        </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem">
         <select id="baFiltroStatus" class="filtro-sel" onchange="window._renderBuscaAtiva()">
