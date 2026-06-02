@@ -110,6 +110,35 @@ async function _initSqlite() {
       observacoes TEXT,
       criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS dias_letivos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      data TEXT NOT NULL UNIQUE,
+      bimestre INTEGER,
+      observacao TEXT,
+      criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS frequencia_diaria (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      aluno_ra TEXT NOT NULL,
+      aluno_nome TEXT NOT NULL,
+      aluno_turma TEXT NOT NULL,
+      data TEXT NOT NULL,
+      status TEXT NOT NULL,
+      observacao TEXT,
+      registrado_por INTEGER,
+      registrado_em TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      atualizado_em TEXT,
+      UNIQUE(aluno_ra, data)
+    );
+    CREATE VIEW IF NOT EXISTS vw_resumo_frequencia_mes AS
+    SELECT aluno_ra, aluno_nome, aluno_turma,
+      COUNT(CASE WHEN status='ausente' THEN 1 END) AS total_ausencias,
+      COUNT(CASE WHEN status='presente' THEN 1 END) AS total_presencas,
+      COUNT(*) AS total_registros,
+      ROUND(CAST(COUNT(CASE WHEN status='ausente' THEN 1 END) AS REAL) * 100.0 / COUNT(*), 1) AS percentual_ausencia
+    FROM frequencia_diaria
+    WHERE strftime('%Y-%m', data) = strftime('%Y-%m', 'now')
+    GROUP BY aluno_ra, aluno_nome, aluno_turma;
   `);
   const migracoes = [
     "ALTER TABLE ocorrencias ADD COLUMN conselho_tutelar TEXT",
@@ -240,6 +269,37 @@ async function _initPg() {
       observacoes TEXT,
       criado_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI')
     );
+    CREATE TABLE IF NOT EXISTS dias_letivos (
+      id SERIAL PRIMARY KEY,
+      data TEXT NOT NULL UNIQUE,
+      bimestre INTEGER,
+      observacao TEXT,
+      criado_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI')
+    );
+    CREATE TABLE IF NOT EXISTS frequencia_diaria (
+      id SERIAL PRIMARY KEY,
+      aluno_ra TEXT NOT NULL,
+      aluno_nome TEXT NOT NULL,
+      aluno_turma TEXT NOT NULL,
+      data TEXT NOT NULL,
+      status TEXT NOT NULL,
+      observacao TEXT,
+      registrado_por INTEGER,
+      registrado_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI'),
+      atualizado_em TEXT,
+      UNIQUE(aluno_ra, data)
+    );
+  `);
+  await pgPool.query(`
+    CREATE OR REPLACE VIEW vw_resumo_frequencia_mes AS
+    SELECT aluno_ra, aluno_nome, aluno_turma,
+      COUNT(*) FILTER (WHERE status='ausente') AS total_ausencias,
+      COUNT(*) FILTER (WHERE status='presente') AS total_presencas,
+      COUNT(*) AS total_registros,
+      ROUND(100.0 * COUNT(*) FILTER (WHERE status='ausente') / NULLIF(COUNT(*), 0), 1) AS percentual_ausencia
+    FROM frequencia_diaria
+    WHERE date_trunc('month', TO_DATE(data, 'YYYY-MM-DD')) = date_trunc('month', NOW() AT TIME ZONE 'America/Sao_Paulo')
+    GROUP BY aluno_ra, aluno_nome, aluno_turma;
   `);
   console.log('✅ Banco PostgreSQL pronto');
 }
@@ -545,6 +605,9 @@ module.exports = {
     if (USE_PG) return _pgRun('DELETE FROM acoes_busca_ativa WHERE id = $1', [id]);
     return _sqRun('DELETE FROM acoes_busca_ativa WHERE id = ?', [id]);
   },
+
+  // ── Dias letivos ──────────────────────────────────────────────────────────
+  async listarDiasLetivos(bimestre = null) {
 };
 async listarDiasLetivos(bimestre = null) {
     if (USE_PG) {
@@ -690,3 +753,4 @@ async listarDiasLetivos(bimestre = null) {
       [aluno_ra, inicio, fim]
     );
   },
+};
