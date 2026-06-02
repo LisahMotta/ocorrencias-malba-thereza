@@ -1370,6 +1370,9 @@ async function renderGestao() {
           <select id="novoPerfil">
             <option value="">Selecione...</option>
             <option value="professor">Professor</option>
+            <option value="agente">Agente de Organização Escolar</option>
+            <option value="secretaria">Secretária de Escola</option>
+            <option value="gerente">Gerente de Organização Escolar</option>
             <option value="poc">P.O.C.</option>
             <option value="coordenador">Coordenador</option>
             <option value="vice">Vice-Diretor</option>
@@ -1720,7 +1723,7 @@ window._editarPerfil = (id, nome, perfilAtual) => {
     <div class="ab bl" style="margin-bottom:1rem">Cargo atual: <strong>${PL[perfilAtual]}</strong></div>
     <div class="fg"><label>Novo cargo</label>
       <select id="novoCargoSel">
-        ${['professor','poc','coordenador','vice','diretor'].map(p =>
+        ${['professor','agente','secretaria','gerente','poc','coordenador','vice','diretor'].map(p =>
           `<option value="${p}"${p===perfilAtual?' selected':''}>${PL[p]}</option>`
         ).join('')}
       </select></div>
