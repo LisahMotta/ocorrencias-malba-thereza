@@ -608,8 +608,6 @@ module.exports = {
 
   // ── Dias letivos ──────────────────────────────────────────────────────────
   async listarDiasLetivos(bimestre = null) {
-};
-async listarDiasLetivos(bimestre = null) {
     if (USE_PG) {
       if (bimestre) return _pgAll('SELECT * FROM dias_letivos WHERE bimestre = $1 ORDER BY data', [bimestre]);
       return _pgAll('SELECT * FROM dias_letivos ORDER BY data');
