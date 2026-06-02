@@ -154,19 +154,20 @@ wss.on('connection', (ws) => {
         ws.send(JSON.stringify({ type: 'erro', msg: 'Token inválido' }));
         return;
       }
-      // Etapa 2: carregar dados — erros aqui não devem forçar logout
+      // Etapa 2: carregar dados — erros parciais não devem apagar tudo
+      userId = String(payload.id);
+      if (!clients.has(userId)) clients.set(userId, new Set());
+      clients.get(userId).add(ws);
+      console.log(`[WS] Usuário autenticado: ${payload.nome} (${payload.perfil}) — total conectados: ${wss.clients.size}`);
+
+      let todasOcc = [], todosChats = {}, pendentesRecentes = [];
+
       try {
-        userId = String(payload.id);
-        if (!clients.has(userId)) clients.set(userId, new Set());
-        clients.get(userId).add(ws);
-        console.log(`[WS] Usuário autenticado: ${payload.nome} (${payload.perfil}) — total conectados: ${wss.clients.size}`);
-        const todasOcc = await db.listarOcc();
-        // Ocorrências pendentes das últimas 2h — para notificar gestor que acabou de conectar
+        todasOcc = await db.listarOcc();
         const doisHAtras = Date.now() - (2 * 60 * 60 * 1000);
-        const pendentesRecentes = todasOcc.filter(o => {
+        pendentesRecentes = todasOcc.filter(o => {
           if (o.status !== 'pendente') return false;
           try {
-            // data formato dd/mm/yyyy
             const [dd,mm,yyyy] = (o.data||'').split('/');
             const hora = o.hora||'00:00';
             const [hh,mi] = hora.split(':');
@@ -174,17 +175,17 @@ wss.on('connection', (ws) => {
             return ts >= doisHAtras;
           } catch { return false; }
         });
-        ws.send(JSON.stringify({
-          type: 'init',
-          ocorrencias: todasOcc,
-          chats: await _todosChats(),
-          pendentesRecentes,
-        }));
       } catch(e) {
-        console.error('[WS auth] Erro ao carregar dados:', e.message);
-        // Envia init vazio para não deixar o cliente preso — não força logout
-        ws.send(JSON.stringify({ type: 'init', ocorrencias: [], chats: {}, pendentesRecentes: [] }));
+        console.error('[WS auth] Erro ao carregar ocorrências:', e.message, e.stack);
       }
+
+      try {
+        todosChats = await _todosChats();
+      } catch(e) {
+        console.error('[WS auth] Erro ao carregar chats:', e.message);
+      }
+
+      ws.send(JSON.stringify({ type: 'init', ocorrencias: todasOcc, chats: todosChats, pendentesRecentes }));
       return;
     }
 

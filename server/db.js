@@ -320,10 +320,13 @@ async function _pgRun(sql, params = []) {
 // ─── parseOcc ─────────────────────────────────────────────────────────────────
 function parseOcc(row) {
   if (!row) return null;
+  let alunos = [], relatosAlunos = [];
+  try { alunos        = row.alunos        ? JSON.parse(row.alunos)        : []; } catch(e) { console.warn('[parseOcc] alunos JSON inválido id='+row.id, e.message); }
+  try { relatosAlunos = row.relatos_alunos? JSON.parse(row.relatos_alunos): []; } catch(e) { console.warn('[parseOcc] relatos_alunos JSON inválido id='+row.id, e.message); }
   return {
     ...row,
-    alunos:              row.alunos             ? JSON.parse(row.alunos)             : [],
-    relatosAlunos:       row.relatos_alunos     ? JSON.parse(row.relatos_alunos)     : [],
+    alunos,
+    relatosAlunos,
     relatoResponsavel:   row.relato_responsavel || '',
     registradoPorId:     row.registrado_por_id,
     registradoPorNome:   row.registrado_por_nome,
