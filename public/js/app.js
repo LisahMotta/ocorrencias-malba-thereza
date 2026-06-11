@@ -2920,16 +2920,57 @@ window._gerarRelatorioBA = () => {
   else alert('Permita popups para gerar o relatório.');
 };
 
+function _baSetupSelectores(turmaAtual, nomeAtual, raAtual) {
+  const tSel = document.getElementById('baTurmaSelect');
+  const aSel = document.getElementById('baAlunoSelect');
+  const turmas = Object.keys(TD).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  tSel.innerHTML = '<option value="">Selecione a turma...</option>' +
+    turmas.map(t => `<option value="${t}"${t === turmaAtual ? ' selected' : ''}>${t}</option>`).join('');
+
+  const preencherAlunos = (turma, nome, ra) => {
+    const lista = (TD[turma]?.alunos || []).slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    aSel.innerHTML = turma
+      ? '<option value="">— selecione o aluno —</option>' + lista.map(a => `<option value="${a.nome}" data-ra="${a.ra}">${a.nome}</option>`).join('')
+      : '<option value="">— selecione a turma primeiro —</option>';
+    if (nome && turma) {
+      const found = [...aSel.options].find(o => o.value === nome);
+      if (found) {
+        aSel.value = nome;
+      } else {
+        const opt = new Option(nome, nome);
+        opt.dataset.ra = ra || '';
+        aSel.appendChild(opt);
+        aSel.value = nome;
+      }
+      document.getElementById('baRa').value = ra || (aSel.options[aSel.selectedIndex]?.dataset?.ra || '');
+    }
+    document.getElementById('baNome').value = nome || '';
+    document.getElementById('baTurma').value = turma || '';
+    document.getElementById('baSerie').value = (turma || '').replace(/ [A-Z]$/, '');
+  };
+
+  preencherAlunos(turmaAtual, nomeAtual, raAtual);
+
+  tSel.onchange = () => {
+    const t = tSel.value;
+    preencherAlunos(t, '', '');
+    document.getElementById('baRa').value = '';
+  };
+
+  aSel.onchange = () => {
+    const opt = aSel.options[aSel.selectedIndex];
+    document.getElementById('baNome').value = opt?.value || '';
+    document.getElementById('baRa').value = opt?.dataset?.ra || '';
+  };
+}
+
 window._abrirFormBuscaAtiva = (prefill) => {
   const podeClassificar = ['poc','coordenador','vice','diretor'].includes(cu?.perfil);
   document.getElementById('baSecClassificacao').style.display = podeClassificar ? '' : 'none';
   document.getElementById('baSecResultado').style.display = podeClassificar ? '' : 'none';
   document.getElementById('baFormId').value = '';
   document.getElementById('baFormTitulo').textContent = 'Novo Caso — Busca Ativa';
-  document.getElementById('baNome').value = prefill?.nome || '';
-  document.getElementById('baRa').value = prefill?.ra || '';
-  document.getElementById('baTurma').value = prefill?.turma || '';
-  document.getElementById('baSerie').value = prefill?.serie || '';
+  _baSetupSelectores(prefill?.turma || '', prefill?.nome || '', prefill?.ra || '');
   document.getElementById('baTurno').value = '';
   document.getElementById('baDataNasc').value = '';
   document.getElementById('baResponsavel').value = '';
@@ -2966,10 +3007,7 @@ window._editarBuscaAtiva = async (id) => {
   document.getElementById('baSecResultado').style.display = podeClassificar ? '' : 'none';
   document.getElementById('baFormId').value = id;
   document.getElementById('baFormTitulo').textContent = 'Editar Caso — Busca Ativa';
-  document.getElementById('baNome').value = c.nome || '';
-  document.getElementById('baRa').value = c.ra || '';
-  document.getElementById('baTurma').value = c.turma || '';
-  document.getElementById('baSerie').value = c.serie || '';
+  _baSetupSelectores(c.turma || '', c.nome || '', c.ra || '');
   document.getElementById('baTurno').value = c.turno || '';
   document.getElementById('baDataNasc').value = c.data_nascimento || '';
   document.getElementById('baResponsavel').value = c.responsavel || '';
@@ -3007,7 +3045,7 @@ window._salvarBuscaAtiva = async () => {
   const nome = document.getElementById('baNome').value.trim();
   if (!nome) {
     const erroEl = document.getElementById('baFormErro');
-    erroEl.textContent = 'Nome do aluno obrigatório.';
+    erroEl.textContent = 'Selecione a turma e o aluno.';
     erroEl.style.display = 'block';
     return;
   }
