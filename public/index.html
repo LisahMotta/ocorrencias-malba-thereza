@@ -480,16 +480,24 @@
       <!-- DADOS DO ALUNO -->
       <div class="fl" style="font-size:11px;letter-spacing:.05em;margin-bottom:8px">DADOS DO ALUNO</div>
       <div class="fr">
-        <div class="fg"><label>Nome completo *</label><input type="text" id="baNome" placeholder="Nome do aluno"></div>
-        <div class="fg" style="max-width:120px"><label>RA</label><input type="text" id="baRa" placeholder="RA"></div>
-      </div>
-      <div class="fr">
-        <div class="fg"><label>Turma</label><input type="text" id="baTurma" placeholder="Ex: 9º Ano A"></div>
-        <div class="fg" style="max-width:120px"><label>Série</label><input type="text" id="baSerie" placeholder="Ex: 9º Ano"></div>
+        <div class="fg"><label>Turma *</label>
+          <select id="baTurmaSelect"><option value="">Selecione a turma...</option></select>
+        </div>
         <div class="fg" style="max-width:110px"><label>Turno</label>
           <select id="baTurno"><option value="">—</option><option>Manhã</option><option>Tarde</option><option>Noite</option></select>
         </div>
       </div>
+      <div class="fr">
+        <div class="fg"><label>Aluno *</label>
+          <select id="baAlunoSelect"><option value="">— selecione a turma primeiro —</option></select>
+        </div>
+        <div class="fg" style="max-width:140px"><label>RA</label>
+          <input type="text" id="baRa" placeholder="preenchido auto." readonly style="opacity:.7;cursor:default">
+        </div>
+      </div>
+      <input type="hidden" id="baNome">
+      <input type="hidden" id="baTurma">
+      <input type="hidden" id="baSerie">
       <div class="fr">
         <div class="fg"><label>Data de Nascimento</label><input type="date" id="baDataNasc"></div>
         <div class="fg"><label>Responsável</label><input type="text" id="baResponsavel" placeholder="Nome do responsável"></div>
