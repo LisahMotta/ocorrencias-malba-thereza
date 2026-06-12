@@ -2920,12 +2920,26 @@ window._gerarRelatorioBA = () => {
   else alert('Permita popups para gerar o relatório.');
 };
 
-function _baSetupSelectores(turmaAtual, nomeAtual, raAtual) {
-  const tSel = document.getElementById('baTurmaSelect');
-  const aSel = document.getElementById('baAlunoSelect');
-  const turmas = Object.keys(TD).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  tSel.innerHTML = '<option value="">Selecione a turma...</option>' +
-    turmas.map(t => `<option value="${t}"${t === turmaAtual ? ' selected' : ''}>${t}</option>`).join('');
+const _TURMAS_POR_TURNO = {
+  'Manhã': ['6º Ano A','7º Ano A','7º Ano B','8º Ano A','8º Ano B','9º Ano A','9º Ano B','9º Ano C','1ª Série A','1ª Série B','1ª Série C','2ª Série A'],
+  'Tarde': ['1º Ano A','1º Ano B','2º Ano A','2º Ano B','3º Ano A','3º Ano B','4º Ano A','4º Ano B','5º Ano A','5º Ano B','6º Ano B'],
+  'Noite': ['2ª Série B','2ª Série C','2ª Série D','3ª Série A','3ª Série B','3ª Série C'],
+};
+
+function _baSetupSelectores(turmaAtual, nomeAtual, raAtual, turnoAtual) {
+  const turnoSel = document.getElementById('baTurno');
+  const tSel     = document.getElementById('baTurmaSelect');
+  const aSel     = document.getElementById('baAlunoSelect');
+
+  turnoSel.value = turnoAtual || '';
+
+  const popularTurmas = (turno, turmaPreSel) => {
+    const lista = turno
+      ? (_TURMAS_POR_TURNO[turno] || [])
+      : Object.keys(TD).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    tSel.innerHTML = (turno ? '<option value="">— selecione a turma —</option>' : '<option value="">— selecione o turno primeiro —</option>') +
+      lista.map(t => `<option value="${t}"${t === turmaPreSel ? ' selected' : ''}>${t}</option>`).join('');
+  };
 
   const preencherAlunos = (turma, nome, ra) => {
     const lista = (TD[turma]?.alunos || []).slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
@@ -2949,11 +2963,18 @@ function _baSetupSelectores(turmaAtual, nomeAtual, raAtual) {
     document.getElementById('baSerie').value = (turma || '').replace(/ [A-Z]$/, '');
   };
 
+  popularTurmas(turnoAtual || '', turmaAtual);
   preencherAlunos(turmaAtual, nomeAtual, raAtual);
 
+  turnoSel.onchange = () => {
+    const t = turnoSel.value;
+    popularTurmas(t, '');
+    preencherAlunos('', '', '');
+    document.getElementById('baRa').value = '';
+  };
+
   tSel.onchange = () => {
-    const t = tSel.value;
-    preencherAlunos(t, '', '');
+    preencherAlunos(tSel.value, '', '');
     document.getElementById('baRa').value = '';
   };
 
@@ -2970,8 +2991,7 @@ window._abrirFormBuscaAtiva = (prefill) => {
   document.getElementById('baSecResultado').style.display = podeClassificar ? '' : 'none';
   document.getElementById('baFormId').value = '';
   document.getElementById('baFormTitulo').textContent = 'Novo Caso — Busca Ativa';
-  _baSetupSelectores(prefill?.turma || '', prefill?.nome || '', prefill?.ra || '');
-  document.getElementById('baTurno').value = '';
+  _baSetupSelectores(prefill?.turma || '', prefill?.nome || '', prefill?.ra || '', '');
   document.getElementById('baDataNasc').value = '';
   document.getElementById('baResponsavel').value = '';
   document.getElementById('baTel1').value = '';
@@ -3007,8 +3027,7 @@ window._editarBuscaAtiva = async (id) => {
   document.getElementById('baSecResultado').style.display = podeClassificar ? '' : 'none';
   document.getElementById('baFormId').value = id;
   document.getElementById('baFormTitulo').textContent = 'Editar Caso — Busca Ativa';
-  _baSetupSelectores(c.turma || '', c.nome || '', c.ra || '');
-  document.getElementById('baTurno').value = c.turno || '';
+  _baSetupSelectores(c.turma || '', c.nome || '', c.ra || '', c.turno || '');
   document.getElementById('baDataNasc').value = c.data_nascimento || '';
   document.getElementById('baResponsavel').value = c.responsavel || '';
   document.getElementById('baTel1').value = c.telefone1 || '';
