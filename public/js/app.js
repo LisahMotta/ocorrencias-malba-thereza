@@ -1096,9 +1096,11 @@ window._fecharModalDoc = () => {
   document.body.style.overflow='';
 };
 window._imprimirFrame = () => {
-  const frame=document.getElementById('frameDoc');
+  const frame = document.getElementById('frameDoc');
+  window._printAutorizado = true;
   frame.contentWindow.focus();
   frame.contentWindow.print();
+  setTimeout(() => { window._printAutorizado = false; }, 5000);
 };
 
 // ─── MODAL ────────────────────────────────────────────────────────────────────
@@ -3291,8 +3293,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ─── PROTEÇÃO LGPD — bloqueia impressão e captura de tela ────────────────────
+window._printAutorizado = false;
 (function() {
   function _avisoLGPD() {
+    if (window._printAutorizado) return;
     let m = document.getElementById('lgpdPrintModal');
     if (m) { m.style.display = 'flex'; return; }
     m = document.createElement('div');
