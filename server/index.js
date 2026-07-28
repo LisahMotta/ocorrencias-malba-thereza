@@ -262,10 +262,18 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(429).json({ erro: `Muitas tentativas. Tente novamente em ${restam} minuto(s).` });
   }
 
-  const { nome, senha } = req.body;
-  if (!nome || !senha) return res.status(400).json({ erro: 'Informe nome e senha' });
-  const usuario = await db.getUsuarioNome(nome.trim().toUpperCase());
-  if (!usuario) return res.status(401).json({ erro: 'Usuário não encontrado' });
+  const { nome, rg, senha } = req.body;
+  if ((!nome && !rg) || !senha) return res.status(400).json({ erro: 'Informe RG (ou nome) e senha' });
+  let usuario;
+  if (rg) {
+    const rgLimpo = rg.replace(/\D/g,'');
+    usuario = await db.getUsuarioRg(rgLimpo);
+    // Se a pessoa digitou com o dígito verificador por engano, tenta sem ele
+    if (!usuario && rgLimpo.length > 8) usuario = await db.getUsuarioRg(rgLimpo.slice(0, -1));
+  } else {
+    usuario = await db.getUsuarioNome(nome.trim().toUpperCase());
+  }
+  if (!usuario) return res.status(401).json({ erro: rg ? 'RG não encontrado ou ainda não cadastrado' : 'Usuário não encontrado' });
   if (!usuario.ativo) return res.status(401).json({ erro: 'Usuário inativo' });
   const ok = await bcrypt.compare(senha, usuario.senha);
   if (!ok) {
@@ -387,6 +395,83 @@ app.get('/api/usuarios/lista-publica', async (req, res) => {
 
 app.get('/api/usuarios', autenticar, exigePerfil('diretor', 'coordenador', 'vice'), async (req, res) => {
   res.json(await db.listarUsuarios());
+});
+
+// Importação em lote de RG/CPF — só o Diretor, dado sensível. Nunca cria usuário: só
+// atualiza quem já existe e casa pelo nome exato (mesma normalização do login).
+function _normalizarNome(s) {
+  return (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase().replace(/\s+/g, ' ');
+}
+
+// Distância de edição simples — só usada pra SUGERIR o nome mais parecido no
+// relatório. Nunca decide sozinha: quem confirma se é a mesma pessoa é sempre
+// o Diretor, olhando o relatório.
+function _distanciaEdicao(a, b) {
+  const m = a.length, n = b.length;
+  const d = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) d[i][0] = i;
+  for (let j = 0; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      d[i][j] = a[i-1] === b[j-1] ? d[i-1][j-1] : 1 + Math.min(d[i-1][j], d[i][j-1], d[i-1][j-1]);
+    }
+  }
+  return d[m][n];
+}
+
+function _sugerirMaisParecido(nomeNorm, candidatos) {
+  // 1) um nome é trecho do outro (ex: "RENATA VALERIA" dentro de "RENATA VALERIA FERREIRA...")
+  const porTrecho = candidatos.find(c =>
+    c.nomeNorm.length >= 6 && (nomeNorm.includes(c.nomeNorm) || c.nomeNorm.includes(nomeNorm))
+  );
+  if (porTrecho) return porTrecho.usuario.nome;
+
+  // 2) nome parecido por distância de edição (erro de digitação, letra faltando etc.)
+  let melhor = null, melhorDist = Infinity;
+  for (const c of candidatos) {
+    const dist = _distanciaEdicao(nomeNorm, c.nomeNorm);
+    if (dist < melhorDist) { melhorDist = dist; melhor = c; }
+  }
+  const limite = Math.max(3, Math.round(nomeNorm.length * 0.25));
+  return melhor && melhorDist <= limite ? melhor.usuario.nome : null;
+}
+
+app.post('/api/usuarios/importar-rg', autenticar, exigePerfil('diretor'), async (req, res) => {
+  const lista = req.body.registros;
+  if (!Array.isArray(lista) || !lista.length) return res.status(400).json({ erro: 'Envie um array "registros" com nome, rg e cpf.' });
+
+  const todosUsuarios = await db.listarUsuarios();
+  const porNomeNormalizado = new Map();
+  const candidatos = [];
+  todosUsuarios.forEach(u => {
+    if (u.ativo) {
+      const nomeNorm = _normalizarNome(u.nome);
+      porNomeNormalizado.set(nomeNorm, u);
+      candidatos.push({ nomeNorm, usuario: u });
+    }
+  });
+
+  const atualizados = [];
+  const naoEncontrados = [];
+  for (const item of lista) {
+    const nomeNorm = _normalizarNome(item.nome);
+    const rg = (item.rg || '').toString().trim();
+    const cpf = (item.cpf || '').toString().trim();
+    if (!nomeNorm || !rg) { naoEncontrados.push({ nome: item.nome, motivo: 'nome ou RG vazio' }); continue; }
+    const usuario = porNomeNormalizado.get(nomeNorm);
+    if (!usuario) {
+      const sugestao = _sugerirMaisParecido(nomeNorm, candidatos);
+      naoEncontrados.push({
+        nome: item.nome,
+        motivo: sugestao ? `não achei exato — o mais parecido no sistema é "${sugestao}"` : 'nenhum usuário parecido encontrado no SisRoe',
+      });
+      continue;
+    }
+    await db.atualizarRgCpf(usuario.id, rg, cpf);
+    atualizados.push({ nome: usuario.nome, perfil: usuario.perfil });
+  }
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'importar_rg_cpf', { total: lista.length, atualizados: atualizados.length, naoEncontrados: naoEncontrados.length });
+  res.json({ atualizados, naoEncontrados });
 });
 
 // Adicionar novo usuário
@@ -681,6 +766,21 @@ app.delete('/api/alunos-monitorados/:ra', autenticar, exigePerfil(...PODE_MONITO
   const aluno = lista.find(a => a.ra === ra);
   await db.removerMonitorado(ra);
   if (aluno) await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'remover_monitoramento', { ra, nome: aluno.nome });
+  res.json({ ok: true });
+});
+
+// ─── CONTATO DO RESPONSÁVEL (notificação via WhatsApp) ─────────────────────────
+app.get('/api/contato-responsavel/:ra', autenticar, exigePerfil(...PODE_MONITORAR), async (req, res) => {
+  const ra = decodeURIComponent(req.params.ra);
+  const contato = await db.buscarContatoResponsavel(ra);
+  res.json(contato || null);
+});
+
+app.post('/api/contato-responsavel', autenticar, exigePerfil(...PODE_MONITORAR), async (req, res) => {
+  const { ra, nomeResponsavel, telefone } = req.body;
+  if (!ra || !telefone) return res.status(400).json({ erro: 'RA e telefone obrigatórios' });
+  await db.salvarContatoResponsavel(ra, nomeResponsavel, telefone, req.usuario.nome);
+  await db.inserirAuditoria(req.usuario.id, req.usuario.nome, 'salvar_contato_responsavel', { ra });
   res.json({ ok: true });
 });
 

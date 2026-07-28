@@ -1,6 +1,7 @@
 // db.js — suporte a PostgreSQL (DATABASE_URL) e SQLite (sql.js como fallback)
 const path = require('path');
 const fs   = require('fs');
+const bcrypt = require('bcryptjs');
 
 const USE_PG = !!process.env.DATABASE_URL;
 
@@ -15,9 +16,35 @@ const DB_PATH = path.join(dataDir, 'ocorrencias.db');
 
 function _salvar() {
   const data = sqliteDb.export();
+  const buf  = Buffer.from(data);
   const tmp  = DB_PATH + '.tmp';
-  fs.writeFileSync(tmp, Buffer.from(data));
-  fs.renameSync(tmp, DB_PATH);
+  fs.writeFileSync(tmp, buf);
+  // No Windows, o rename pode falhar por um instante (antivírus, OneDrive,
+  // indexação, um processo anterior ainda com o arquivo aberto). Tenta de
+  // novo algumas vezes antes de desistir — normalmente resolve em milissegundos.
+  for (let tentativa = 1; tentativa <= 5; tentativa++) {
+    try {
+      fs.renameSync(tmp, DB_PATH);
+      return;
+    } catch (e) {
+      if (tentativa === 5) {
+        // Última tentativa: escreve direto no arquivo final, sem passar pelo
+        // rename — evita derrubar o servidor por causa de um travamento pontual.
+        try {
+          fs.writeFileSync(DB_PATH, buf);
+          try { fs.unlinkSync(tmp); } catch {}
+          console.warn('[db] rename falhou 5x (arquivo travado?), salvei direto no arquivo final.');
+          return;
+        } catch (e2) {
+          console.error('[db] Não consegui salvar o banco de dados:', e2.message);
+          throw e2;
+        }
+      }
+      const espera = tentativa * 100;
+      const inicio = Date.now();
+      while (Date.now() - inicio < espera) { /* pequena pausa síncrona */ }
+    }
+  }
 }
 
 async function _initSqlite() {
@@ -68,6 +95,13 @@ async function _initSqlite() {
       motivo TEXT,
       sinalizado_por TEXT,
       sinalizado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS contatos_responsaveis (
+      ra TEXT PRIMARY KEY,
+      nome_responsavel TEXT,
+      telefone TEXT NOT NULL,
+      atualizado_por TEXT,
+      atualizado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS fotos_alunos (
       ra TEXT PRIMARY KEY,
@@ -151,7 +185,12 @@ async function _initSqlite() {
     "ALTER TABLE ocorrencias ADD COLUMN complementado_por_nome TEXT",
     "ALTER TABLE ocorrencias ADD COLUMN complementado_por_perfil TEXT",
     "ALTER TABLE ocorrencias ADD COLUMN placon TEXT",
+    "ALTER TABLE ocorrencias ADD COLUMN intervencoes_pedagogicas TEXT",
+    "ALTER TABLE ocorrencias ADD COLUMN afastamento_preventivo TEXT",
+    "ALTER TABLE ocorrencias ADD COLUMN transferencia_cautelar TEXT",
     "ALTER TABLE usuarios ADD COLUMN perfil_anterior TEXT",
+    "ALTER TABLE usuarios ADD COLUMN rg TEXT",
+    "ALTER TABLE usuarios ADD COLUMN cpf TEXT",
     "CREATE INDEX IF NOT EXISTS idx_occ_status ON ocorrencias(status)",
     "CREATE INDEX IF NOT EXISTS idx_occ_data   ON ocorrencias(data)",
     "CREATE INDEX IF NOT EXISTS idx_chat_occ   ON chats(occ_id)",
@@ -165,6 +204,20 @@ async function _initSqlite() {
   try { sqliteDb.run("SELECT placon FROM ocorrencias LIMIT 1"); }
   catch { migracoes.forEach(sql => { try { sqliteDb.run(sql); } catch {} }); }
   migracoes.forEach(sql => { try { sqliteDb.run(sql); } catch {} });
+
+  // Trava de segurança: se por qualquer motivo a tabela de usuários estiver
+  // vazia (banco novo, pasta data/ perdida etc.), cria um login de recuperação
+  // — sem isso, ninguém consegue entrar de jeito nenhum pra recriar os usuários.
+  try {
+    const r = sqliteDb.exec("SELECT COUNT(*) as total FROM usuarios")[0];
+    const total = r ? r.values[0][0] : 0;
+    if (total === 0) {
+      const hash = bcrypt.hashSync('Malba@2025', 10);
+      sqliteDb.run("INSERT INTO usuarios (nome, perfil, senha) VALUES (?, ?, ?)", ['ADMINISTRADOR TEMPORARIO', 'diretor', hash]);
+      console.log('⚠️  Tabela de usuários vazia — criado login de recuperação: ADMINISTRADOR TEMPORARIO / Malba@2025 (perfil Diretor). Troque a senha e recrie os usuários reais assim que entrar.');
+    }
+  } catch (e) { console.warn('[bootstrap admin] falhou:', e.message); }
+
   _salvar();
   console.log('✅ Banco SQLite pronto:', DB_PATH);
 }
@@ -239,6 +292,13 @@ async function _initPg() {
       motivo TEXT,
       sinalizado_por TEXT,
       sinalizado_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI')
+    );
+    CREATE TABLE IF NOT EXISTS contatos_responsaveis (
+      ra TEXT PRIMARY KEY,
+      nome_responsavel TEXT,
+      telefone TEXT NOT NULL,
+      atualizado_por TEXT,
+      atualizado_em TEXT NOT NULL DEFAULT to_char(NOW() AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI')
     );
     CREATE TABLE IF NOT EXISTS fotos_alunos (
       ra TEXT PRIMARY KEY,
@@ -326,10 +386,25 @@ async function _initPg() {
     "ALTER TABLE busca_ativa ADD COLUMN IF NOT EXISTS gestao_comunicada_em TEXT",
     "ALTER TABLE busca_ativa ADD COLUMN IF NOT EXISTS resultado TEXT",
     "ALTER TABLE busca_ativa ADD COLUMN IF NOT EXISTS resultado_detalhe TEXT",
+    "ALTER TABLE ocorrencias ADD COLUMN IF NOT EXISTS intervencoes_pedagogicas TEXT",
+    "ALTER TABLE ocorrencias ADD COLUMN IF NOT EXISTS afastamento_preventivo TEXT",
+    "ALTER TABLE ocorrencias ADD COLUMN IF NOT EXISTS transferencia_cautelar TEXT",
+    "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rg TEXT",
+    "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS cpf TEXT",
   ];
   for (const sql of migPg) {
     try { await pgPool.query(sql); } catch {}
   }
+
+  try {
+    const r = await _pgOne('SELECT COUNT(*) as total FROM usuarios');
+    if (Number(r?.total) === 0) {
+      const hash = bcrypt.hashSync('Malba@2025', 10);
+      await _pgRun('INSERT INTO usuarios (nome, perfil, senha) VALUES ($1, $2, $3)', ['ADMINISTRADOR TEMPORARIO', 'diretor', hash]);
+      console.log('⚠️  Tabela de usuários vazia — criado login de recuperação: ADMINISTRADOR TEMPORARIO / Malba@2025 (perfil Diretor). Troque a senha e recrie os usuários reais assim que entrar.');
+    }
+  } catch (e) { console.warn('[bootstrap admin] falhou:', e.message); }
+
   console.log('✅ Banco PostgreSQL pronto');
 }
 
@@ -349,13 +424,17 @@ async function _pgRun(sql, params = []) {
 // ─── parseOcc ─────────────────────────────────────────────────────────────────
 function parseOcc(row) {
   if (!row) return null;
-  let alunos = [], relatosAlunos = [];
+  let alunos = [], relatosAlunos = [], intervencoesPedagogicas = [];
   try { alunos        = row.alunos        ? JSON.parse(row.alunos)        : []; } catch(e) { console.warn('[parseOcc] alunos JSON inválido id='+row.id, e.message); }
   try { relatosAlunos = row.relatos_alunos? JSON.parse(row.relatos_alunos): []; } catch(e) { console.warn('[parseOcc] relatos_alunos JSON inválido id='+row.id, e.message); }
+  try { intervencoesPedagogicas = row.intervencoes_pedagogicas ? JSON.parse(row.intervencoes_pedagogicas) : []; } catch(e) { console.warn('[parseOcc] intervencoes_pedagogicas JSON inválido id='+row.id, e.message); }
   return {
     ...row,
     alunos,
     relatosAlunos,
+    intervencoesPedagogicas,
+    afastamentoPreventivo: row.afastamento_preventivo || '',
+    transferenciaCautelar: row.transferencia_cautelar || '',
     relatoResponsavel:   row.relato_responsavel || '',
     registradoPorId:     row.registrado_por_id,
     registradoPorNome:   row.registrado_por_nome,
@@ -391,9 +470,17 @@ module.exports = {
     if (USE_PG) return _pgOne('SELECT * FROM usuarios WHERE nome = $1 AND ativo = 1', [nome]);
     return _sqOne('SELECT * FROM usuarios WHERE nome = ? AND ativo = 1', [nome]);
   },
+  async getUsuarioRg(rg) {
+    if (USE_PG) return _pgOne('SELECT * FROM usuarios WHERE rg = $1 AND ativo = 1', [rg]);
+    return _sqOne('SELECT * FROM usuarios WHERE rg = ? AND ativo = 1', [rg]);
+  },
+  async atualizarRgCpf(id, rg, cpf) {
+    if (USE_PG) return _pgRun('UPDATE usuarios SET rg=$1, cpf=$2 WHERE id=$3', [rg, cpf, id]);
+    return _sqRun('UPDATE usuarios SET rg=?, cpf=? WHERE id=?', [rg, cpf, id]);
+  },
   async listarUsuarios() {
-    if (USE_PG) return _pgAll('SELECT id, nome, perfil, ativo, criado_em FROM usuarios ORDER BY perfil, nome');
-    return _sqAll('SELECT id, nome, perfil, ativo, criado_em FROM usuarios ORDER BY perfil, nome');
+    if (USE_PG) return _pgAll('SELECT id, nome, perfil, ativo, rg, criado_em FROM usuarios ORDER BY perfil, nome');
+    return _sqAll('SELECT id, nome, perfil, ativo, rg, criado_em FROM usuarios ORDER BY perfil, nome');
   },
   async inserirUsuario(nome, perfil, senha) {
     if (USE_PG) return _pgRun('INSERT INTO usuarios (nome, perfil, senha) VALUES ($1, $2, $3) RETURNING id', [nome, perfil, senha]);
@@ -449,20 +536,22 @@ module.exports = {
   async complementarOcc(id, d) {
     if (USE_PG) {
       await _pgRun(
-        `UPDATE ocorrencias SET descricao=$1,providencias=$2,bo=$3,familia=$4,conselho_tutelar=$5,placon=$6,relatos_alunos=$7,relato_responsavel=$8,complementado_por_id=$9,complementado_por_nome=$10,complementado_por_perfil=$11,data_comp=$12,status='encerrado' WHERE id=$13`,
+        `UPDATE ocorrencias SET descricao=$1,providencias=$2,bo=$3,familia=$4,conselho_tutelar=$5,placon=$6,relatos_alunos=$7,relato_responsavel=$8,complementado_por_id=$9,complementado_por_nome=$10,complementado_por_perfil=$11,data_comp=$12,intervencoes_pedagogicas=$13,afastamento_preventivo=$14,transferencia_cautelar=$15,status='encerrado' WHERE id=$16`,
         [d.descricao||'',d.providencias||'',d.bo||'',d.familia||'',d.conselhoTutelar||'',d.placon||'',
          JSON.stringify(d.relatosAlunos||[]),d.relatoResponsavel||'',
          d.complementadoPorId,d.complementadoPorNome||'',d.complementadoPorPerfil||'',
-         new Date().toLocaleDateString('pt-BR'),id]
+         new Date().toLocaleDateString('pt-BR'),
+         JSON.stringify(d.intervencoesPedagogicas||[]),d.afastamentoPreventivo||'',d.transferenciaCautelar||'',id]
       );
       return parseOcc(await _pgOne('SELECT * FROM ocorrencias WHERE id = $1', [id]));
     }
     _sqRun(
-      `UPDATE ocorrencias SET descricao=?,providencias=?,bo=?,familia=?,conselho_tutelar=?,placon=?,relatos_alunos=?,relato_responsavel=?,complementado_por_id=?,complementado_por_nome=?,complementado_por_perfil=?,data_comp=?,status='encerrado' WHERE id=?`,
+      `UPDATE ocorrencias SET descricao=?,providencias=?,bo=?,familia=?,conselho_tutelar=?,placon=?,relatos_alunos=?,relato_responsavel=?,complementado_por_id=?,complementado_por_nome=?,complementado_por_perfil=?,data_comp=?,intervencoes_pedagogicas=?,afastamento_preventivo=?,transferencia_cautelar=?,status='encerrado' WHERE id=?`,
       [d.descricao||'',d.providencias||'',d.bo||'',d.familia||'',d.conselhoTutelar||'',d.placon||'',
        JSON.stringify(d.relatosAlunos||[]),d.relatoResponsavel||'',
        d.complementadoPorId,d.complementadoPorNome||'',d.complementadoPorPerfil||'',
-       new Date().toLocaleDateString('pt-BR'),id]
+       new Date().toLocaleDateString('pt-BR'),
+       JSON.stringify(d.intervencoesPedagogicas||[]),d.afastamentoPreventivo||'',d.transferenciaCautelar||'',id]
     );
     return parseOcc(_sqOne('SELECT * FROM ocorrencias WHERE id = ?', [id]));
   },
@@ -550,6 +639,22 @@ module.exports = {
   async removerMonitorado(ra) {
     if (USE_PG) return _pgRun('DELETE FROM alunos_monitorados WHERE ra = $1', [ra]);
     return _sqRun('DELETE FROM alunos_monitorados WHERE ra = ?', [ra]);
+  },
+
+  // ── Contato do responsável (para notificação via WhatsApp) ────────────────
+  async buscarContatoResponsavel(ra) {
+    if (USE_PG) return _pgOne('SELECT * FROM contatos_responsaveis WHERE ra = $1', [ra]);
+    return _sqOne('SELECT * FROM contatos_responsaveis WHERE ra = ?', [ra]);
+  },
+  async salvarContatoResponsavel(ra, nomeResponsavel, telefone, atualizadoPor) {
+    if (USE_PG) return _pgRun(
+      'INSERT INTO contatos_responsaveis (ra,nome_responsavel,telefone,atualizado_por) VALUES ($1,$2,$3,$4) ON CONFLICT (ra) DO UPDATE SET nome_responsavel=EXCLUDED.nome_responsavel,telefone=EXCLUDED.telefone,atualizado_por=EXCLUDED.atualizado_por,atualizado_em=to_char(NOW() AT TIME ZONE \'America/Sao_Paulo\',\'DD/MM/YYYY HH24:MI\')',
+      [ra, nomeResponsavel||'', telefone, atualizadoPor||'']
+    );
+    return _sqRun(
+      'INSERT OR REPLACE INTO contatos_responsaveis (ra,nome_responsavel,telefone,atualizado_por) VALUES (?,?,?,?)',
+      [ra, nomeResponsavel||'', telefone, atualizadoPor||'']
+    );
   },
 
   // ── Fotos alunos (carômetro) ──────────────────────────────────────────────

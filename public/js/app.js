@@ -128,6 +128,20 @@ const INTERVENCOES = {
   'Homofobia / Transfobia': ['Suporte ao estudante','Orientar toda turma','Protocolo de proteção'],
   'Dano ao patrimônio público': ['Comunicar família','Solicitar ressarcimento','Medida socioeducativa'],
 };
+// Intervenções pedagógicas do Art. 7º da Resolução SEDUC nº 68/2026 (indisciplina escolar)
+const INTERVENCOES_RES68 = [
+  'Acolhimento e escuta dos envolvidos',
+  'Orientação individual e retomada dos combinados de convivência',
+  'Repactuação de compromisso / plano individual de acompanhamento',
+  'Articulação com a família ou responsáveis legais',
+  'Acompanhamento por adulto de referência da unidade escolar',
+  'Mediação de conflitos e práticas restaurativas',
+  'Ações de reparação e recomposição das relações',
+  'Articulação com a rede protetiva ou órgãos competentes',
+  'Encaminhamento temporário a outro espaço (estudo dirigido)',
+  'Outras intervenções pedagógicas compatíveis com a proteção integral',
+];
+
 const TB0 = [
   {n:'A1', l:'Aluno dormiu durante a aula'},
   {n:'A2', l:'Aluno sem material escolar'},
@@ -235,14 +249,33 @@ async function _montarLoginSelect() {
   });
 }
 
+let _modoLoginRg = true;
+window._alternarModoLogin = () => {
+  _modoLoginRg = !_modoLoginRg;
+  document.getElementById('loginModoRg').style.display = _modoLoginRg ? '' : 'none';
+  document.getElementById('loginModoNome').style.display = _modoLoginRg ? 'none' : '';
+  document.getElementById('btnAlternarLogin').textContent = _modoLoginRg
+    ? 'Ainda não tenho RG cadastrado — entrar pelo nome'
+    : 'Já tenho RG cadastrado — entrar pelo RG';
+  document.getElementById('loginErro').style.display = 'none';
+};
+
 window._doLogin = async () => {
-  const sel = document.getElementById('loginUsuario');
-  const nome = sel.options[sel.selectedIndex]?.dataset?.nome || '';
   const senha = document.getElementById('loginPass').value;
   const erroEl = document.getElementById('loginErro');
   erroEl.style.display = 'none';
 
-  if (!nome) { erroEl.textContent = 'Selecione seu nome.'; erroEl.style.display = 'block'; return; }
+  let corpo;
+  if (_modoLoginRg) {
+    const rg = document.getElementById('loginRg').value.replace(/\D/g,'');
+    if (!rg) { erroEl.textContent = 'Digite seu RG.'; erroEl.style.display = 'block'; return; }
+    corpo = { rg, senha };
+  } else {
+    const sel = document.getElementById('loginUsuario');
+    const nome = sel.options[sel.selectedIndex]?.dataset?.nome || '';
+    if (!nome) { erroEl.textContent = 'Selecione seu nome.'; erroEl.style.display = 'block'; return; }
+    corpo = { nome, senha };
+  }
   if (!senha) { erroEl.textContent = 'Digite sua senha.'; erroEl.style.display = 'block'; return; }
 
   const btn = document.querySelector('#loginScreen .bp');
@@ -252,7 +285,7 @@ window._doLogin = async () => {
     const resp = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, senha }),
+      body: JSON.stringify(corpo),
     });
     const data = await resp.json();
     if (!resp.ok) {
@@ -355,6 +388,10 @@ async function _autenticar(usuario) {
   _iniciarWS();
   // Dados chegam via WebSocket (evento 'init')
   _renderMain();
+  const chaveTutorial = 'sisroe_tutorial_visto_' + usuario.id;
+  if (!localStorage.getItem(chaveTutorial)) {
+    setTimeout(() => { window._iniciarTutorial(); localStorage.setItem(chaveTutorial, '1'); }, 900);
+  }
 }
 
 // ─── WEBSOCKET ────────────────────────────────────────────────────────────────
@@ -475,13 +512,17 @@ function _atualizarBadgeChat() {
 // ─── RENDER MAIN ─────────────────────────────────────────────────────────────
 function _renderMain() {
   document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('mainScreen').style.display = 'block';
+  document.getElementById('mainScreen').style.display = 'grid';
   document.getElementById('rodape-app').style.display = 'block';
   document.getElementById('topName').textContent = cu.nome.split(' ').slice(0,2).join(' ');
   document.getElementById('topRole').textContent = PL[cu.perfil];
+  const ubAv = document.getElementById('ubAvatar');
+  if (ubAv) ubAv.textContent = cu.nome.split(' ').filter(Boolean).slice(0,2).map(p=>p[0]).join('').toUpperCase();
 
   const isB1 = PODE_EDIT.includes(cu.perfil);
   document.getElementById('blocoI').style.display = isB1 ? 'block' : 'none';
+  const catUrg = document.getElementById('catUrg');
+  if (catUrg) catUrg.style.display = isB1 ? '' : 'none';
   document.getElementById('campoRelato').style.display = 'block'; // todos relatam
   document.getElementById('campoGestao').style.display = isGest() ? 'block' : 'none';
   document.getElementById('optUrg').style.display = isB1 ? '' : 'none';
@@ -493,6 +534,11 @@ function _renderMain() {
   document.getElementById('tabBuscaAtiva').style.display = ['poc','coordenador','agente','vice','diretor'].includes(cu.perfil) ? '' : 'none';
   const btnRelBA = document.getElementById('btnRelatorioBA');
   if (btnRelBA) btnRelBA.style.display = ['poc','coordenador','vice','diretor'].includes(cu.perfil) ? '' : 'none';
+  // Espelha visibilidade nos atalhos de "Acesso rápido" da dashboard (mesmos critérios acima)
+  const qaBA = document.getElementById('qaBuscaAtiva');
+  if (qaBA) qaBA.style.display = document.getElementById('tabBuscaAtiva').style.display;
+  const qaRel = document.getElementById('qaRelatorios');
+  if (qaRel) qaRel.style.display = document.getElementById('tabRel').style.display;
 
   const icons = {professor:'👨‍🏫',agente:'🏫',secretaria:'📝',gerente:'🗂️',poc:'🔵',coordenador:'📋',vice:'🏫',diretor:'⭐'};
   const descs = {
@@ -771,7 +817,7 @@ function cardHTML(o) {
   const regNome = o.registradoPorNome || '—';
   const regPerfil = o.registradoPorPerfil || '';
   const nomes = o.alunos&&o.alunos.length ? o.alunos.map(a=>a.nome).join(', ') : '—';
-  const pchip = ['professor','agente','secretaria','gerente'].includes(regPerfil)?'background:#E8EAF6;color:#3949AB':regPerfil==='poc'?'background:var(--orl);color:var(--or)':'background:var(--mgl);color:var(--mg)';
+  const pchip = ['professor','agente','secretaria','gerente'].includes(regPerfil)?'background:var(--purple-bg);color:var(--purple)':regPerfil==='poc'?'background:var(--orl);color:var(--or)':'background:var(--mgl);color:var(--mg)';
   const naoLidos = chatNaoLidos[String(o.id)] || 0;
   const badgeChat = naoLidos > 0 ? `<span style="background:var(--re);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-left:4px">${naoLidos}</span>` : '';
   const badgePlacon = o.placon === 'Sim'
@@ -797,6 +843,7 @@ function cardHTML(o) {
       <button class="bn" onclick="window._verDet(${o.id})">Ver detalhes</button>
       ${isEdit()&&o.status==='pendente'?`<button class="bn mg" onclick="window._abrirComp(${o.id})">✏ Complementar</button>`:''}
       ${isEdit()?`<button class="bn or" onclick="window._abrirEdit(${o.id})">⬆ Editar</button>`:''}
+      ${isEdit()?`<button class="bn" style="border-color:#25D366;color:#1B8A4C" onclick='window._contatarResponsavelComp(${JSON.stringify((o.alunos||[]).map(a=>({ra:a.ra,nome:a.nome}))).replace(/'/g,"&apos;")})'><svg class="ic ic-sm"><use href="#ic-phone"/></svg> Contatar</button>`:''}
       <button class="bn vd" onclick="window._abrirChat(${o.id})">💬 Chat${badgeChat}</button>
       ${isImprimir()?`<button class="bn bl" onclick="window._gerarDoc(${o.id})">📄 Gerar Documento</button>`:''}
       ${isGestor()?`<button class="bn re" onclick="window._confirmarDeletar(${o.id})" title="Apagar ocorrência">🗑 Apagar</button>`:''}
@@ -834,10 +881,10 @@ function renderDash() {
 
   // Cards de stat com ícone
   document.getElementById('statsGrid').innerHTML=`
-    <div class="sc re"><div class="sc-ico">🚨</div><div class="sn">${urg}</div><div class="sl">Urgência</div></div>
-    <div class="sc or"><div class="sc-ico">📋</div><div class="sn">${pend}</div><div class="sl">Aguard. complemento</div></div>
-    <div class="sc mg"><div class="sc-ico">📊</div><div class="sn">${total}</div><div class="sl">Total</div></div>
-    <div class="sc gr"><div class="sc-ico">✅</div><div class="sn">${enc}</div><div class="sl">Encerradas</div></div>`;
+    <div class="sc re"><div class="sc-chip"><svg class="ic"><use href="#ic-alert-triangle"/></svg></div><div class="sn">${urg}</div><div class="sl">Urgência</div></div>
+    <div class="sc or"><div class="sc-chip"><svg class="ic"><use href="#ic-clipboard"/></svg></div><div class="sn">${pend}</div><div class="sl">Aguard. complemento</div></div>
+    <div class="sc mg"><div class="sc-chip"><svg class="ic"><use href="#ic-bar-chart"/></svg></div><div class="sn">${total}</div><div class="sl">Total</div></div>
+    <div class="sc gr"><div class="sc-chip"><svg class="ic"><use href="#ic-check-circle"/></svg></div><div class="sn">${enc}</div><div class="sl">Encerradas</div></div>`;
 
   // Alertas
   const al=[];
@@ -863,6 +910,113 @@ function renderDash() {
   document.getElementById('dashList').innerHTML = rec.length
     ? rec.map(cardHTML).join('')
     : '<div class="es">Nenhuma ocorrência registrada ainda.</div>';
+
+  // Sino de alertas do cabeçalho (mesma contagem já usada acima: urgência + pendentes)
+  const alertBadgeEl = document.getElementById('alertBadge');
+  if (alertBadgeEl) {
+    const nAlertas = urg + (isEdit() ? pend : 0);
+    alertBadgeEl.textContent = nAlertas;
+    alertBadgeEl.style.display = nAlertas > 0 ? 'flex' : 'none';
+  }
+
+  _renderDashGravidade(lista);
+  _renderDashPeriodo(lista);
+  _renderDashTurmas(lista);
+}
+
+let _dashGravidadeChart = null;
+let _dashPeriodoChart = null;
+
+// Rosca "Ocorrências por gravidade" — mesma paleta semântica já usada nos badges (GL/var(--re,--or,--go,--gr,--bl))
+function _renderDashGravidade(lista) {
+  const canvas = document.getElementById('dashGravidadeChart');
+  const legendEl = document.getElementById('dashGravidadeLegend');
+  if (!canvas || !window.Chart) return;
+  const ordem = ['urgencia','grave','media','leve','administrativa'];
+  const cores = { urgencia:'#F44336', grave:'#F59E0B', media:'#B45309', leve:'#34A853', administrativa:'#3B6FD8' };
+  const contagem = {}; ordem.forEach(g => contagem[g] = 0);
+  lista.forEach(o => { if (contagem[o.gravidade] !== undefined) contagem[o.gravidade]++; });
+  const total = lista.length;
+
+  if (_dashGravidadeChart) _dashGravidadeChart.destroy();
+  _dashGravidadeChart = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ordem.map(g => GL[g]),
+      datasets: [{ data: ordem.map(g => contagem[g]), backgroundColor: ordem.map(g => cores[g]), borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: { cutout: '72%', plugins: { legend: { display: false }, tooltip: { enabled: true } }, maintainAspectRatio: false }
+  });
+
+  if (legendEl) {
+    legendEl.innerHTML = total
+      ? ordem.map(g => `<div class="dash-legend-row"><span class="dash-legend-dot" style="background:${cores[g]}"></span><span class="dash-legend-label">${GL[g]}</span><span class="dash-legend-val">${contagem[g]} (${total ? Math.round(contagem[g]/total*100) : 0}%)</span></div>`).join('')
+      : '<div class="es" style="padding:1rem">Sem dados no período.</div>';
+  }
+}
+
+// Linha "Ocorrências por período" — últimos 7 dias, manhã (<12h) vs tarde (≥12h)
+function _renderDashPeriodo(lista) {
+  const canvas = document.getElementById('dashPeriodoChart');
+  if (!canvas || !window.Chart) return;
+  const dias = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    dias.push({ label: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), chave: d.toISOString().slice(0,10) });
+  }
+  // Turno real da turma (mesma fonte usada na Busca Ativa) — não é mais um corte por horário do registro
+  const turnoDaTurma = {};
+  Object.entries(_TURMAS_POR_TURNO).forEach(([turno, turmas]) => turmas.forEach(t => turnoDaTurma[t] = turno));
+
+  const manha = dias.map(() => 0), tarde = dias.map(() => 0), noite = dias.map(() => 0);
+  lista.forEach(o => {
+    if (!o.data) return;
+    let iso;
+    if (o.data.includes('/')) { const [dd,mm,yyyy] = o.data.split('/'); iso = `${yyyy}-${mm}-${dd}`; }
+    else iso = o.data;
+    const idx = dias.findIndex(d => d.chave === iso);
+    if (idx === -1) return;
+    const turno = turnoDaTurma[o.turma];
+    if (turno === 'Manhã') manha[idx]++;
+    else if (turno === 'Tarde') tarde[idx]++;
+    else if (turno === 'Noite') noite[idx]++;
+  });
+
+  if (_dashPeriodoChart) _dashPeriodoChart.destroy();
+  _dashPeriodoChart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: dias.map(d => d.label),
+      datasets: [
+        { label: 'Manhã', data: manha, borderColor: '#D11559', backgroundColor: 'rgba(209,21,89,.08)', fill: true, tension: .3 },
+        { label: 'Tarde', data: tarde, borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,.06)', fill: true, tension: .3 },
+        { label: 'Noite', data: noite, borderColor: '#3B6FD8', backgroundColor: 'rgba(59,111,216,.06)', fill: true, tension: .3 }
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', align: 'start', labels: { boxWidth: 10, font: { size: 11 } } } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } }
+    }
+  });
+}
+
+// Ranking "Turmas com mais ocorrências"
+function _renderDashTurmas(lista) {
+  const el = document.getElementById('dashTurmasList');
+  if (!el) return;
+  const contagem = {};
+  lista.forEach(o => { if (o.turma) contagem[o.turma] = (contagem[o.turma] || 0) + 1; });
+  const ranking = Object.entries(contagem).sort((a,b) => b[1]-a[1]).slice(0,5);
+  if (!ranking.length) { el.innerHTML = '<div class="es" style="padding:1rem">Sem dados no período.</div>'; return; }
+  const max = ranking[0][1];
+  el.innerHTML = ranking.map(([turma,n],i) => `
+    <div class="dash-turma-row">
+      <span class="dash-turma-pos">${i+1}</span>
+      <span class="dash-turma-nome">${turma}</span>
+      <div class="dash-turma-bar-wrap"><div class="dash-turma-bar" style="width:${Math.max(8,n/max*100)}%"></div></div>
+      <span class="dash-turma-n">${n}</span>
+    </div>`).join('');
 }
 
 window.renderOcc = function renderOcc() {
@@ -937,7 +1091,82 @@ function _limparForm() {
   document.getElementById('filtroAluno').value='';
   ['occData','occHora','occLocal','occGrav','occTurma','occEnv','occRelato','occDesc','occProv','occBO','occFam'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   _setDatas();
+  document.querySelectorAll('.reg-cat-card').forEach(c=>c.classList.remove('sel'));
+  ['blocoADM','blocoI','blocoII'].forEach(id=>document.getElementById(id).style.display='none');
+  const artWrap = document.getElementById('regArtigosWrap');
+  if (artWrap) artWrap.style.display = 'none';
+  if (window._regGotoStep) window._regGotoStep(1);
 }
+window._limparForm = _limparForm;
+
+// ─── WIZARD DE ETAPAS (Registrar) ──────────────────────────────────────────────
+// Apenas reorganiza visualmente os mesmos campos/ids em 5 passos.
+// Nenhuma validação aqui substitui a de window._registrarOcorrencia (que roda
+// integralmente no envio final, com todos os campos, visíveis ou não).
+let _regStepAtual = 1;
+const REG_TOTAL_STEPS = 5;
+
+function _regValidarStep(n) {
+  if (n === 1) {
+    if (!sTipo) { toastErro('Selecione o tipo de ocorrência.'); return false; }
+    const faltando = ['occData','occHora','occLocal','occGrav'].some(id => !document.getElementById(id).value);
+    if (faltando) { toastErro('Preencha data, horário, local e gravidade.'); return false; }
+  }
+  if (n === 2) {
+    if (!document.getElementById('occTurma').value) { toastErro('Selecione a turma.'); return false; }
+  }
+  return true;
+}
+
+function _regRenderResumo() {
+  const el = document.getElementById('regResumo');
+  if (!el) return;
+  const nomesAlunos = selAlunos.length ? selAlunos.map(a=>a.nome).join(', ') : '—';
+  el.innerHTML = `
+    <div class="ir"><span class="il">Tipo</span><span>${document.getElementById('tipoLabel').textContent}</span></div>
+    <div class="ir"><span class="il">Data / Hora</span><span>${document.getElementById('occData').value||'—'} às ${document.getElementById('occHora').value||'—'}</span></div>
+    <div class="ir"><span class="il">Local</span><span>${document.getElementById('occLocal').value||'—'}</span></div>
+    <div class="ir"><span class="il">Turma</span><span>${document.getElementById('occTurma').value||'—'}</span></div>
+    <div class="ir"><span class="il">Aluno(s)</span><span>${nomesAlunos}</span></div>`;
+}
+
+window._regGotoStep = (n) => {
+  _regStepAtual = Math.min(Math.max(n,1), REG_TOTAL_STEPS);
+  document.querySelectorAll('.reg-step').forEach(s => {
+    s.style.display = Number(s.dataset.step) === _regStepAtual ? '' : 'none';
+  });
+  document.querySelectorAll('#regStepper .stepper-item').forEach(it => {
+    const s = Number(it.dataset.stepNav);
+    it.classList.toggle('done', s < _regStepAtual);
+    it.classList.toggle('act', s === _regStepAtual);
+  });
+  const btnVoltar = document.getElementById('regBtnVoltar');
+  const btnProximo = document.getElementById('regBtnProximo');
+  const btnEnviar = document.getElementById('regBtnEnviar');
+  if (btnVoltar) btnVoltar.style.visibility = _regStepAtual === 1 ? 'hidden' : 'visible';
+  if (btnProximo) btnProximo.style.display = _regStepAtual === REG_TOTAL_STEPS ? 'none' : '';
+  if (btnEnviar) btnEnviar.style.display = _regStepAtual === REG_TOTAL_STEPS ? '' : 'none';
+  if (_regStepAtual === REG_TOTAL_STEPS) _regRenderResumo();
+  document.getElementById('tab-registrar')?.scrollIntoView({ block: 'start' });
+};
+
+window._regProximo = () => {
+  if (!_regValidarStep(_regStepAtual)) return;
+  window._regGotoStep(_regStepAtual + 1);
+};
+
+window._regVoltar = () => window._regGotoStep(_regStepAtual - 1);
+
+// ─── SELETOR DE CATEGORIA (3 cards reais — Administrativo/Urgência/Convivência) ─
+window._regSelCategoria = (cat) => {
+  if (cat === 'urg' && !PODE_EDIT.includes(cu.perfil)) return; // respeita a permissão do Bloco I
+  document.querySelectorAll('.reg-cat-card').forEach(c => c.classList.toggle('sel', c.dataset.cat === cat));
+  document.getElementById('blocoADM').style.display = cat === 'adm' ? '' : 'none';
+  document.getElementById('blocoI').style.display = cat === 'urg' ? '' : 'none';
+  document.getElementById('blocoII').style.display = cat === 'conv' ? '' : 'none';
+  document.getElementById('regArtigosWrap').style.display = '';
+};
+
 
 // ─── VER DETALHES ─────────────────────────────────────────────────────────────
 window._verDet = (id) => {
@@ -961,6 +1190,8 @@ window._verDet = (id) => {
     <div class="ir"><span class="il">Registrado por</span><span>${regNome2}</span></div>
     ${o.relato?`<div style="margin-top:10px;background:#f9f9f9;border-radius:8px;padding:10px"><p style="font-size:12px;color:var(--mu);font-weight:500;margin-bottom:4px">Relato</p><p style="font-size:13px">${o.relato}</p></div>`:''}
     ${o.descricao?`<div style="margin-top:8px;background:var(--mgl);border-radius:8px;padding:10px"><p style="font-size:12px;color:var(--mg);font-weight:500;margin-bottom:4px">Descrição — ${compNome||'Coordenação'}</p><p style="font-size:13px">${o.descricao}</p>${o.providencias?`<p style="font-size:12px;color:var(--mu);font-weight:500;margin:6px 0 3px">Providências</p><p style="font-size:13px">${o.providencias}</p>`:''}</div>`:''}
+    ${(o.intervencoesPedagogicas&&o.intervencoesPedagogicas.length)?`<div style="margin-top:8px;background:var(--bll);border-radius:8px;padding:10px"><p style="font-size:12px;color:var(--bl);font-weight:500;margin-bottom:4px">Intervenções pedagógicas — Res. SEDUC 68/2026</p><p style="font-size:13px">${o.intervencoesPedagogicas.join(', ')}</p></div>`:''}
+    ${(o.afastamentoPreventivo==='Sim'||o.transferenciaCautelar==='Sim')?`<div style="margin-top:8px;background:var(--rel);border-radius:8px;padding:10px"><p style="font-size:12px;color:var(--re);font-weight:500">${o.afastamentoPreventivo==='Sim'?'⚠ Afastamento preventivo temporário aplicado':''}${o.afastamentoPreventivo==='Sim'&&o.transferenciaCautelar==='Sim'?' · ':''}${o.transferenciaCautelar==='Sim'?'⚠ Transferência cautelar aplicada':''}</p></div>`:''}
     <div style="display:flex;gap:6px;margin-top:1rem;flex-wrap:wrap">
       ${isEdit()&&o.status==='pendente'?`<button class="bn mg" onclick="closeModal();window._abrirComp(${id})">✏ Complementar</button>`:''}
       ${isEdit()?`<button class="bn or" onclick="closeModal();window._abrirEdit(${id})">⬆ Editar</button>`:''}
@@ -1034,6 +1265,17 @@ window._abrirComp = (id) => {
         <div class="fg"><label>Lançado no Placon?</label><select id="cPlacon"><option value="">Selecione...</option><option${o.placon==='Sim'?' selected':''}>Sim</option><option${o.placon==='Não'?' selected':''}>Não</option><option${o.placon==='Pendente'?' selected':''}>Pendente</option></select></div>
       </div>
       ${o.placon==='Sim'?'':`<div class="ab or" style="margin-top:8px;font-size:12px">📋 Lembrete: registrar esta ocorrência na <strong>Plataforma CONVIVA (Placon)</strong> após encerrar.</div>`}
+      <div class="fl" style="font-size:11px;margin-top:12px;margin-bottom:8px">Intervenções Pedagógicas <span class="lt gt">Resolução SEDUC 68/2026, Art. 7º</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:12.5px">
+        ${INTERVENCOES_RES68.map((txt,i)=>`<label style="display:flex;align-items:flex-start;gap:6px;cursor:pointer"><input type="checkbox" id="cInt_${i}" style="margin-top:2px"${(o.intervencoesPedagogicas||[]).includes(txt)?' checked':''}><span>${txt}</span></label>`).join('')}
+      </div>
+      <div class="fl" style="font-size:11px;margin-top:12px;margin-bottom:8px">Medidas Excepcionais <span class="lt" style="background:var(--re)">Resolução SEDUC 68/2026</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg"><label>Afastamento preventivo temporário? <span style="font-weight:400;color:var(--mu)">(Art. 11 — máx. 5 dias letivos)</span></label>
+          <select id="cAfastamento"><option value="">Selecione...</option><option${o.afastamentoPreventivo==='Sim'?' selected':''}>Sim</option><option${o.afastamentoPreventivo==='Não'?' selected':''}>Não</option></select></div>
+        <div class="fg"><label>Transferência cautelar? <span style="font-weight:400;color:var(--mu)">(Art. 13 — medida excepcional)</span></label>
+          <select id="cTransferencia"><option value="">Selecione...</option><option${o.transferenciaCautelar==='Sim'?' selected':''}>Sim</option><option${o.transferenciaCautelar==='Não'?' selected':''}>Não</option></select></div>
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
         <button class="bp" style="flex:1;min-width:140px" onclick="window._salvarComp(${id})">Salvar e Encerrar</button>
         <button class="bn" style="flex:1;min-width:100px;padding:10px" onclick="closeModal()">Cancelar</button>
@@ -1049,6 +1291,7 @@ window._salvarComp = async (id) => {
     ? o.alunos.map((_,i)=>{const el=document.getElementById('cRelAl_'+i);return el?el.value:'';})
     : [document.getElementById('cRelAl_0')?.value||''];
   const _v = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const intervencoesPedagogicas = INTERVENCOES_RES68.filter((_,i) => document.getElementById('cInt_'+i)?.checked);
   const body={
     relatosAlunos,
     relatoResponsavel: _v('cRelResp'),
@@ -1058,6 +1301,9 @@ window._salvarComp = async (id) => {
     familia: _v('cFam') || 'Não informado',
     conselhoTutelar: _v('cConselhoTutelar') || 'Não informado',
     placon: _v('cPlacon') || 'Não informado',
+    intervencoesPedagogicas,
+    afastamentoPreventivo: _v('cAfastamento') || 'Não informado',
+    transferenciaCautelar: _v('cTransferencia') || 'Não informado',
     complementadoPorId: cu.id,
   };
   const resp = await apiFetch('/api/ocorrencias/'+id+'/complementar',{method:'PATCH',body:JSON.stringify(body)});
@@ -1101,6 +1347,144 @@ window._imprimirFrame = () => {
   frame.contentWindow.print();
 };
 
+window._contatarResponsavelComp = (alunos) => {
+  if (!alunos || !alunos.length) { toastErro('Esta ocorrência não tem aluno(s) vinculado(s).'); return; }
+  if (alunos.length === 1) { window._notificarResponsavel(alunos[0].ra, alunos[0].nome); return; }
+  document.getElementById('notifTit').innerHTML = `<svg class="ic ic-sm"><use href="#ic-phone"/></svg> Contatar responsável — qual aluno?`;
+  document.getElementById('notifBody').innerHTML = alunos.map(a =>
+    `<button class="bn" style="width:100%;text-align:left;margin-bottom:6px" onclick='window._notificarResponsavel(${JSON.stringify(a.ra).replace(/'/g,"&apos;")},${JSON.stringify(a.nome).replace(/'/g,"&apos;")})'>${a.nome}</button>`
+  ).join('');
+  document.getElementById('modalNotif').classList.add('show');
+};
+
+window._notificarResponsavel = async (ra, nomeAluno) => {
+  if (!ra) { toastErro('Este aluno não tem RA cadastrado — não é possível salvar o contato.'); return; }
+  const resp = await apiFetch('/api/contato-responsavel/'+encodeURIComponent(ra));
+  const contato = resp && resp.ok ? await resp.json() : null;
+  const escola = 'EE Profª Malba Thereza Ferraz Campaner';
+  const msgPadrao = `Olá! Aqui é da ${escola}. Há uma comunicação sobre o(a) aluno(a) ${nomeAluno} que gostaríamos de tratar. Poderia entrar em contato com a escola, por gentileza? Atenciosamente, Equipe Gestora.`;
+  document.getElementById('notifTit').innerHTML = `<svg class="ic ic-sm"><use href="#ic-phone"/></svg> Notificar responsável — ${nomeAluno}`;
+  document.getElementById('notifBody').innerHTML = `
+    <div class="ab bl" style="margin-bottom:1rem"><span>O telefone fica salvo pra próxima vez. A mensagem abre pronta no WhatsApp, mas <strong>você confere e clica em enviar por lá</strong> — nada é disparado automaticamente por aqui.</span></div>
+    <div class="fg"><label>Nome do responsável (opcional)</label><input type="text" id="nrNome" value="${contato&&contato.nome_responsavel?contato.nome_responsavel:''}" placeholder="Ex: Maria da Silva"></div>
+    <div class="fg"><label>WhatsApp do responsável (com DDD)</label><input type="text" id="nrTelefone" value="${contato&&contato.telefone?contato.telefone:''}" placeholder="Ex: 12988887777"></div>
+    <div class="fg"><label>Mensagem</label><textarea id="nrMensagem" rows="4">${msgPadrao}</textarea></div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="bp" style="flex:1;min-width:160px" onclick="window._confirmarNotificar('${ra}')"><svg class="ic ic-sm"><use href="#ic-phone"/></svg> Salvar e abrir WhatsApp</button>
+      <button class="bn" style="flex:1;min-width:100px;padding:10px" onclick="window._fecharNotif()">Cancelar</button>
+    </div>`;
+  document.getElementById('modalNotif').classList.add('show');
+};
+
+window._fecharNotif = () => {
+  document.getElementById('modalNotif').classList.remove('show');
+  document.getElementById('notifBody').innerHTML = '';
+};
+
+// ─── TUTORIAL GUIADO ────────────────────────────────────────────────────────
+const TOUR_DESCRICOES = {
+  dashboard:  { titulo: 'Início',       texto: 'O painel geral: urgências, pendências, encerradas, total, e os gráficos de gravidade, período e turmas.' },
+  registrar:  { titulo: 'Registrar',    texto: 'Abre uma ocorrência nova: você escolhe a categoria, o artigo específico, a turma, o(s) aluno(s) e escreve o relato.' },
+  ocorrencias:{ titulo: 'Ocorrências',  texto: 'Lista tudo que já foi registrado. Dá pra ver detalhes, complementar, editar, conversar pelo chat, contatar a família e gerar o documento oficial.' },
+  relatorio:  { titulo: 'Relatórios',   texto: 'Gera relatórios em PDF, filtrando por período, turma ou gravidade.' },
+  alunos:     { titulo: 'Alunos',       texto: 'Consulta os alunos cadastrados por turma.' },
+  segmento:   { titulo: 'Meu Segmento', texto: 'Visão das ocorrências do seu segmento de ensino.' },
+  carometro:  { titulo: 'Carômetro',    texto: 'Fotos dos alunos por turma, pra identificação rápida.' },
+  buscaativa: { titulo: 'Busca Ativa',  texto: 'Acompanhamento de alunos com risco de evasão ou baixa frequência.' },
+  gestao:     { titulo: 'Gestão',       texto: 'Administração de usuários: adicionar, editar cargo, importar RG/CPF e mais.' },
+};
+
+let _tourPassos = [];
+let _tourIndex = 0;
+
+function _construirPassosTutorial() {
+  const passos = [];
+  passos.push({ sel: '.sb-brand', titulo: 'Bem-vindo(a) ao SisRoe', texto: 'Esse tutorial mostra rapidinho onde fica cada coisa no sistema. Dá pra rever quando quiser clicando no ícone de ajuda no rodapé do menu.' });
+
+  document.querySelectorAll('.nt button').forEach((btn, i) => {
+    if (btn.offsetParent === null) return; // não mostra itens escondidos pro seu perfil
+    const m = btn.getAttribute('onclick')?.match(/showTab\('(\w+)'/);
+    const chave = m && m[1];
+    const info = chave && TOUR_DESCRICOES[chave];
+    if (info) passos.push({ sel: `.nt button:nth-of-type(${i + 1})`, titulo: info.titulo, texto: info.texto });
+  });
+
+  passos.push({ sel: '.tb-search', titulo: 'Busca rápida', texto: 'Filtra ocorrências já na tela, sem precisar abrir outro filtro. Atalho: Ctrl + K.' });
+  passos.push({ sel: '.tb-ic-btn:nth-of-type(1)', titulo: 'Alertas', texto: 'Avisa sobre urgências e pendências.' });
+  passos.push({ sel: '.tb-ic-btn:nth-of-type(2)', titulo: 'Mensagens', texto: 'Avisa sobre mensagens não lidas no chat das ocorrências.' });
+  passos.push({ sel: '.sb-foot .ub', titulo: 'Seu perfil', texto: 'Seu nome e cargo. Embaixo tem os botões pra trocar senha e sair.' });
+
+  return passos.filter(p => document.querySelector(p.sel));
+}
+
+window._iniciarTutorial = () => {
+  _tourPassos = _construirPassosTutorial();
+  _tourIndex = 0;
+  if (_tourPassos.length) _tourMostrarPasso(0);
+};
+
+function _tourMostrarPasso(i) {
+  document.querySelectorAll('.tour-spot').forEach(el => el.classList.remove('tour-spot'));
+  const passo = _tourPassos[i];
+  const alvo = document.querySelector(passo.sel);
+  if (!alvo) { window._tourProximo(); return; }
+  alvo.classList.add('tour-spot');
+  alvo.scrollIntoView({ block: 'center', behavior: 'smooth' });
+
+  const card = document.getElementById('tourCard');
+  document.getElementById('tourTitulo').textContent = passo.titulo;
+  document.getElementById('tourTexto').textContent = passo.texto;
+  document.getElementById('tourContador').textContent = `${i + 1} de ${_tourPassos.length}`;
+  document.getElementById('tourBtnVoltar').style.visibility = i === 0 ? 'hidden' : 'visible';
+  document.getElementById('tourBtnProximo').textContent = i === _tourPassos.length - 1 ? 'Concluir' : 'Próximo ›';
+  card.style.display = 'block';
+
+  setTimeout(() => {
+    const r = alvo.getBoundingClientRect();
+    const cw = card.offsetWidth, ch = card.offsetHeight;
+    let top = r.bottom + 12, left = r.left;
+    if (top + ch > window.innerHeight - 12) top = Math.max(12, r.top - ch - 12);
+    if (left + cw > window.innerWidth - 12) left = window.innerWidth - cw - 12;
+    if (left < 12) left = 12;
+    card.style.top = top + 'px';
+    card.style.left = left + 'px';
+  }, 50);
+}
+
+window._tourProximo = () => {
+  if (_tourIndex >= _tourPassos.length - 1) { window._pularTutorial(); return; }
+  _tourIndex++;
+  _tourMostrarPasso(_tourIndex);
+};
+window._tourVoltar = () => {
+  if (_tourIndex === 0) return;
+  _tourIndex--;
+  _tourMostrarPasso(_tourIndex);
+};
+window._pularTutorial = () => {
+  document.querySelectorAll('.tour-spot').forEach(el => el.classList.remove('tour-spot'));
+  document.getElementById('tourCard').style.display = 'none';
+};
+
+
+window._confirmarNotificar = async (ra) => {
+  const nome = document.getElementById('nrNome').value.trim();
+  let telefone = document.getElementById('nrTelefone').value.trim();
+  const mensagem = document.getElementById('nrMensagem').value.trim();
+  telefone = telefone.replace(/\D/g,'');
+  if (!telefone || telefone.length < 10) { toastErro('Digite um telefone válido, com DDD.'); return; }
+  if (!mensagem) { toastErro('A mensagem não pode ficar vazia.'); return; }
+  const resp = await apiFetch('/api/contato-responsavel', { method:'POST', body: JSON.stringify({ ra, nomeResponsavel: nome, telefone }) });
+  if (!resp || !resp.ok) { toastErro('Erro ao salvar o telefone. Tente novamente.'); return; }
+  const numeroCompleto = telefone.startsWith('55') ? telefone : '55'+telefone;
+  window.open(`https://wa.me/${numeroCompleto}?text=${encodeURIComponent(mensagem)}`, '_blank');
+  window._fecharNotif();
+  // Se o formulário de complemento estiver aberto atrás, marca "Família comunicada" automaticamente
+  const campoFam = document.getElementById('cFam');
+  if (campoFam) campoFam.value = 'Sim';
+  toastOk('WhatsApp aberto em outra aba. Confira a mensagem antes de enviar.');
+};
+
 // ─── MODAL ────────────────────────────────────────────────────────────────────
 window.closeModal = (e) => {
   if(!e||e.target===document.getElementById('modalOv'))
@@ -1118,6 +1502,7 @@ window.showTab = (name, btn) => {
   if(name==='carometro') window._carregarCarometro();
   if(name==='gestao') { renderGestao(); window._renderGrafico(); }
   if(name==='dashboard') renderDash();
+  if(name==='registrar' && window._regGotoStep) window._regGotoStep(1);
   if(name==='alunos') {
     _initAbaAlunos();
     window.renderAlunos();
@@ -1381,6 +1766,21 @@ async function renderGestao() {
       </div>
       <button class="bn mg" onclick="window._adicionarUsuario()">➕ Adicionar</button>
       <div id="msgNovoUsuario" style="display:none;margin-top:8px;font-size:13px"></div>
+    </div>`;
+  }
+
+  if (cu.perfil === 'diretor') {
+    const usuariosSemRg = usuariosDB.filter(u => !u.rg);
+    html += `<div class="fc" style="margin-bottom:1rem">
+      <div class="st" style="font-size:13px;margin-bottom:6px">🪪 Importar RG/CPF em lote</div>
+      <p style="font-size:12px;color:var(--mu);margin-bottom:10px">Sobe um arquivo <strong>.json</strong> com <code>[{"nome":"...","rg":"...","cpf":"..."}]</code>. Só atualiza usuários que já existem no sistema — casa pelo nome exato, nunca cria ninguém novo. Hoje: <strong>${usuariosSemRg.length}</strong> de ${usuariosDB.length} usuário(s) ainda sem RG.</p>
+      ${usuariosSemRg.length ? `<details style="margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;color:var(--mg);font-weight:600">Ver quem ainda falta (${usuariosSemRg.length})</summary>
+        <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);max-height:180px;overflow-y:auto;border:1px solid var(--bd);border-radius:6px;padding:8px">
+          ${usuariosSemRg.map(u => `${u.nome} <span style="color:var(--mu)">— ${PL[u.perfil]||u.perfil}</span>`).join('<br>')}
+        </div></details>` : ''}
+      <input type="file" id="arquivoImportRg" accept=".json">
+      <button class="bn mg" style="margin-top:8px" onclick="window._importarRg()">Importar</button>
+      <div id="resultadoImportRg" style="margin-top:10px;font-size:12.5px"></div>
     </div>`;
   }
 
@@ -1692,6 +2092,26 @@ window._carregarAuditoria = async () => {
   }).join('');
 };
 
+window._importarRg = async () => {
+  const input = document.getElementById('arquivoImportRg');
+  const out = document.getElementById('resultadoImportRg');
+  if (!input.files.length) { toastErro('Escolha o arquivo .json primeiro.'); return; }
+  let registros;
+  try {
+    const texto = await input.files[0].text();
+    registros = JSON.parse(texto);
+  } catch (e) { toastErro('Arquivo inválido — não consegui ler como JSON.'); return; }
+  out.innerHTML = 'Importando...';
+  const resp = await apiFetch('/api/usuarios/importar-rg', { method: 'POST', body: JSON.stringify({ registros }) });
+  if (!resp || !resp.ok) { out.innerHTML = '<span style="color:var(--re)">Erro ao importar.</span>'; return; }
+  const { atualizados, naoEncontrados } = await resp.json();
+  out.innerHTML = `
+    <div class="ab gr" style="margin-bottom:6px"><span>✅ ${atualizados.length} usuário(s) atualizado(s) — só RG/CPF, o perfil/privilégio de cada um continua exatamente o mesmo:<br>${atualizados.map(a=>`${a.nome} — <strong>${PL[a.perfil]||a.perfil}</strong>`).join('<br>')}</span></div>
+    ${naoEncontrados.length ? `<div class="ab or"><span>⚠ ${naoEncontrados.length} não encontrado(s) no sistema:<br>${naoEncontrados.map(n=>`${n.nome} — ${n.motivo}`).join('<br>')}</span></div>` : ''}`;
+  toastOk(`Importação concluída: ${atualizados.length} atualizados.`);
+  renderGestao();
+};
+
 window._adicionarUsuario = async () => {
   const nome = document.getElementById('novoNome').value.trim().toUpperCase();
   const perfil = document.getElementById('novoPerfil').value;
@@ -1809,7 +2229,7 @@ function montarDoc(o) {
     urgencia:['Manter calma e preservar a segurança de todos','Acionar a Polícia Militar imediatamente (190) ou Botão do Pânico','Comunicar o Diretor/Vice-Diretor da unidade escolar','Comunicar a Unidade Regional de Ensino de São José dos Campos','Registrar na Plataforma CONVIVA (Placon)','Preservar imagens de câmeras (solicitar em até 3 dias úteis)','Manter sigilo sobre os envolvidos','Aguardar orientação da URE São José dos Campos'],
     grave:['Acolher e escutar as partes envolvidas com imparcialidade','Comunicar a equipe gestora (Diretor/Vice-Diretor/Coordenador)','Comunicar a família dos estudantes envolvidos','Registrar na Plataforma CONVIVA (Placon)','Verificar necessidade de acionamento do Conselho Tutelar','Verificar necessidade de lavratura de Boletim de Ocorrência','Acompanhar o caso e registrar todas as providências tomadas','Realizar escuta individualizada dos envolvidos quando necessário'],
   };
-  const passos=protCompleto[o.gravidade==='urgencia'?'urgencia':'grave'];
+  const passos = ['urgencia','grave'].includes(o.gravidade) ? protCompleto[o.gravidade] : null;
   // Logo em base64 embutido no HTML do documento
   const logoBase64='LOGO_BASE64_PLACEHOLDER';
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
@@ -1857,44 +2277,75 @@ function montarDoc(o) {
     .assinatura-cpf{font-size:8pt;color:#888;text-align:center}
     .rodape{margin-top:12px;border-top:1px solid #ccc;padding-top:6px;display:flex;justify-content:space-between}
     .rodape div{font-size:7.5pt;color:#888}
-    .aviso-legal{background:#FFF8E1;border:1px solid #FFE082;border-radius:4px;padding:6px 10px;font-size:8pt;color:#555;margin-top:8px;text-align:center}
+    .aviso-legal{display:flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:none;padding:10px;font-size:8.5pt;color:#555;margin-top:10px;text-align:center}
+    .aviso-legal svg{width:20px;height:20px;flex-shrink:0;fill:none;stroke:#C2185B;stroke-width:1.8}
+    .aviso-legal-txt{text-align:left;line-height:1.4}
+    .aviso-legal-txt b{display:block;color:#222;font-size:9pt}
+    .faixa-topo{height:4px;background:linear-gradient(90deg,#C2185B,#D11559)}
+    .secao-titulo2{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .secao-n{width:20px;height:20px;border-radius:50%;background:#C2185B;color:#fff;font-size:9pt;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .secao-n.cinza{background:#222}.secao-n.azul{background:#1565C0}
+    .secao-titulo2 span{font-size:10pt;font-weight:bold;text-transform:uppercase;color:#222;letter-spacing:.02em}
+    .campo-card{border:1px solid #e2e2e2;border-radius:6px}
+    .campo-card-grid{display:grid;grid-template-columns:1fr 1fr 1fr}
+    .campo-ic-row{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;border-bottom:1px solid #eee}
+    .campo-ic-row:last-child{border-bottom:none}
+    .campo-ic-row svg{width:15px;height:15px;flex-shrink:0;margin-top:2px;fill:none;stroke:#C2185B;stroke-width:2}
+    .campo-ic-row label{font-size:7.5pt;color:#888;display:block;font-weight:normal;text-transform:none}
+    .campo-ic-row .valor2{font-size:9.5pt;font-weight:600;color:#222;border:none;padding:0;min-height:0}
+    .grav-pill{display:inline-block;padding:2px 10px;border-radius:10px;font-size:8.5pt;font-weight:bold}
     @media print{body{margin:0}}
-  </style></head><body><div class="page">
+  </style></head><body>
+  <div class="faixa-topo"></div>
+  <div class="page">
     <div class="cabecalho">
-      <img class="cab-logo" src="/assets/logo_sp.png" alt="SP"/>
+      <div style="display:flex;align-items:center;gap:8px">
+        <img src="/icons/logo-sisroe-96.png" alt="SisRoe" style="width:34px;height:34px;object-fit:contain"/>
+        <div>
+          <div style="font-size:13pt;font-weight:900;color:#1A1D24">Sis<span style="color:#C2185B">Roe</span></div>
+          <div style="font-size:6.5pt;color:#888;letter-spacing:.04em;text-transform:uppercase">Gestão Escolar Inteligente</div>
+        </div>
+      </div>
       <div class="cab-centro">
-        <div class="cab-escola">EE PROFESSORA MALBA THEREZA FERRAZ CAMPANER</div>
-        <div class="cab-seduc">Unidade Regional de Ensino de São José dos Campos · Secretaria da Educação do Estado de São Paulo</div>
-        <div class="cab-dir" style="margin-top:6px;font-weight:bold;color:#C2185B">REGISTRO DE OCORRÊNCIA ESCOLAR</div>
-        <div class="cab-dir">Protocolo 179 · CONVIVA SP · SEDUC SP</div>
+        <div style="font-size:13pt;font-weight:900;color:#1A1D24;letter-spacing:.01em">REGISTRO DE OCORRÊNCIA ESCOLAR</div>
+        <div class="cab-dir" style="margin-top:2px">Protocolo 179 · CONVIVA SP · SEDUC SP</div>
+        <div class="cab-seduc" style="margin-top:2px">Documento com valor legal — Art. 5º LDB 9394/96 · Res. SE nº 19/2010 · Res. SEDUC nº 68/2026</div>
       </div>
-      <div class="cab-direita">
-        <div class="cab-num">${numF}</div>
-        <div class="cab-data">Emissão: ${hoje}</div>
-      </div>
-    </div>
-    <p style="font-size:8pt;color:#888;text-align:center;margin-bottom:8px">Documento com valor legal — Art. 5º LDB 9394/96 · Res. SE nº 19/2010 · Protocolo 179 CONVIVA SP</p>
-    <div class="secao"><div class="secao-titulo">1. Identificação da Ocorrência</div>
-      <div class="campo-grid">
-        <div class="campo"><label>Tipo / Artigo</label><div class="valor">Art. ${o.numero} — ${o.tipo}</div></div>
-        <div class="campo"><label>Gravidade</label><div class="valor"><span class="grav-badge grav-${o.gravidade}">${GL2[o.gravidade]}</span></div></div>
-        <div class="campo"><label>Data</label><div class="valor">${o.data}</div></div>
-        <div class="campo"><label>Horário</label><div class="valor">${o.hora}</div></div>
-        <div class="campo"><label>Local</label><div class="valor">${o.local}</div></div>
-        <div class="campo"><label>Turma</label><div class="valor">${o.turma}</div></div>
-        <div class="campo"><label>Envolvido</label><div class="valor">${o.envolvido||'—'}</div></div>
-        <div class="campo"><label>Status</label><div class="valor">${o.status==='encerrado'?'Encerrado':'Em andamento'}</div></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="cab-direita">
+          <div class="cab-num">${numF}</div>
+          <div class="cab-data">Emissão: ${hoje}<br>${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+        <img src="/assets/brasao_sp.png" alt="Estado de São Paulo" style="width:46px;object-fit:contain"/>
       </div>
     </div>
-    <div class="secao"><div class="secao-titulo">2. Aluno(s) Envolvido(s)</div>
+    <div class="secao"><div class="secao-titulo2"><span class="secao-n">1</span><span>Identificação da Ocorrência</span></div>
+      <div class="campo-card campo-card-grid">
+        <div>
+          <div class="campo-ic-row"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 2.5h6a1 1 0 0 1 1 1V5H8V3.5a1 1 0 0 1 1-1ZM8.5 10.5h7M8.5 14h7M8.5 17.5h4"/></svg><div><label>Tipo / Artigo</label><div class="valor2">Art. ${o.numero} — ${o.tipo}</div></div></div>
+          <div class="campo-ic-row"><svg viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3.5v4M16 3.5v4"/></svg><div><label>Data</label><div class="valor2">${o.data}</div></div></div>
+          <div class="campo-ic-row"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.3 7-11.5A7 7 0 0 0 5 9.5C5 14.7 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/></svg><div><label>Local</label><div class="valor2">${o.local}</div></div></div>
+        </div>
+        <div style="border-left:1px solid #eee">
+          <div class="campo-ic-row"><svg viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg><div><label>Gravidade</label><div class="valor2"><span class="grav-badge grav-${o.gravidade}">${GL2[o.gravidade]}</span></div></div></div>
+          <div class="campo-ic-row"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><div><label>Horário</label><div class="valor2">${o.hora}</div></div></div>
+          <div class="campo-ic-row"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.8 19c.7-3.4 3-5.3 6.2-5.3s5.5 1.9 6.2 5.3"/><path d="M16 8.3a2.7 2.7 0 1 1 .5 5.4"/><path d="M17.5 14c2.5.4 4 1.9 4.6 5"/></svg><div><label>Turma</label><div class="valor2">${o.turma}</div></div></div>
+        </div>
+        <div style="border-left:1px solid #eee">
+          <div class="campo-ic-row"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c.8-4 3.7-6 7.5-6s6.7 2 7.5 6"/></svg><div><label>Envolvido</label><div class="valor2">${o.envolvido||'—'}</div></div></div>
+          <div class="campo-ic-row"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 8v.01"/></svg><div><label>Status</label><div class="valor2">${o.status==='encerrado'?'Encerrado':'Em andamento'}</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="secao"><div class="secao-titulo2"><span class="secao-n">2</span><span>Aluno(s) Envolvido(s)</span></div>
       <table class="tab-alunos"><thead><tr><th style="width:30px">Nº</th><th>Nome Completo</th><th style="width:120px">RA</th></tr></thead>
       <tbody>${nomeAlunos}</tbody></table>
     </div>
-    <div class="secao"><div class="secao-titulo">3. Relato do Professor / Servidor</div>
+    <div class="secao"><div class="secao-titulo2"><span class="secao-n">3</span><span>Relato do Professor / Servidor</span></div>
       <div class="campo"><label>Por: ${regNome2} (${PL[regPerfil2]||regPerfil2}) · ${o.data} às ${o.hora}</label></div>
       ${o.relato?`<div class="caixa-texto">${o.relato}</div>`:`<div class="caixa-vazia"></div>`}
     </div>
-    <div class="secao"><div class="secao-titulo cinza">4. Relato(s) dos Envolvidos / Família</div>
+    <div class="secao"><div class="secao-titulo2"><span class="secao-n cinza">4</span><span>Relato(s) dos Envolvidos / Família</span></div>
       ${o.alunos&&o.alunos.length?o.alunos.map((a,i)=>{
         const rel=o.relatosAlunos&&o.relatosAlunos[i]?o.relatosAlunos[i]:'';
         return `<div style="margin-bottom:8px"><div class="campo"><label>Estudante: ${a.nome} · RA: ${a.ra||'—'}</label></div>
@@ -1904,7 +2355,7 @@ function montarDoc(o) {
       <div class="campo"><label>Relato da Família / Responsável</label></div>
       ${o.relatoResponsavel?`<div class="caixa-texto" style="min-height:38px">${o.relatoResponsavel}</div>`:`<div class="caixa-vazia" style="min-height:38px"></div>`}
     </div>
-    <div class="secao"><div class="secao-titulo azul">5. Descrição e Providências — Equipe Gestora</div>
+    <div class="secao"><div class="secao-titulo2"><span class="secao-n azul">5</span><span>Descrição e Providências — Equipe Gestora</span></div>
       <div class="campo"><label>Por: ${compNome||(o.dataComp?'Equipe Gestora':'—')} ${compNome?'('+( PL[compPerfil]||compPerfil)+')':''} · Em: ${o.dataComp||'—'}</label></div>
       <div class="campo"><label>Descrição detalhada</label></div>
       ${o.descricao?`<div class="caixa-texto" style="min-height:60px">${o.descricao}</div>`:`<div class="caixa-vazia" style="min-height:60px"></div>`}
@@ -1916,11 +2367,20 @@ function montarDoc(o) {
         <div class="campo"><label>Conselho Tutelar</label><div class="valor">${o.conselhoTutelar&&o.conselhoTutelar!=='Não informado'?o.conselhoTutelar:'☐ Sim  ☐ Não  ☐ N/A'}</div></div>
         <div class="campo"><label>Lançado no Placon</label><div class="valor" style="${o.placon==='Sim'?'color:#2E7D32;font-weight:bold':o.placon==='Pendente'?'color:#E65100':''}">${o.placon&&o.placon!=='Não informado'?o.placon:'☐ Sim  ☐ Não  ☐ Pendente'}</div></div>
       </div>
+      ${(o.intervencoesPedagogicas&&o.intervencoesPedagogicas.length)||( o.afastamentoPreventivo&&o.afastamentoPreventivo!=='Não informado')||(o.transferenciaCautelar&&o.transferenciaCautelar!=='Não informado') ? `
+      <div class="campo" style="margin-top:8px"><label>Intervenções Pedagógicas — Resolução SEDUC nº 68/2026, Art. 7º</label></div>
+      ${o.intervencoesPedagogicas&&o.intervencoesPedagogicas.length
+        ? `<ul class="protocolo-lista">${o.intervencoesPedagogicas.map(t=>`<li><span class="step-n" style="background:#1565C0">✓</span><span>${t}</span></li>`).join('')}</ul>`
+        : `<div class="caixa-vazia" style="min-height:24px"></div>`}
+      <div class="campo-grid" style="margin-top:6px">
+        <div class="campo"><label>Afastamento preventivo temporário (Art. 11)</label><div class="valor">${o.afastamentoPreventivo&&o.afastamentoPreventivo!=='Não informado'?o.afastamentoPreventivo:'☐ Sim  ☐ Não'}</div></div>
+        <div class="campo"><label>Transferência cautelar (Art. 13)</label><div class="valor">${o.transferenciaCautelar&&o.transferenciaCautelar!=='Não informado'?o.transferenciaCautelar:'☐ Sim  ☐ Não'}</div></div>
+      </div>` : ''}
     </div>
-    <div class="secao"><div class="secao-titulo">6. Providências — Protocolo 179 · CONVIVA SP</div>
+    ${passos ? `<div class="secao"><div class="secao-titulo2"><span class="secao-n">6</span><span>Providências — Protocolo 179 · CONVIVA SP</span></div>
       <ul class="protocolo-lista">${passos.map((p,i)=>`<li><span class="step-n">${i+1}</span><span>${p}</span></li>`).join('')}</ul>
-    </div>
-    <div class="secao"><div class="secao-titulo">7. Assinaturas</div>
+    </div>` : ''}
+    <div class="secao"><div class="secao-titulo2"><span class="secao-n">${passos ? 7 : 6}</span><span>Assinaturas</span></div>
       <div class="assinaturas-grid">
         ${(()=>{
           const jaAssinou = new Set();
@@ -1946,7 +2406,7 @@ function montarDoc(o) {
         })()}
       </div>
     </div>div>
-    <div class="aviso-legal">Este documento possui valor legal e deve ser arquivado na UE, conforme Res. SE nº 19/2010 e Protocolo 179 CONVIVA SP. Falsificação: Art. 299 CP.</div>
+    <div class="aviso-legal"><svg viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg><div class="aviso-legal-txt"><b>Este documento possui validade legal.</b>Deve ser arquivado na UE, conforme Res. SE nº 19/2010, Res. SEDUC nº 68/2026 e Protocolo 179 CONVIVA SP. Falsificação: Art. 299 CP. · Emitido eletronicamente pelo SisRoe</div></div>
     <div class="rodape">
       <div>EE Professora Malba Thereza Ferraz Campaner · Protocolo 179 · CONVIVA SP · SEDUC SP · ${numF}</div>
       <div style="text-align:right">Emitido em: ${hoje}</div>
