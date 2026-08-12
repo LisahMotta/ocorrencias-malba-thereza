@@ -767,9 +767,10 @@ window._selTipo = (num, btn, nivel) => {
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 const isGest    = () => ['coordenador','vice','diretor'].includes(cu.perfil);
-const isGestor  = () => ['diretor','vice'].includes(cu.perfil);
-const isEdit    = () => PODE_EDIT.includes(cu.perfil);
-const isImprimir = () => PODE_EDIT.includes(cu.perfil);
+const isGestor    = () => ['diretor','vice'].includes(cu.perfil);
+const isEdit      = () => PODE_EDIT.includes(cu.perfil);
+const isImprimir  = () => PODE_EDIT.includes(cu.perfil);
+const isPrimNivel = () => ['agente','secretaria','gerente'].includes(cu?.perfil);
 
 function _setDatas() {
   const now = new Date();
@@ -845,6 +846,7 @@ function cardHTML(o) {
       ${isEdit()?`<button class="bn or" onclick="window._abrirEdit(${o.id})">⬆ Editar</button>`:''}
       ${isEdit()?`<button class="bn" style="border-color:#25D366;color:#1B8A4C" onclick='window._contatarResponsavelComp(${JSON.stringify((o.alunos||[]).map(a=>({ra:a.ra,nome:a.nome}))).replace(/'/g,"&apos;")})'><svg class="ic ic-sm"><use href="#ic-phone"/></svg> Contatar</button>`:''}
       <button class="bn vd" onclick="window._abrirChat(${o.id})">💬 Chat${badgeChat}</button>
+      ${isPrimNivel()?`<button class="bn" style="background:#6d4c41;color:#fff" onclick="window._imprimirOcorrencia(${o.id})">🖨 Imprimir</button>`:''}
       ${isImprimir()?`<button class="bn bl" onclick="window._gerarDoc(${o.id})">📄 Gerar Documento</button>`:''}
       ${isGestor()?`<button class="bn re" onclick="window._confirmarDeletar(${o.id})" title="Apagar ocorrência">🗑 Apagar</button>`:''}
     </div></div>`;
@@ -1196,6 +1198,7 @@ window._verDet = (id) => {
       ${isEdit()&&o.status==='pendente'?`<button class="bn mg" onclick="closeModal();window._abrirComp(${id})">✏ Complementar</button>`:''}
       ${isEdit()?`<button class="bn or" onclick="closeModal();window._abrirEdit(${id})">⬆ Editar</button>`:''}
       <button class="bn vd" onclick="closeModal();window._abrirChat(${id})">💬 Chat</button>
+      ${isPrimNivel()?`<button class="bn" style="background:#6d4c41;color:#fff" onclick="closeModal();window._imprimirOcorrencia(${id})">🖨 Imprimir</button>`:''}
       ${isImprimir()?`<button class="bn bl" onclick="closeModal();window._gerarDoc(${id})">📄 Gerar Documento</button>`:''}
     </div>`;
   document.getElementById('modalOv').classList.add('show');
@@ -1342,9 +1345,11 @@ window._fecharModalDoc = () => {
   document.body.style.overflow='';
 };
 window._imprimirFrame = () => {
-  const frame=document.getElementById('frameDoc');
+  const frame = document.getElementById('frameDoc');
+  window._printAutorizado = true;
   frame.contentWindow.focus();
   frame.contentWindow.print();
+  setTimeout(() => { window._printAutorizado = false; }, 5000);
 };
 
 window._contatarResponsavelComp = (alunos) => {
@@ -3750,9 +3755,69 @@ document.addEventListener('DOMContentLoaded', async () => {
   }, 60 * 60 * 1000); // a cada 1 hora
 });
 
+// ─── IMPRESSÃO SIMPLES — agente / secretaria / gerente ───────────────────────
+window._imprimirOcorrencia = (id) => {
+  const o = occ.find(x => x.id === id);
+  if (!o) return;
+  const GL2 = { urgencia:'URGÊNCIA / EMERGÊNCIA', grave:'GRAVE', media:'MÉDIA', leve:'LEVE' };
+  const SL2 = { pendente:'Pendente', encerrado:'Encerrado', cancelado:'Cancelado' };
+  const numF = 'OC-' + new Date().getFullYear() + '-' + String(o.id).padStart(4,'0');
+  const hoje = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+  const nomes = o.alunos?.length
+    ? o.alunos.map(a => `${a.nome}${a.ra ? ' — RA: ' + a.ra : ''}`).join('<br>')
+    : '—';
+
+  const linha = (label, val) =>
+    `<div class="row"><span class="lb">${label}</span><span class="val">${val||'—'}</span></div>`;
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Ocorrência ${numF}</title>
+  <style>
+    @page{size:A4;margin:1.5cm 2cm}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#000;background:#fff;padding:.5cm}
+    h1{font-size:13pt;font-weight:bold;margin-bottom:3px}
+    h2{font-size:9pt;color:#555;margin-bottom:14px}
+    .row{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid #eee}
+    .lb{font-size:9pt;font-weight:bold;color:#555;min-width:150px;flex-shrink:0}
+    .val{font-size:11pt}
+    .badge{display:inline-block;padding:1px 10px;border-radius:8px;font-size:9pt;font-weight:bold}
+    .urgencia{background:#FFEBEE;color:#C62828;border:1px solid #FFCDD2}
+    .grave{background:#FFF3E0;color:#E65100;border:1px solid #FFE0B2}
+    .media{background:#FFF8E1;color:#F57F17;border:1px solid #FFE082}
+    .leve{background:#E8F5E9;color:#2E7D32;border:1px solid #C8E6C9}
+    .caixa{background:#f9f9f9;border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-top:10px}
+    .caixa .tit{font-size:9pt;font-weight:bold;color:#555;margin-bottom:4px}
+    .caixa .txt{font-size:11pt;white-space:pre-wrap}
+    .rodape{margin-top:18px;border-top:1px solid #ccc;padding-top:6px;font-size:7.5pt;color:#999;text-align:center}
+    @media print{body{padding:0}}
+  </style></head><body>
+  <h1>📋 Registro de Ocorrência — ${numF}</h1>
+  <h2>EE Professora Malba Thereza Ferraz Campaner · Emissão: ${hoje}</h2>
+  ${linha('Gravidade', `<span class="badge ${o.gravidade}">${GL2[o.gravidade]||o.gravidade}</span>`)}
+  ${linha('Tipo', o.tipo)}
+  ${linha('Data / Hora', `${o.data} às ${o.hora}`)}
+  ${linha('Local', o.local)}
+  ${linha('Turma', o.turma)}
+  ${linha('Aluno(s)', nomes)}
+  ${linha('Status', SL2[o.status]||o.status)}
+  ${linha('Registrado por', `${o.registradoPorNome||'—'} (${o.registradoPorPerfil||'—'})`)}
+  ${o.relato ? `<div class="caixa"><div class="tit">Relato</div><div class="txt">${o.relato}</div></div>` : ''}
+  ${o.descricao ? `<div class="caixa"><div class="tit">Descrição — ${o.complementadoPorNome||'Coordenação'}</div><div class="txt">${o.descricao}</div>${o.providencias?`<div class="tit" style="margin-top:8px">Providências</div><div class="txt">${o.providencias}</div>`:''}</div>` : ''}
+  <div class="rodape">SisRoe · EE Professora Malba Thereza Ferraz Campaner · Protocolo 179 · CONVIVA SP · SEDUC SP</div>
+  <script>window.onload = () => window.print();<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  if (w) { w.document.write(html); w.document.close(); }
+  else alert('Permita popups para imprimir.');
+};
+
 // ─── PROTEÇÃO LGPD — bloqueia impressão e captura de tela ────────────────────
+window._printAutorizado = false;
 (function() {
   function _avisoLGPD() {
+    if (window._printAutorizado) return;
     let m = document.getElementById('lgpdPrintModal');
     if (m) { m.style.display = 'flex'; return; }
     m = document.createElement('div');
