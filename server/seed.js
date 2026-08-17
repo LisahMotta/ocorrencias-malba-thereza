@@ -59,6 +59,7 @@ const USUARIOS = [
   { nome: 'WELLINGTON ROBERTO GALVAO BORGES DE OLIVEIRA',    perfil: 'professor'    },
   // Agentes de Organização Escolar
   { nome: 'KÁTIA MARA FERREIRA DIAS MARTINS',                perfil: 'agente'       },
+  { nome: 'APARECIDA SATIKO ITO AGUIAR',                     perfil: 'agente'       },
   { nome: 'ALINE BAUMGARTER',                                perfil: 'agente'       },
   { nome: 'ELISABETH APARECIDA BERNARDES DE FARIA',          perfil: 'agente'       },
   { nome: 'LILIAN DAS GRAÇAS DA SILVA NEVES',                perfil: 'agente'       },
@@ -66,6 +67,10 @@ const USUARIOS = [
   { nome: 'LUCIMAR DE OLIVEIRA SANTOS',                      perfil: 'agente'       },
   { nome: 'MARIA APARECIDA GOMES FRANCISCO',                 perfil: 'agente'       },
   { nome: 'RODOLFO JESUS DO PRADO FILHO',                    perfil: 'agente'       },
+  { nome: 'SONIA APARECIDA BARBOSA DOS SANTOS',              perfil: 'agente'       },
+  { nome: 'ROSA FRANCISCA DE LIMA',                          perfil: 'agente'       },
+  { nome: 'ROSELENE FÁTIMA DE SOUSA SILVA',                  perfil: 'agente'       },
+  { nome: 'ROBERTA MARQUES DA SILVA',                        perfil: 'agente'       },
   // Secretaria de Escola
   { nome: 'ROSEMARY ALVES FERREIRA ANDRADE EUGÊNIO',         perfil: 'secretaria'   },
   // Gerente de Organização Escolar
